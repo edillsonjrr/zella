@@ -1,0 +1,115 @@
+{
+  "componente": "Sidebar (menu lateral) recolhido do ClickUp — versão 'sidebar-v3'",
+  "fonte": "Valores extraídos via inspeção real do DOM/CSS computado da página (não é suposição)",
+  "container": {
+    "classe": "cu-simple-bar__container.sidebar-v3 (estado: collapsed, non-expandable)",
+    "largura_total_px": 64,
+    "largura_coluna_itens_px": 52,
+    "background": "transparente (herda o fundo escuro do app, ~rgb(25,25,25) no wrapper interno)",
+    "layout": "coluna vertical fixa, ícones empilhados, sem scroll horizontal"
+  },
+  "item_de_menu": {
+    "estrutura_dom": "DIV.cu-simple-bar__item-container > A.cu-simple-bar__item > SPAN.cu-simple-bar__item-inner > (ícone) + SPAN.cu-simple-bar__item-label",
+    "tamanho_area_clicavel_px": { "largura": 32, "altura": 32 },
+    "tamanho_bloco_completo_com_label_px": { "largura": 52, "altura": 62 },
+    "icone": {
+      "dimensao": "1.25rem (20px) — controlado pela variável CSS --sidebar-icon-dimensions",
+      "transicao": "transform 0.2s ease-in-out (anima ao trocar de estado, ex.: hover/click)"
+    },
+    "texto_label": {
+      "fonte_size_computado_px": 10,
+      "font_weight": 700,
+      "cor_padrao": "rgb(238, 238, 238)",
+      "cor_item_ativo": "rgb(255, 255, 255)",
+      "posicao": "abaixo do ícone, centralizado",
+      "obs": "a variável de design --cu-label-small-font-size é 0.875rem (14px), mas o valor final aplicado e computado no elemento é 10px — ou seja, há um override específico para o modo recolhido da sidebar"
+    },
+    "border_radius_px": 6,
+    "espacamento_interno": "ícone + label empilhados verticalmente (flex column), padding 0 no wrapper, o espaçamento visual vem do próprio tamanho fixo do bloco (52x62)"
+  },
+  "estados_de_interacao": {
+    "padrao": {
+      "background": "transparente"
+    },
+    "hover": {
+      "background_tema_escuro": "rgb(43, 52, 59) (ou rgb(56, 64, 71) dependendo do contexto de classe)",
+      "background_tema_claro": "rgb(246, 247, 249)",
+      "transicao_icone": "transform 0.2s ease-in-out"
+    },
+    "ativo_selecionado": {
+      "classe_extra": "cu-simple-bar__item_active (no item) + cu-simple-bar__item-container_active (no container pai)",
+      "background": "var(--cu-background-primary-on-subtle) → rgb(42, 42, 42)",
+      "cor_icone_e_label": "var(--cu-content-primary) → rgb(238, 238, 238) / branco puro no label (rgb(255,255,255))",
+      "border_radius": "6px (mesmo do item base — o destaque é um retângulo arredondado atrás do ícone+label, não uma pílula)",
+      "observacao_visual": "não há animação de 'slide' entre itens — a troca de item ativo apenas troca a cor de fundo do bloco selecionado instantaneamente/via transição curta de cor"
+    }
+  },
+  "badge_de_notificacao_data": {
+    "exemplo_observado": "item 'Planejador' (calendário) mostra um selo com o dia atual ('20')",
+    "estrutura": "círculo pequeno sobreposto no canto do ícone",
+    "tamanho_px": { "largura": 9, "altura": 9 },
+    "fonte_size_px": 9,
+    "font_weight": 800,
+    "cor_texto": "rgb(198, 42, 47) (vermelho)",
+    "cor_fundo_do_selo": "rgb(255, 255, 255) (branco)",
+    "posicionamento": "position: absolute, ancorado no canto superior/direito do ícone",
+    "obs_visual": "no screenshot o ícone de calendário aparece com fundo vermelho arredondado por trás do número — esse fundo vermelho pertence ao próprio ícone SVG do calendário (não a um elemento de badge separado), o selo branco+número vermelho fica por cima dele"
+  },
+  "itens_do_menu_observados": [
+    { "nome": "Início", "icone": "balão de chat/dashboard", "ativo": false },
+    { "nome": "Planejador", "icone": "calendário com selo do dia atual", "ativo": true },
+    { "nome": "IA", "icone": "engrenagem/sparkle", "ativo": false },
+    { "nome": "Mais", "icone": "grade 3x3 (apps)", "ativo": false },
+    { "nome": "Convidar", "icone": "pessoa com +", "ativo": false, "posicao": "separado por espaço, mais abaixo" },
+    { "nome": "Fazer upgrade", "icone": "foguete", "ativo": false, "posicao": "rodapé, cor de destaque (laranja/amarelo)" }
+  ],
+  "elemento_topo": {
+    "avatar_workspace": "ícone/inicial do workspace (ex.: 'E'), quadrado com radius pequeno",
+    "botao_recolher_expandir": {
+      "classe": "cu-simple-bar__expand-sidebar-button",
+      "tamanho_px": { "largura": 32, "altura": 32 },
+      "font_size_icone_px": 18,
+      "funcao": "alterna a sidebar entre estado recolhido (só ícones) e expandido (ícones + nomes na horizontal)"
+    },
+    "divisor": "linha fina abaixo do topo separando o cabeçalho do restante da navegação"
+  },
+  "pontos_importantes_para_replicar_igual": [
+    "Largura fixa de 64px no estado recolhido, com área clicável de cada item de 32x32px centralizada.",
+    "Ícone (20px) sempre acima do texto (10px, bold, branco), nunca lado a lado — layout em coluna dentro de cada item.",
+    "O texto do label é desproporcionalmente pequeno (10px) comparado ao token de design padrão da aplicação (14px) — isso é intencional para caber no menu estreito.",
+    "O estado ativo é feito só com mudança de cor de fundo (cinza escuro, rgb(42,42,42)) + radius 6px no bloco do item, sem alterar tamanho, sem borda, sem indicador lateral tipo 'barra'.",
+    "Hover é uma transição sutil e rápida de background (não há delay perceptível, é feedback instantâneo de UI).",
+    "O ícone tem transição própria (transform 0.2s ease-in-out) preparada para pequenas animações (ex.: leve escala) — separada da transição de fundo do item.",
+    "Badges numéricos (como o dia do calendário) são elementos pequenos (9px) sobrepostos via position:absolute no canto do ícone, com alto contraste (fundo branco, texto vermelho vibrante) para chamar atenção mesmo em tamanho reduzido.",
+    "Itens de 'sistema' (Convidar, Fazer upgrade) ficam visualmente separados dos itens de navegação principal, geralmente ancorados mais para o rodapé da coluna."
+  ],
+  "modelo_de_dados_sugerido_para_kimi": {
+    "sidebar": {
+      "width": "64px (collapsed) | expandir para modo texto lateral quando expandido",
+      "items": [
+        {
+          "id": "string",
+          "label": "string",
+          "icon": "string (nome/slug do ícone)",
+          "active": "boolean",
+          "badge": {
+            "type": "number | dot | null",
+            "value": "string | number | null",
+            "bgColor": "#ffffff",
+            "textColor": "#c62a2f"
+          }
+        }
+      ]
+    },
+    "estilos": {
+      "itemSize": "32x32px",
+      "iconSize": "20px",
+      "labelFontSize": "10px",
+      "labelFontWeight": 700,
+      "borderRadius": "6px",
+      "activeBg": "#2a2a2a",
+      "hoverBg": "#2b343b",
+      "iconTransition": "transform 0.2s ease-in-out"
+    }
+  }
+}

@@ -1,0 +1,193 @@
+:host {
+  display: block;
+}
+
+.login-background {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(123, 104, 238, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 80% 70%, rgba(123, 104, 238, 0.14) 0%, transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(139, 122, 246, 0.08) 0%, transparent 60%);
+}
+
+.gradient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.7;
+  animation: orb-float 18s ease-in-out infinite;
+  will-change: transform;
+}
+
+.orb-1 {
+  width: 520px;
+  height: 520px;
+  top: -120px;
+  left: -120px;
+  background: rgba(123, 104, 238, 0.4);
+}
+
+.orb-2 {
+  width: 420px;
+  height: 420px;
+  bottom: -100px;
+  right: -100px;
+  background: rgba(139, 122, 246, 0.35);
+  animation-delay: -6s;
+}
+
+.orb-3 {
+  width: 340px;
+  height: 340px;
+  top: 40%;
+  left: 30%;
+  background: rgba(160, 140, 255, 0.25);
+  animation-delay: -12s;
+}
+
+@keyframes orb-float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(50px, -40px) scale(1.08);
+  }
+  50% {
+    transform: translate(-20px, 30px) scale(0.95);
+  }
+  75% {
+    transform: translate(-40px, -20px) scale(1.03);
+  }
+}
+
+.bubble {
+  position: absolute;
+  opacity: 0;
+  animation: bubble-enter 0.6s ease-out forwards, bubble-float 10s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.bubble.sm .bubble-shape {
+  padding: 0.55rem 0.75rem;
+}
+
+.bubble.sm svg {
+  width: 18px;
+  height: 18px;
+}
+
+.bubble.md .bubble-shape {
+  padding: 0.8rem 1rem;
+}
+
+.bubble.md svg {
+  width: 22px;
+  height: 22px;
+}
+
+.bubble.lg .bubble-shape {
+  padding: 1rem 1.25rem;
+}
+
+.bubble.lg svg {
+  width: 26px;
+  height: 26px;
+}
+
+.bubble-shape {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  border-radius: 1rem;
+  box-shadow: var(--shadow-card-hover);
+  backdrop-filter: blur(4px);
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
+.bubble.chamado .bubble-shape {
+  background: rgba(123, 104, 238, 0.92);
+  border: 1px solid rgba(155, 138, 245, 0.5);
+  border-bottom-left-radius: 0.25rem;
+  color: var(--text-primary);
+}
+
+.bubble.os .bubble-shape {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(232, 230, 255, 0.6);
+  border-bottom-right-radius: 0.25rem;
+  color: var(--primary-500);
+}
+
+.bubble-lines {
+  display: grid;
+  gap: 0.35rem;
+  width: 4rem;
+
+  span {
+    display: block;
+    height: 0.4rem;
+    border-radius: 0.25rem;
+    background: currentColor;
+    opacity: 0.75;
+
+    &:nth-child(1) { width: 100%; }
+    &:nth-child(2) { width: 65%; }
+  }
+}
+
+@keyframes bubble-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes bubble-float {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  20% {
+    transform: translate(10px, -22px) rotate(1.5deg);
+  }
+  40% {
+    transform: translate(-8px, 10px) rotate(-1deg);
+  }
+  60% {
+    transform: translate(12px, 8px) rotate(1deg);
+  }
+  80% {
+    transform: translate(-6px, -14px) rotate(-0.5deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .bubble {
+    animation-duration: 0.6s, 12s;
+  }
+
+  .bubble.sm {
+    display: none;
+  }
+
+  .gradient-orb {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gradient-orb,
+  .bubble {
+    animation: none !important;
+  }
+}

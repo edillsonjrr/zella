@@ -1,0 +1,90 @@
+<div class="painel-header">
+  <div class="painel-titulo">
+    <div class="painel-icone">
+      <app-icon name="account_balance_wallet"></app-icon>
+    </div>
+    <div>
+      <h2>{{ item.item }}</h2>
+      <span class="painel-subtitulo">{{ contrato.numero }} — {{ contrato.fornecedor }}</span>
+    </div>
+  </div>
+  <button mat-icon-button (click)="fechar()" aria-label="Fechar">
+    <app-icon name="close"></app-icon>
+  </button>
+</div>
+
+<mat-divider class="painel-divider"></mat-divider>
+
+<div class="painel-conteudo">
+  <div class="campo campo--bloco">
+    <span class="campo-label">Utilização</span>
+    <div class="utilizacao">
+      <span class="utilizacao-valor" [class.critico]="percentual() > 90">{{ percentual() }}%</span>
+      <mat-progress-bar mode="determinate" [value]="percentual()" [color]="percentual() > 90 ? 'warn' : 'primary'"></mat-progress-bar>
+    </div>
+  </div>
+
+  <div class="resumo-saldo">
+    <div class="resumo-item">
+      <span class="resumo-label">Contratado</span>
+      <span class="resumo-valor">{{ item.contratado }} {{ item.unidadeMedida }}</span>
+    </div>
+    <div class="resumo-item">
+      <span class="resumo-label">Consumido</span>
+      <span class="resumo-valor">{{ item.consumido }} {{ item.unidadeMedida }}</span>
+    </div>
+    <div class="resumo-item">
+      <span class="resumo-label">Reservado</span>
+      <span class="resumo-valor">{{ item.reservado }} {{ item.unidadeMedida }}</span>
+    </div>
+    <div class="resumo-item resumo-item--destaque">
+      <span class="resumo-label">Disponível</span>
+      <span class="resumo-valor">{{ item.disponivel }} {{ item.unidadeMedida }}</span>
+    </div>
+  </div>
+
+  <div class="resumo-saldo">
+    <div class="resumo-item">
+      <span class="resumo-label">Preço unitário</span>
+      <span class="resumo-valor">{{ formatarMoeda(item.precoUnitario) }}</span>
+    </div>
+    <div class="resumo-item">
+      <span class="resumo-label">Valor disponível</span>
+      <span class="resumo-valor">{{ formatarMoeda(item.disponivel * item.precoUnitario) }}</span>
+    </div>
+  </div>
+
+  <mat-divider class="painel-divider"></mat-divider>
+
+  <div class="campo campo--bloco">
+    <span class="campo-label">Histórico de consumo</span>
+    <table mat-table [dataSource]="historico" class="app-table full-width">
+      <ng-container matColumnDef="os">
+        <th mat-header-cell *matHeaderCellDef>OS</th>
+        <td mat-cell *matCellDef="let h"><strong>{{ h.os }}</strong></td>
+      </ng-container>
+
+      <ng-container matColumnDef="data">
+        <th mat-header-cell *matHeaderCellDef>Data</th>
+        <td mat-cell *matCellDef="let h">{{ h.data }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="quantidade">
+        <th mat-header-cell *matHeaderCellDef>Qtd</th>
+        <td mat-cell *matCellDef="let h">{{ h.quantidade }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="tecnico">
+        <th mat-header-cell *matHeaderCellDef>Técnico</th>
+        <td mat-cell *matCellDef="let h">{{ h.tecnico }}</td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+  </div>
+</div>
+
+<div class="painel-acoes">
+  <app-flow-button variant="secondary" class="full-width" type="button" (click)="fechar()">Fechar</app-flow-button>
+</div>

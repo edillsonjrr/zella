@@ -1,0 +1,49 @@
+<div class="qrcode-panel">
+  <header class="qrcode-header">
+    <div class="qrcode-title">
+      <div class="qrcode-icon">
+        <app-icon name="qr_code" aria-hidden="true"></app-icon>
+      </div>
+      <div>
+        <h2>QR Code</h2>
+        <span class="qrcode-subtitle">{{ alvo.titulo }}</span>
+      </div>
+    </div>
+    <button mat-icon-button type="button" class="qrcode-close" (click)="fechar()" aria-label="Fechar">
+      <app-icon name="close" aria-hidden="true"></app-icon>
+    </button>
+  </header>
+
+  <div class="qrcode-body">
+    <div class="qrcode-image-wrap">
+      @if (qrDataUrl(); as src) {
+        <img [src]="src" [alt]="'QR Code para ' + alvo.titulo" width="240" height="240" />
+      } @else {
+        <div class="qrcode-loading" aria-hidden="true"></div>
+      }
+    </div>
+
+    <p class="qrcode-hint">
+      Qualquer pessoa que escanear este código abre o formulário de novo chamado já com
+      <strong>{{ alvo.subtitulo }}</strong> preenchido.
+    </p>
+
+    <mat-divider class="qrcode-divider"></mat-divider>
+
+    <div class="qrcode-link-row">
+      <app-icon name="link" aria-hidden="true"></app-icon>
+      <span class="qrcode-link">{{ url }}</span>
+    </div>
+
+    <div class="qrcode-actions">
+      <button mat-stroked-button type="button" (click)="copiarLink()">
+        <app-icon class="btn-icon" name="copy" aria-hidden="true"></app-icon>
+        {{ linkCopiado() ? 'Link copiado!' : 'Copiar link' }}
+      </button>
+      <app-flow-button type="button" (click)="baixar()" [disabled]="!qrDataUrl()">
+        <app-icon class="btn-icon" name="download" aria-hidden="true"></app-icon>
+        Baixar QR Code
+      </app-flow-button>
+    </div>
+  </div>
+</div>

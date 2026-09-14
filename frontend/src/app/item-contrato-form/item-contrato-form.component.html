@@ -1,0 +1,89 @@
+<mat-card class="app-card animate-fade-in-up standalone-card modal-card">
+  <mat-card-content>
+    <form (ngSubmit)="salvar(itemForm)" #itemForm="ngForm" class="modal-form" novalidate>
+      <div class="modal-scrollable-header">
+        <div class="modal-title">
+          <div class="modal-icon">
+            <app-icon name="format_list_bulleted" aria-hidden="true"></app-icon>
+          </div>
+          <div>
+            <h2>{{ isEdicao ? 'Editar item' : 'Novo item' }}</h2>
+            <span class="modal-subtitle">Contrato {{ data.contrato.numero }}</span>
+          </div>
+        </div>
+        <button mat-icon-button type="button" class="modal-close" (click)="cancelar()" aria-label="Fechar">
+          <app-icon name="close" aria-hidden="true"></app-icon>
+        </button>
+      </div>
+
+      <div class="modal-scrollable-body">
+        <section class="form-section">
+          <div class="section-title">
+            <app-icon name="format_list_bulleted" aria-hidden="true"></app-icon>
+            <h3>Dados do item</h3>
+          </div>
+
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Item</mat-label>
+              <input matInput #nomeCtrl="ngModel" [(ngModel)]="nome" name="nome" placeholder="Ex: Manutenção de câmeras…" required />
+              @if (nomeCtrl.invalid && nomeCtrl.touched) {
+                <mat-error>Informe o nome do item</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Unidade de medida</mat-label>
+              <input matInput #unidadeCtrl="ngModel" [(ngModel)]="unidadeMedida" name="unidadeMedida" placeholder="un" required />
+              @if (unidadeCtrl.invalid && unidadeCtrl.touched) {
+                <mat-error>Informe a unidade</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Quantidade contratada</mat-label>
+              <input matInput type="number" #qtdCtrl="ngModel" [(ngModel)]="quantidadeContratada" name="quantidadeContratada" min="0" required [readonly]="isEdicao" />
+              @if (isEdicao) {
+                <mat-hint>Muda só por aditivo</mat-hint>
+              }
+              @if (qtdCtrl.invalid && qtdCtrl.touched) {
+                <mat-error>Informe a quantidade</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Preço unitário</mat-label>
+              <input matInput type="number" #precoCtrl="ngModel" [(ngModel)]="precoUnitario" name="precoUnitario" min="0" step="0.01" required />
+              @if (precoCtrl.invalid && precoCtrl.touched) {
+                <mat-error>Informe o preço unitário</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          @if (isEdicao) {
+            <p class="aviso-saldo">
+              <app-icon name="info" aria-hidden="true"></app-icon>
+              {{ data.item?.quantidadeReservada }} reservada(s), {{ data.item?.quantidadeConsumida }} consumida(s) e
+              {{ data.item?.quantidadeDisponivel }} disponível(is). A quantidade contratada é o que foi acordado:
+              para alterá-la, registre um aditivo no painel do contrato.
+            </p>
+          }
+
+          @if (erro()) {
+            <p class="erro-salvar" role="alert">
+              <app-icon name="warning" aria-hidden="true"></app-icon> {{ erro() }}
+            </p>
+          }
+        </section>
+      </div>
+
+      <div class="modal-scrollable-footer">
+        <app-flow-button variant="secondary" type="button" (click)="cancelar()">Cancelar</app-flow-button>
+        <app-flow-button type="submit" [disabled]="salvando()">
+          <app-icon class="btn-icon" name="save" aria-hidden="true"></app-icon>
+          {{ salvando() ? 'Salvando…' : 'Salvar item' }}
+        </app-flow-button>
+      </div>
+    </form>
+  </mat-card-content>
+</mat-card>

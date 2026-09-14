@@ -1,0 +1,108 @@
+<mat-card class="app-card animate-fade-in-up standalone-card modal-card">
+  <mat-card-content>
+    <form (ngSubmit)="salvar(aditivoForm)" #aditivoForm="ngForm" class="modal-form" novalidate>
+      <div class="modal-scrollable-header">
+        <div class="modal-title">
+          <div class="modal-icon">
+            <app-icon name="create" aria-hidden="true"></app-icon>
+          </div>
+          <div>
+            <h2>Aditivo nº {{ proximoNumero }}</h2>
+            <span class="modal-subtitle">Contrato {{ contrato.numero }} — {{ contrato.fornecedor }}</span>
+          </div>
+        </div>
+        <button mat-icon-button type="button" class="modal-close" (click)="cancelar()" aria-label="Fechar">
+          <app-icon name="close" aria-hidden="true"></app-icon>
+        </button>
+      </div>
+
+      <div class="modal-scrollable-body">
+        <section class="form-section">
+          <div class="section-title">
+            <app-icon name="description" aria-hidden="true"></app-icon>
+            <h3>Motivo e vigência</h3>
+          </div>
+
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Motivo do aditivo</mat-label>
+              <input matInput #motivoCtrl="ngModel" [(ngModel)]="motivo" name="motivo" maxlength="500" placeholder="Ex: Termo aditivo nº 02/2026 — acréscimo de 25%" required />
+              @if (motivoCtrl.invalid && motivoCtrl.touched) {
+                <mat-error>Informe o motivo</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Vigência atual</mat-label>
+              <input matInput [value]="(contrato.vigenciaFim | date:'dd/MM/yyyy') ?? ''" readonly />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Nova vigência (fim)</mat-label>
+              <input matInput type="date" [(ngModel)]="novaVigenciaFim" name="novaVigenciaFim" [min]="contrato.vigenciaFim" />
+              @if (problemaVigencia) {
+                <mat-hint class="hint-erro">{{ problemaVigencia }}</mat-hint>
+              } @else {
+                <mat-hint>Deixe igual para não alterar</mat-hint>
+              }
+            </mat-form-field>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <div class="section-title">
+            <app-icon name="format_list_bulleted" aria-hidden="true"></app-icon>
+            <h3>Quantidades contratadas</h3>
+          </div>
+          <p class="section-hint">Altere só o que o aditivo muda. O saldo disponível acompanha a diferença.</p>
+
+          @if (!linhas.length) {
+            <p class="aviso-saldo">
+              <app-icon name="info" aria-hidden="true"></app-icon>
+              Este contrato ainda não tem itens. Adicione itens pelo painel do contrato; o aditivo pode alterar só a vigência.
+            </p>
+          }
+
+          <div class="linhas-itens">
+            @for (linha of linhas; track linha.itemContratoId) {
+              <div class="linha-item" [class.linha-item--alterada]="delta(linha) !== 0">
+                <div class="linha-info">
+                  <strong>{{ linha.nome }}</strong>
+                  <span class="linha-meta">
+                    Atual: {{ linha.atual }} {{ linha.unidadeMedida }}
+                    @if (linha.minimo > 0) {
+                      · mínimo {{ linha.minimo }} (reservado + consumido)
+                    }
+                  </span>
+                </div>
+                <mat-form-field appearance="outline" class="linha-qtd">
+                  <mat-label>Nova qtd.</mat-label>
+                  <input matInput type="number" [min]="linha.minimo" step="1" [(ngModel)]="linha.nova" [name]="'nova-' + linha.itemContratoId" />
+                  @if (problemaLinha(linha)) {
+                    <mat-hint class="hint-erro">{{ problemaLinha(linha) }}</mat-hint>
+                  } @else if (delta(linha) !== 0) {
+                    <mat-hint>{{ delta(linha) > 0 ? '+' : '' }}{{ delta(linha) }}</mat-hint>
+                  }
+                </mat-form-field>
+              </div>
+            }
+          </div>
+
+          @if (erro()) {
+            <p class="erro-salvar" role="alert">
+              <app-icon name="warning" aria-hidden="true"></app-icon> {{ erro() }}
+            </p>
+          }
+        </section>
+      </div>
+
+      <div class="modal-scrollable-footer">
+        <app-flow-button variant="secondary" type="button" (click)="cancelar()">Cancelar</app-flow-button>
+        <app-flow-button type="submit" [disabled]="salvando() || !temMudanca">
+          <app-icon class="btn-icon" name="save" aria-hidden="true"></app-icon>
+          {{ salvando() ? 'Registrando…' : 'Registrar aditivo' }}
+        </app-flow-button>
+      </div>
+    </form>
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,28 @@
+# Dependências
+node_modules/
+
+# Saídas de build
+frontend/dist/
+frontend/.angular/
+functions/lib/
+backend/dist/
+
+# Firebase local
+.firebase/
+*-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Editores e sistema
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Ferramentas locais de IA (não fazem parte do produto)
+.claude/
+.angular-accessibility-skill/
+.motion-principles-skill/

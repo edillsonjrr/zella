@@ -1,0 +1,75 @@
+<nav class="rail" aria-label="Navegação principal">
+  <div class="rail-top">
+    <a class="rail-logo" routerLink="/" matTooltip="Zella" matTooltipPosition="right" aria-label="Zella — início">
+      <app-logo [size]="32" [wordmark]="false"></app-logo>
+    </a>
+
+    <div class="rail-divider"></div>
+
+    <div class="rail-scroll">
+      @for (item of itensPrincipais; track item.route) {
+        <a
+          mat-icon-button
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [matTooltip]="item.label"
+          matTooltipPosition="right"
+          class="rail-item"
+          [attr.aria-label]="item.label"
+        >
+          <span class="rail-item-inner">
+            <app-icon [name]="item.icon"></app-icon>
+            @if (item.badge) {
+              <span
+                class="rail-badge"
+                [class.rail-badge--dot]="item.badge.type === 'dot'"
+                [matTooltip]="item.badge.type === 'number' ? 'Há ' + item.badge.value + ' itens no planejador de hoje' : 'Notificação pendente'"
+                matTooltipPosition="right"
+              >
+                {{ item.badge.type === 'number' ? item.badge.value : '' }}
+              </span>
+            }
+          </span>
+          <span class="rail-label">{{ item.label }}</span>
+        </a>
+      }
+    </div>
+  </div>
+
+  @if (gruposAdministracao.length > 0) {
+    <div class="rail-bottom">
+      <div class="rail-divider"></div>
+      <button
+        mat-icon-button
+        type="button"
+        class="rail-item"
+        [class.active]="administracaoAtiva"
+        [matMenuTriggerFor]="menuAdministracao"
+        matTooltip="Cadastros e ferramentas"
+        matTooltipPosition="right"
+        aria-label="Cadastros e ferramentas"
+        aria-haspopup="menu"
+      >
+        <span class="rail-item-inner">
+          <app-icon name="settings"></app-icon>
+        </span>
+        <span class="rail-label">Admin</span>
+      </button>
+
+      <mat-menu #menuAdministracao="matMenu" class="rail-menu" xPosition="after" yPosition="above">
+        @for (grupo of gruposAdministracao; track grupo.titulo; let primeiro = $first) {
+          @if (!primeiro) {
+            <mat-divider></mat-divider>
+          }
+          <div class="rail-menu-titulo">{{ grupo.titulo }}</div>
+          @for (item of grupo.itens; track item.route) {
+            <a mat-menu-item [routerLink]="item.route" routerLinkActive="rail-menu-ativo">
+              <app-icon [name]="item.icon"></app-icon>
+              <span>{{ item.label }}</span>
+            </a>
+          }
+        }
+      </mat-menu>
+    </div>
+  }
+</nav>

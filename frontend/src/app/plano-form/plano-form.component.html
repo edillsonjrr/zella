@@ -1,0 +1,127 @@
+<mat-card class="app-card animate-fade-in-up standalone-card modal-card">
+  <mat-card-content>
+    <form (ngSubmit)="salvar(planoForm)" #planoForm="ngForm" class="modal-form" novalidate>
+      <div class="modal-scrollable-header">
+        <div class="modal-title">
+          <div class="modal-icon">
+            <app-icon name="calendar_check" aria-hidden="true"></app-icon>
+          </div>
+          <div>
+            <h2>{{ isEdicao ? 'Editar plano' : 'Novo plano preventivo' }}</h2>
+            <span class="modal-subtitle">Gera um chamado automaticamente a cada ciclo</span>
+          </div>
+        </div>
+        <button mat-icon-button type="button" class="modal-close" (click)="cancelar()" aria-label="Fechar">
+          <app-icon name="close" aria-hidden="true"></app-icon>
+        </button>
+      </div>
+
+      <div class="modal-scrollable-body">
+        <section class="form-section">
+          <div class="section-title">
+            <app-icon name="handyman" aria-hidden="true"></app-icon>
+            <h3>O que e onde</h3>
+          </div>
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Nome do plano</mat-label>
+              <input matInput #nomeCtrl="ngModel" [(ngModel)]="nome" name="nome" placeholder="Ex: Limpeza de filtro…" required />
+              @if (nomeCtrl.invalid && nomeCtrl.touched) {
+                <mat-error>Informe o nome do plano</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Equipamento</mat-label>
+              <mat-select #eqCtrl="ngModel" [(ngModel)]="equipamentoId" name="equipamentoId" required>
+                @for (eq of equipamentos(); track eq.id) {
+                  <mat-option [value]="eq.id">{{ descricaoEquipamento(eq.id) }}</mat-option>
+                }
+              </mat-select>
+              @if (eqCtrl.invalid && eqCtrl.touched) {
+                <mat-error>Selecione o equipamento</mat-error>
+              }
+            </mat-form-field>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <div class="section-title">
+            <app-icon name="clock" aria-hidden="true"></app-icon>
+            <h3>Quando</h3>
+          </div>
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Periodicidade</mat-label>
+              <mat-select [(ngModel)]="periodicidadeDias" name="periodicidadeDias" required>
+                @for (p of periodicidades; track p.dias) {
+                  <mat-option [value]="p.dias">{{ p.label }} ({{ p.dias }} dias)</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Próxima execução</mat-label>
+              <input matInput type="date" #proxCtrl="ngModel" [(ngModel)]="proximaExecucao" name="proximaExecucao" required />
+              @if (proxCtrl.invalid && proxCtrl.touched) {
+                <mat-error>Informe a data</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Abrir o chamado com quantos dias de antecedência</mat-label>
+              <input matInput type="number" [(ngModel)]="antecedenciaDias" name="antecedenciaDias" min="0" max="90" required />
+            </mat-form-field>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <div class="section-title">
+            <app-icon name="description" aria-hidden="true"></app-icon>
+            <h3>Quem paga <span class="opcional">(opcional)</span></h3>
+          </div>
+          <p class="section-hint">
+            Amarrar a um item de contrato é o que permite projetar o consumo futuro e antecipar quando o saldo vai acabar.
+          </p>
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Contrato</mat-label>
+              <mat-select [(ngModel)]="contratoId" name="contratoId" (ngModelChange)="aoTrocarContrato($event)">
+                <mat-option value="">Nenhum</mat-option>
+                @for (c of contratos(); track c.id) {
+                  <mat-option [value]="c.id">{{ c.numero }} — {{ c.fornecedor }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Item</mat-label>
+              <mat-select [(ngModel)]="itemContratoId" name="itemContratoId" [disabled]="!contratoId">
+                <mat-option value="">Nenhum</mat-option>
+                @for (i of itensDoContrato(); track i.id) {
+                  <mat-option [value]="i.id">{{ i.nome }} ({{ i.quantidadeDisponivel }} {{ i.unidadeMedida }})</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Quantidade prevista por execução</mat-label>
+              <input matInput type="number" [(ngModel)]="quantidadePrevista" name="quantidadePrevista" min="0" [disabled]="!itemContratoId" />
+            </mat-form-field>
+          </div>
+        </section>
+
+        <mat-slide-toggle [(ngModel)]="ativo" name="ativo" class="toggle-ativo">
+          Plano ativo (gera chamados automaticamente)
+        </mat-slide-toggle>
+      </div>
+
+      <div class="modal-scrollable-footer">
+        <app-flow-button variant="secondary" type="button" (click)="cancelar()">Cancelar</app-flow-button>
+        <app-flow-button type="submit" [disabled]="salvando()">
+          <app-icon class="btn-icon" name="save" aria-hidden="true"></app-icon> Salvar plano
+        </app-flow-button>
+      </div>
+    </form>
+  </mat-card-content>
+</mat-card>

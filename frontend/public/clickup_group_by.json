@@ -1,0 +1,84 @@
+{
+  "componente": "Botão 'Grupo' (Group by) — Toolbar da visualização Lista do ClickUp",
+  "localizacao": "Barra de ferramentas abaixo das abas de visualização (Lista, Quadro, Calendário, Gantt, Tabela), primeiro botão à esquerda",
+  "estado_observado": {
+    "rotulo_botao": "Grupo: Status",
+    "ativo": true,
+    "estilo_ativo": "fundo roxo/azul preenchido (indica que um agrupamento está aplicado)",
+    "icone": "duas camadas empilhadas (ícone de 'grupo/camadas')"
+  },
+  "comportamento": {
+    "acao_ao_clicar": "Abre um painel (popover) fixado logo abaixo da toolbar, sem fechar a página, permitindo configurar como as tarefas da lista serão agrupadas.",
+    "tipo_de_ui": "popover/dropdown panel (não é modal bloqueante — o restante da tela permanece visível e interativo)",
+    "titulo_painel": "Agrupar por",
+    "aplica_a": "Todas as tarefas da lista atual são reorganizadas em seções (grupos) de acordo com o campo escolhido; cada linha de tarefa passa a pertencer a um grupo visual com cabeçalho próprio."
+  },
+  "campos_do_painel": [
+    {
+      "campo": "Seletor de propriedade de agrupamento",
+      "tipo": "dropdown",
+      "valor_padrao": "Status",
+      "opcoes": [
+        "Status",
+        "Responsável",
+        "Prioridade",
+        "Etiquetas",
+        "Data de vencimento",
+        "Tipo de tarefa"
+      ],
+      "efeito": "Define por qual atributo da tarefa as linhas serão agrupadas/segmentadas em seções."
+    },
+    {
+      "campo": "Seletor de ordem",
+      "tipo": "dropdown",
+      "valor_padrao": "Crescente",
+      "opcoes": [
+        "Crescente",
+        "Decrescente"
+      ],
+      "efeito": "Define a ordem de exibição dos grupos (ex.: ordem alfabética ou sequência lógica do status, ascendente ou descendente)."
+    },
+    {
+      "campo": "Ícone de lixeira (remover)",
+      "tipo": "botão de ação",
+      "efeito": "Remove o agrupamento ativo, retornando a lista para exibição plana (sem seções)."
+    }
+  ],
+  "resultado_visual_na_lista": {
+    "estrutura": "Cada valor único do campo selecionado (ex.: cada Status) vira uma seção colapsável.",
+    "cabecalho_do_grupo": {
+      "elementos": [
+        "chevron para colapsar/expandir o grupo",
+        "badge colorido com nome do grupo (ex.: 'EM PROGRESSO' em azul)",
+        "contador de tarefas dentro do grupo (ex.: '1')"
+      ]
+    },
+    "corpo_do_grupo": {
+      "colunas_padrao": ["Nome", "Responsável", "Data de vencimento", "Prioridade"],
+      "acao_rapida": "Link 'Adicionar Tarefa' no rodapé de cada grupo para criar uma nova tarefa já atribuída àquele valor de grupo (ex.: nova tarefa já criada com aquele Status)."
+    }
+  },
+  "modelo_de_dados_sugerido_para_replicar": {
+    "groupBy": {
+      "field": "status | assignee | priority | tags | dueDate | taskType",
+      "sortDirection": "asc | desc"
+    },
+    "groups": [
+      {
+        "groupValue": "string (ex: 'Em Progresso')",
+        "color": "string (hex ou token de cor)",
+        "itemCount": "number",
+        "collapsed": "boolean",
+        "items": [
+          {
+            "id": "string",
+            "name": "string",
+            "assignee": "string | null",
+            "dueDate": "date | null",
+            "priority": "low | normal | high | urgent | null"
+          }
+        ]
+      }
+    ]
+  }
+}

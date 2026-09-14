@@ -1,0 +1,52 @@
+<div class="page-header animate-fade-in">
+  <h1>Usuários</h1>
+  <app-flow-button size="lg" (click)="nova()">
+    <app-icon class="btn-icon" name="add"></app-icon> Novo usuário
+  </app-flow-button>
+</div>
+
+<mat-card class="app-card animate-fade-in-up">
+  <mat-card-content>
+    <table mat-table [dataSource]="usuarios()" class="app-table full-width">
+      <ng-container matColumnDef="nome">
+        <th mat-header-cell *matHeaderCellDef>Nome</th>
+        <td mat-cell *matCellDef="let u">{{ u.nome }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef>E-mail</th>
+        <td mat-cell *matCellDef="let u">{{ u.email }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="perfil">
+        <th mat-header-cell *matHeaderCellDef>Perfil</th>
+        <td mat-cell *matCellDef="let u">{{ perfilLabel(u.perfil) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="unidade">
+        <th mat-header-cell *matHeaderCellDef>Unidade</th>
+        <td mat-cell *matCellDef="let u">{{ dataService.getUnidadeById(u.unidadeId)?.nome ?? '-' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="contratada">
+        <th mat-header-cell *matHeaderCellDef>Contratada</th>
+        <td mat-cell *matCellDef="let u">{{ dataService.getEmpresaContratadaById(u.empresaContratadaId)?.nome ?? '-' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="acoes">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let u">
+          <button mat-icon-button (click)="editar(u)" aria-label="Editar">
+            <app-icon name="edit"></app-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="excluir(u)" aria-label="Excluir">
+            <app-icon name="delete"></app-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+  </mat-card-content>
+</mat-card>

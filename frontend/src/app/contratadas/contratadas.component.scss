@@ -1,0 +1,61 @@
+.contratadas-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.contratada-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contratada-form-titulo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  app-icon {
+    font-size: 1.5rem;
+    color: var(--primary-500);
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 600;
+  }
+
+  span {
+    font-size: 0.8125rem;
+    color: var(--text-tertiary);
+  }
+}
+
+.contratada-form-acoes {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.contratada-erro {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: var(--button-radius);
+  background: var(--danger-50);
+  color: var(--danger-500);
+  font-size: 0.8125rem;
+}
+
+.contratadas-vazio {
+  margin: 0;
+  padding: 24px 0;
+  text-align: center;
+  color: var(--text-tertiary);
+}

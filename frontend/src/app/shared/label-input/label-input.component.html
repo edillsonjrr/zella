@@ -1,0 +1,29 @@
+<div class="li-wrap" [class.li-disabled]="disabled">
+  <input
+    class="li-input"
+    [class.li-input--password]="isPassword"
+    [id]="inputId"
+    [type]="currentType"
+    [placeholder]="placeholder"
+    [autocomplete]="autocomplete"
+    [spellcheck]="spellcheckOn"
+    [disabled]="disabled"
+    [required]="required"
+    [value]="value"
+    (input)="onInput($event)"
+    (blur)="onBlur()"
+  />
+  <label class="li-label" [for]="inputId">{{ label }}{{ required ? ' *' : '' }}</label>
+  @if (isPassword) {
+    <button
+      type="button"
+      class="li-toggle"
+      tabindex="-1"
+      (click)="toggleVisibility()"
+      [attr.aria-label]="visible() ? 'Ocultar senha' : 'Mostrar senha'"
+      [attr.aria-pressed]="visible()"
+    >
+      <app-icon [name]="visible() ? 'visibility_off' : 'visibility'" aria-hidden="true"></app-icon>
+    </button>
+  }
+</div>

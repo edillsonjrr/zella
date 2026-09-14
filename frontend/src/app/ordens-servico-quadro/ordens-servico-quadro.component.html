@@ -1,0 +1,49 @@
+<div class="quadro-container">
+  @for (coluna of colunas; track coluna.status) {
+    <div class="quadro-coluna">
+      <div class="coluna-header">
+        <div class="coluna-titulo">
+          <span class="status-dot" [class]="'status-dot--' + coluna.corClasse"></span>
+          <span class="titulo-texto">{{ coluna.titulo }}</span>
+          <span class="contador">{{ coluna.ordens.length }}</span>
+        </div>
+        <button mat-icon-button (click)="onAbrirNovaOs()" [attr.aria-label]="'Adicionar OS em ' + coluna.titulo">
+          <app-icon name="add"></app-icon>
+        </button>
+      </div>
+
+      <button type="button" class="criacao-inline" (click)="onAbrirNovaOs()">
+        <app-icon name="add"></app-icon>
+        <span>Adicionar OS...</span>
+      </button>
+
+      <div class="coluna-cards">
+        @for (ordem of ordensDaColuna(coluna); track ordem.numero) {
+          <mat-card
+            class="os-card app-card"
+            role="button"
+            tabindex="0"
+            [attr.aria-label]="'Abrir OS ' + ordem.numero"
+            (click)="onAbrirDetalhe(ordem)"
+            (keydown.enter)="onAbrirDetalhe(ordem)"
+            (keydown.space)="$event.preventDefault(); onAbrirDetalhe(ordem)"
+          >
+            <mat-card-content>
+              <div class="card-header">
+                <span class="os-numero">{{ ordem.numero }}</span>
+              </div>
+              <div class="os-ativo">{{ ordem.ativo }}</div>
+              <div class="os-contrato">{{ ordem.contrato }}</div>
+              <div class="os-meta">
+                <span class="tecnico">
+                  <app-icon name="person"></app-icon> {{ ordem.tecnico }}
+                </span>
+                <span class="data">{{ ordem.dataCriacao | date:'dd/MM/yyyy' }}</span>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,131 @@
+<div class="painel-header">
+  <div class="painel-titulo">
+    <div class="painel-icone">
+      <app-icon name="account_tree"></app-icon>
+    </div>
+    <div>
+      <h2>{{ unidade.nome }}</h2>
+      <span class="painel-subtitulo">{{ unidade.sigla }} · Estrutura</span>
+    </div>
+  </div>
+  <button mat-icon-button (click)="fechar()" aria-label="Fechar">
+    <app-icon name="close"></app-icon>
+  </button>
+</div>
+
+<mat-divider class="painel-divider"></mat-divider>
+
+<div class="painel-conteudo">
+  <div class="secao">
+    <div class="secao-header">
+      <span class="campo-label">Blocos</span>
+      <button mat-icon-button (click)="novoBloco()" aria-label="Novo bloco">
+        <app-icon name="add"></app-icon>
+      </button>
+    </div>
+
+    @if (editandoBlocoId() !== null) {
+      <div class="form-inline">
+        <mat-form-field appearance="outline" class="nome-field">
+          <mat-label>Nome do bloco</mat-label>
+          <input matInput [(ngModel)]="nomeBloco" name="nomeBloco" />
+        </mat-form-field>
+        <div class="form-inline-acoes">
+          <app-flow-button size="sm" (click)="salvarBloco()">Salvar</app-flow-button>
+          <app-flow-button variant="secondary" type="button" (click)="cancelarBloco()">Cancelar</app-flow-button>
+        </div>
+      </div>
+    }
+
+    @if (blocos().length) {
+      <table mat-table [dataSource]="blocos()" class="app-table full-width">
+        <ng-container matColumnDef="nome">
+          <th mat-header-cell *matHeaderCellDef>Bloco</th>
+          <td mat-cell *matCellDef="let b">
+            <a class="link-item" [title]="b.nome" (click)="gerenciarSalasDoBloco(b)">{{ b.nome }}</a>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="acoes">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let b">
+            <button mat-icon-button (click)="gerarQrCodeBloco(b)" aria-label="Gerar QR Code">
+              <app-icon name="qr_code"></app-icon>
+            </button>
+            <button mat-icon-button (click)="editarBloco(b)" aria-label="Editar">
+              <app-icon name="edit"></app-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="excluirBloco(b)" aria-label="Excluir">
+              <app-icon name="delete"></app-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="colunasBlocos"></tr>
+        <tr mat-row *matRowDef="let row; columns: colunasBlocos;"></tr>
+      </table>
+    } @else {
+      <p class="lista-vazia">Nenhum bloco cadastrado.</p>
+    }
+  </div>
+
+  <mat-divider class="painel-divider"></mat-divider>
+
+  <div class="secao">
+    <div class="secao-header">
+      <span class="campo-label">Salas diretas</span>
+      <button mat-icon-button (click)="novaSala()" aria-label="Nova sala">
+        <app-icon name="add"></app-icon>
+      </button>
+    </div>
+    <p class="secao-hint">Salas que não pertencem a nenhum bloco.</p>
+
+    @if (editandoSalaId() !== null) {
+      <div class="form-inline">
+        <mat-form-field appearance="outline" class="nome-field">
+          <mat-label>Nome da sala</mat-label>
+          <input matInput [(ngModel)]="nomeSala" name="nomeSala" />
+        </mat-form-field>
+        <div class="form-inline-acoes">
+          <app-flow-button size="sm" (click)="salvarSala()">Salvar</app-flow-button>
+          <app-flow-button variant="secondary" type="button" (click)="cancelarSala()">Cancelar</app-flow-button>
+        </div>
+      </div>
+    }
+
+    @if (salas().length) {
+      <table mat-table [dataSource]="salas()" class="app-table full-width">
+        <ng-container matColumnDef="nome">
+          <th mat-header-cell *matHeaderCellDef>Sala</th>
+          <td mat-cell *matCellDef="let s">
+            <a class="link-item" [title]="s.nome" (click)="gerenciarEquipamentosDaSala(s)">{{ s.nome }}</a>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="acoes">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let s">
+            <button mat-icon-button (click)="gerarQrCodeSala(s)" aria-label="Gerar QR Code">
+              <app-icon name="qr_code"></app-icon>
+            </button>
+            <button mat-icon-button (click)="editarSala(s)" aria-label="Editar">
+              <app-icon name="edit"></app-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="excluirSala(s)" aria-label="Excluir">
+              <app-icon name="delete"></app-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="colunasSalas"></tr>
+        <tr mat-row *matRowDef="let row; columns: colunasSalas;"></tr>
+      </table>
+    } @else {
+      <p class="lista-vazia">Nenhuma sala direta cadastrada.</p>
+    }
+  </div>
+</div>
+
+<div class="painel-acoes">
+  <app-flow-button variant="secondary" class="full-width" type="button" (click)="fechar()">Fechar</app-flow-button>
+</div>

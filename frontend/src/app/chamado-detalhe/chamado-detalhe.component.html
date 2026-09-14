@@ -1,0 +1,125 @@
+<div class="painel-header">
+  <div class="painel-titulo">
+    <div class="painel-icone">
+      <app-icon name="support_agent"></app-icon>
+    </div>
+    <div>
+      <h2>{{ chamado.numero }}</h2>
+      <span class="painel-subtitulo">Chamado</span>
+    </div>
+  </div>
+  <button mat-icon-button (click)="fechar()" aria-label="Fechar">
+    <app-icon name="close"></app-icon>
+  </button>
+</div>
+
+<mat-divider class="painel-divider"></mat-divider>
+
+<div class="painel-conteudo">
+  <div class="campo">
+    <span class="campo-label">Situação</span>
+    <span class="badge" [ngClass]="badgeClass(chamado.situacao)">
+      <app-icon [name]="statusIcon(chamado.situacao)"></app-icon>
+      {{ chamado.situacao }}
+    </span>
+  </div>
+
+  <div class="campo">
+    <span class="campo-label">Equipamento</span>
+    <span class="campo-valor">{{ chamado.equipamento }}</span>
+  </div>
+
+  <div class="campo">
+    <span class="campo-label">Número de série</span>
+    <span class="campo-valor">{{ chamado.numeroSerie || 'Não informado' }}</span>
+  </div>
+
+  <div class="campo">
+    <span class="campo-label">Unidade</span>
+    <span class="campo-valor">{{ unidadeNome }}</span>
+  </div>
+
+  <div class="campo">
+    <span class="campo-label">Solicitante</span>
+    <span class="campo-valor">{{ chamado.solicitanteNome }}</span>
+  </div>
+
+  <div class="campo">
+    <span class="campo-label">Data de abertura</span>
+    <span class="campo-valor">{{ chamado.dataCriacao | date:'dd/MM/yyyy' }}</span>
+  </div>
+
+  <mat-divider class="painel-divider"></mat-divider>
+
+  @if (podeAtribuirResponsavel()) {
+    <div class="campo">
+      <span class="campo-label">Responsável (gestor)</span>
+      <mat-form-field appearance="outline" class="full-width responsavel-select">
+        <mat-label>Selecione o gestor</mat-label>
+        <mat-select [(ngModel)]="responsavelId" name="responsavelId" (selectionChange)="atribuirResponsavel()">
+          <mat-option value="">Nenhum</mat-option>
+          @for (g of gestores(); track g.id) {
+            <mat-option [value]="g.id">{{ g.nome }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  } @else if (chamado.responsavelId) {
+    <div class="campo">
+      <span class="campo-label">Responsável</span>
+      <span class="campo-valor">{{ dataService.getUsuarioById(chamado.responsavelId)?.nome ?? '-' }}</span>
+    </div>
+  }
+
+  <div class="campo campo--bloco">
+    <span class="campo-label">Descrição do problema</span>
+    <p class="campo-descricao">{{ chamado.descricao }}</p>
+  </div>
+
+  @if (chamado.possuiFoto) {
+    <div class="campo campo--bloco">
+      <span class="campo-label">Foto de evidência</span>
+      @if (fotoUrl(); as url) {
+        <a [href]="url" target="_blank" rel="noopener" class="foto-link">
+          <img [src]="url" alt="Foto de evidência do chamado" class="foto-evidencia" />
+        </a>
+      } @else {
+        <div class="foto-placeholder">
+          <app-icon name="photo_camera"></app-icon>
+          <span>{{ chamado.fotoPath ? 'Carregando foto...' : 'Foto anexada, mas não enviada ao servidor' }}</span>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<div class="painel-conteudo painel-historico">
+  <app-historico-registro [alvoPaiId]="chamado.id" titulo="Histórico deste chamado"></app-historico-registro>
+</div>
+
+<div class="painel-acoes">
+  @if (erroAcao()) {
+    <p class="acao-erro" role="alert">{{ erroAcao() }}</p>
+  }
+  @if (podeConverterEmOs()) {
+    <app-flow-button class="full-width" (click)="converterEmOs()">
+      <app-icon class="btn-icon" name="assignment"></app-icon> Converter em OS
+    </app-flow-button>
+  }
+  @if (podeEncerrar()) {
+    <app-flow-button class="full-width" (click)="encerrarChamado()">
+      <app-icon class="btn-icon" name="lock"></app-icon> Encerrar chamado
+    </app-flow-button>
+  }
+  @if (podeCancelar()) {
+    <app-flow-button variant="secondary" class="full-width" type="button" (click)="cancelarChamado()">
+      <app-icon class="btn-icon" name="block"></app-icon> Cancelar chamado
+    </app-flow-button>
+  }
+  @if (podeReabrir()) {
+    <app-flow-button variant="secondary" class="full-width" type="button" (click)="reabrirChamado()">
+      <app-icon class="btn-icon" name="handyman"></app-icon> Reabrir chamado
+    </app-flow-button>
+  }
+  <app-flow-button variant="secondary" class="full-width" type="button" (click)="fechar()">Fechar</app-flow-button>
+</div>

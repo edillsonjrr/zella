@@ -1,0 +1,350 @@
+{
+  "meta": {
+    "source": "ClickUp - tela 'Lista' do espaço 'Get Started with ClickUp'",
+    "purpose": "Especificação visual/estrutural da tela para recriação de UI (aparência, não funcionalidade real do ClickUp)",
+    "theme": "dark",
+    "viewport_reference": "980x535 (desktop, mas layout deve ser responsivo)",
+    "font_family": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif",
+    "measurement_note": "Todos os valores em px abaixo foram medidos via getBoundingClientRect() diretamente no DOM real, com o navegador em 980x535. São referência exata para ESSE viewport; ao implementar, use-os como base para um layout fluido (colunas em %, sidebar fixa em px, resto flexível)."
+  },
+
+  "measurements_px": {
+    "viewport": { "width": 980, "height": 535 },
+    "left_rail": { "x": 0, "y": 40, "width": 64, "height": 489, "note": "altura = viewport_height - top_bar_height" },
+    "top_bar": { "x": 0, "y": 0, "width": 980, "height": 40 },
+    "search_box": { "x": 433, "y": 6, "width": 194, "height": 28, "border_radius": "6-8px (estimado)" },
+    "notification_banner": { "x": 64, "y": 40, "width": 916, "height": 45 },
+    "notification_banner_buttons": {
+      "habilitado": { "x": 801, "y": 51, "width": 71, "height": 24 },
+      "adiar": { "x": 880, "y": 51, "width": 45, "height": 24 }
+    },
+    "breadcrumb_bar": { "x": 65, "y": 85, "width": 908, "height": 38 },
+    "breadcrumb_title_text": { "x": 242, "y": 99, "width": 156, "height": 16 },
+    "view_tabs_bar": { "x": 77, "y": 123, "width": 888, "height": 35 },
+    "view_tab_item": { "x": 190, "y": 123, "width": 50, "height": 35, "note": "largura varia por rótulo (Lista≈50px, Quadro/Calendário mais largos)" },
+    "toolbar": { "x": 65, "y": 158, "width": 908, "height": 36, "note": "estimado por padrão de espaçamento entre as barras (não capturado diretamente)" },
+    "table_group_header_row": { "x": 65, "y": "≈194", "width": 990, "height": 35 },
+    "table_column_header_row": { "x": 113, "y": "≈229", "width": "≈880", "height": 32 },
+    "table_column_positions": {
+      "nome": { "x": 113, "width": "≈320", "note": "coluna flexível, ocupa o espaço restante" },
+      "responsavel": { "x": "≈460", "width": "≈170" },
+      "data_vencimento": { "x": 635, "width": 107 },
+      "prioridade": { "x": 795, "width": 54 },
+      "botao_adicionar_coluna": { "x": 889, "width": 83, "height": 24 }
+    },
+    "table_row": { "height": 35, "padding_left": 48, "padding_right": 48, "note": "altura igual para linhas de tarefa e cabeçalho de grupo" },
+    "assignee_avatar": { "width": 24, "height": 24, "border_radius": "666px (círculo perfeito)", "font_size": "12px", "font_weight": 700 },
+    "priority_flag_icon": { "width": 16, "height": 16, "fill_color": "#FFC53D" },
+    "task_row_secondary_icon": { "width": 14, "height": 14, "note": "ícone de 'linhas de descrição' (≡) ao lado do nome da tarefa" },
+    "task_type_icon_slot": { "width": 16, "height": 16, "note": "espaço reservado ao emoji/ícone da tarefa" },
+    "task_name_text": { "font_size": "14px", "font_weight": 500, "color": "#eeeeee", "line_height": "21px" }
+  },
+
+  "colorPalette": {
+    "bg_app": "#111111",
+    "bg_sidebar": "#0a0a0a",
+    "bg_topbar": "#181818",
+    "bg_panel_elevated": "#1f1f1f",
+    "bg_row_hover": "#1c1c1c",
+    "border_subtle": "#2a2a2a",
+    "text_primary": "#eeeeee",
+    "text_secondary": "#b4b4b4",
+    "text_muted": "#8a8a8a",
+    "text_placeholder": "#6e6e6e",
+    "accent_purple": "#7b68ee",
+    "accent_purple_bg": "#2c2650",
+    "accent_teal_gradient_start": "#1fb6a4",
+    "accent_teal_gradient_end": "#5b8def",
+    "warning_orange": "#e8a33d",
+    "danger_red_orange": "#e0623f",
+    "flag_priority_high": "#f6a623",
+    "avatar_bg": "#2b2b2b",
+    "avatar_text": "#ffffff",
+    "divider": "#2a2a2a",
+    "icon_default": "#9a9a9a",
+    "link_blue": "#4d8eff"
+  },
+
+  "layout": {
+    "type": "vertical_stack",
+    "regions": [
+      { "id": "notification_banner", "order": 1 },
+      { "id": "top_bar", "order": 2 },
+      { "id": "breadcrumb_bar", "order": 3 },
+      { "id": "view_tabs_bar", "order": 4 },
+      { "id": "toolbar", "order": 5 },
+      { "id": "task_table", "order": 6 }
+    ],
+    "sidebar": { "id": "left_rail", "position": "fixed_left", "width": "64px" }
+  },
+
+  "components": {
+
+    "left_rail": {
+      "description": "Barra lateral vertical estreita e escura, ícones empilhados verticalmente, sem texto de rótulo visível exceto abaixo de cada ícone em texto pequeno.",
+      "background": "#0a0a0a",
+      "width": "64px",
+      "height": "489px (calc(100vh - 40px), abaixo do top_bar)",
+      "items": [
+        { "icon": "double_chevron_collapse", "label": null },
+        {
+          "icon": "workspace_avatar",
+          "label": "Início",
+          "shape": "rounded_square",
+          "style": "gradiente diagonal roxo/azul para laranja/amarelo (ex: #6a5acd -> #ff8a5c)",
+          "letter": null
+        },
+        { "icon": "calendar_grid", "label": "Planejador" },
+        { "icon": "sparkle_target", "label": "IA" },
+        { "icon": "grid_dots", "label": "Mais" },
+        { "icon": "person_plus", "label": "Convidar" },
+        { "icon": "gift_confetti", "label": "Fazer upgra...", "note": "texto truncado 'Fazer upgra...'" }
+      ]
+    },
+
+    "notification_banner": {
+      "description": "Faixa fina de aviso no topo da área de conteúdo, fundo levemente diferente do bg principal, com ícone de sino à esquerda.",
+      "height": "45px",
+      "background": "#161616",
+      "border_bottom": "1px solid #2a2a2a",
+      "icon_left": "bell",
+      "text": "Não deixe atualizações importantes passarem. Ative as notificações em tempo real.",
+      "text_color": "#eeeeee",
+      "actions": [
+        { "type": "button_outline", "label": "Habilitado" },
+        { "type": "button_ghost", "label": "Adiar" },
+        { "type": "icon_button", "icon": "close_x" }
+      ]
+    },
+
+    "top_bar": {
+      "description": "Barra superior com seletor de workspace, ícone de calendário, campo de busca central e ícones de utilidades à direita.",
+      "height": "40px",
+      "background": "#111111",
+      "left": [
+        {
+          "type": "workspace_switcher",
+          "avatar": { "shape": "rounded_square", "letter": "E", "bg": "linear-gradient teal->green (#1fb6a4 -> #2fae5c)" },
+          "text": "Edilson Junior's Workspace",
+          "chevron_down": true
+        },
+        { "type": "icon_button", "icon": "calendar" }
+      ],
+      "center": {
+        "type": "search_bar",
+        "placeholder": "Pesquisar",
+        "shortcut_hint": "Ctrl K",
+        "icon_left": "magnifier",
+        "icon_right": "sparkle_gradient_orb (assistente IA)",
+        "background": "#1c1c1c",
+        "border_radius": "8px",
+        "width": "194px",
+        "height": "28px"
+      },
+      "right_icons": [
+        "diamond/gem (referral ou recompensas)",
+        "camera/gravar",
+        "picture-in-picture",
+        "microfone",
+        "billboard/dashboard",
+        "chevron_down (menu)",
+        { "type": "avatar_circle", "initials": "EJ", "bg": "#2b2b2b" }
+      ]
+    },
+
+    "breadcrumb_bar": {
+      "height": "38px",
+      "background": "#111111",
+      "left": [
+        { "type": "avatar_small", "letter": "E", "shape": "rounded_square", "bg": "teal/green gradient" },
+        { "type": "text", "value": "Espaço da equipe", "color": "text_secondary" },
+        { "type": "separator", "value": "/" },
+        { "type": "icon", "icon": "list_flag_small" },
+        { "type": "text", "value": "Get Started with ClickUp", "color": "text_primary", "weight": "600" },
+        { "type": "chevron_down" },
+        { "type": "icon_button", "icon": "star_outline", "tooltip": "Favorito" }
+      ],
+      "right": [
+        { "type": "icon_button", "icon": "chat_bubble", "with_chevron": true },
+        { "type": "button_ghost", "icon": "flag_checkered", "label": "Agentes" },
+        { "type": "button_ghost", "icon": "bolt", "label": "Automatizar" },
+        { "type": "button_ghost", "icon": "brain_gradient", "label": "Brain", "badge_superscript": "2" },
+        { "type": "button_ghost", "icon": "user_plus", "label": "Compartilhar" }
+      ]
+    },
+
+    "view_tabs_bar": {
+      "height": "35px",
+      "background": "#111111",
+      "border_bottom": "1px solid #2a2a2a",
+      "left": [
+        { "type": "button_ghost", "icon": "plus", "label": "Adicionar canal" }
+      ],
+      "tabs": [
+        { "icon": "list_lines", "label": "Lista", "active": true, "active_style": "fundo levemente destacado, texto branco, indicador inferior" },
+        { "icon": "kanban_board", "label": "Quadro", "active": false },
+        { "icon": "calendar", "label": "Calendário", "active": false },
+        { "icon": "gantt_bars", "label": "Gantt", "active": false },
+        { "icon": "table_grid", "label": "Tabela", "active": false }
+      ],
+      "right": [
+        { "type": "button_ghost", "icon": "plus", "label": "Visualização" }
+      ]
+    },
+
+    "toolbar": {
+      "height": "36px",
+      "background": "#111111",
+      "left": [
+        {
+          "type": "pill_button",
+          "icon": "layers",
+          "label": "Grupo: Status",
+          "style": "fundo roxo translúcido (#2c2650), texto claro, cantos arredondados (pill)",
+          "background": "#2c2650",
+          "text_color": "#c9c1ff"
+        },
+        { "type": "button_ghost", "icon": "link_nodes", "label": "Subtarefas" },
+        { "type": "button_ghost", "icon": "columns", "label": "Colunas" }
+      ],
+      "right_icons": [
+        { "icon": "funnel", "tooltip": "Filtro" },
+        { "icon": "circle_check_outline", "tooltip": "Fechado" },
+        { "icon": "people_outline", "tooltip": "Responsável" },
+        { "type": "avatar_circle", "initials": "E", "bg": "teal/green gradient", "size": "small" },
+        { "icon": "magnifier", "tooltip": "Pesquisar" },
+        { "icon": "gear", "tooltip": "Configurações" },
+        { "icon": "plus", "with_chevron": true }
+      ]
+    },
+
+    "task_table": {
+      "description": "Tabela de tarefas agrupada por status, estilo lista do ClickUp.",
+      "groups": [
+        {
+          "id": "group_pendente",
+          "header": {
+            "chevron_expand_icon": "down (expandido)",
+            "status_dot": { "shape": "circle_outline_dashed", "color": "#9a9a9a", "label": "PENDENTE" },
+            "count_badge": 7,
+            "count_style": "texto cinza claro, sem fundo",
+            "background": "transparent",
+            "text_transform": "uppercase",
+            "letter_spacing": "wide"
+          },
+          "column_headers": [
+            { "label": "Nome", "align": "left", "x": 113, "width": "flex (≈320px neste viewport, ocupa espaço restante)" },
+            { "label": "Responsável", "align": "left", "x": 460, "width": "≈170px" },
+            { "label": "Data de vencimento", "align": "left", "x": 635, "width": "107px" },
+            { "label": "Prioridade", "align": "left", "x": 795, "width": "54px" },
+            { "type": "button_ghost", "icon": "plus", "label": "Adicionar", "align": "right", "x": 889, "width": "83px", "height": "24px" }
+          ],
+          "column_header_style": {
+            "text_color": "#8a8a8a",
+            "font_size": "12px",
+            "border_bottom": "1px solid #2a2a2a",
+            "row_height": "32px"
+          },
+          "rows": [
+            {
+              "row_hover_icons": ["circle_dashed_checkbox (à esquerda, aparece no hover)", "drag_handle_dots (aparece no hover)"],
+              "task_icon_emoji": "🚀",
+              "name": "Set up Your Tasks in Just 5 Minutes",
+              "name_style": { "color": "#eeeeee", "font_weight": "500", "font_size": "14px", "line_height": "21px" },
+              "description_lines_icon": { "present": true, "size": "14x14px" },
+              "task_link": true,
+              "assignee": { "type": "avatar_circle", "initials": "EJ", "bg": "#2b2b2b", "text_color": "#ffffff", "size": "24x24px", "border_radius": "50%", "font_size": "12px", "font_weight": 700 },
+              "due_date": { "text": "Ontem", "color": "#e0623f", "note": "vermelho/laranja = atrasado (overdue)" },
+              "priority": { "icon": "flag_filled", "color": "#FFC53D", "icon_size": "16x16px", "label": "Alta", "label_color": "#f6a623" },
+              "status_pill": { "label": "PENDENTE", "dot_color": "#9a9a9a" }
+            },
+            {
+              "task_icon_emoji": "🎨",
+              "name": "Design a Workflow That Works for You",
+              "assignee": { "type": "avatar_circle", "initials": "EJ" },
+              "due_date": { "text": "Hoje", "color": "#e8a33d", "note": "laranja = vence hoje" },
+              "priority": { "icon": "flag_filled", "color": "#f6a623", "label": "Alta" }
+            },
+            {
+              "task_icon_emoji": "🤝",
+              "name": "Bring Your Team Onboard in Minutes",
+              "assignee": { "type": "avatar_circle", "initials": "EJ" },
+              "due_date": { "text": "Amanhã", "color": "#b4b4b4" },
+              "priority": { "icon": "flag_filled", "color": "#f6a623", "label": "Alta" }
+            },
+            {
+              "task_icon_emoji": "🔗",
+              "name": "Integrate Your Favorite Tools in ClickUp",
+              "name_truncated_display": "Integrate Your Favorite Tools in Click...",
+              "assignee": { "type": "avatar_circle", "initials": "EJ" },
+              "due_date": { "text": "sáb", "color": "#b4b4b4" },
+              "priority": { "icon": "flag_filled", "color": "#f6a623", "label": "Alta" }
+            },
+            {
+              "task_icon_emoji": "📥",
+              "name": "Import Your Work into ClickUp",
+              "assignee": { "type": "avatar_circle", "initials": "EJ" },
+              "due_date": { "text": "Amanhã", "color": "#b4b4b4" },
+              "priority": { "icon": "flag_filled", "color": "#f6a623", "label": "Alta" }
+            },
+            {
+              "task_icon_emoji": "🧠",
+              "name": "Work Smarter with ClickUp AI",
+              "assignee": { "type": "avatar_circle", "initials": "EJ" },
+              "due_date": { "text": "dom", "color": "#b4b4b4" },
+              "priority": { "icon": "flag_filled", "color": "#f6a623", "label": "Alta" }
+            },
+            {
+              "task_icon_emoji": null,
+              "name": "TESTE",
+              "name_style": { "color": "#eeeeee", "font_weight": "500" },
+              "description_lines_icon": true,
+              "assignee": { "type": "avatar_placeholder_icon", "icon": "person_outline", "color": "#6e6e6e", "note": "sem responsável atribuído" },
+              "due_date": { "text": "Hoje", "color": "#e8a33d" },
+              "priority": { "icon": "flag_outline", "color": "#6e6e6e", "label": null, "note": "sem prioridade definida, apenas contorno" },
+              "status_pill": { "label": "PENDENTE", "dot_color": "#9a9a9a" }
+            }
+          ],
+          "add_row": {
+            "icon": "plus",
+            "label": "Adicionar Tarefa",
+            "text_color": "#8a8a8a"
+          }
+        }
+      ],
+      "row_style": {
+        "height": "35px",
+        "padding_left": "48px",
+        "padding_right": "48px",
+        "border_bottom": "1px solid #202020",
+        "hover_background": "#1a1a1a"
+      },
+      "group_header_row_style": { "height": "35px" },
+      "footer_bar": {
+        "items": [
+          { "label": "Calcular", "column": "Responsável" },
+          { "label": "Calcular", "column": "Data de vencimento" },
+          { "type": "link", "label": "Novo status", "column": "Prioridade/status add" }
+        ],
+        "text_color": "#6e6e6e"
+      }
+    }
+  },
+
+  "typography": {
+    "base_font_size": "14px",
+    "small_font_size": "12px",
+    "header_group_font_size": "13px",
+    "font_weight_normal": 400,
+    "font_weight_medium": 500,
+    "font_weight_semibold": 600
+  },
+
+  "interaction_notes": {
+    "row_hover": "Ao passar o mouse sobre uma linha, aparecem à esquerda um checkbox circular tracejado e um ícone de arrastar (drag handle) antes do emoji da tarefa.",
+    "status_pills": "Pill 'PENDENTE' com ícone circular tracejado cinza indica status 'to do'.",
+    "priority_flags": "Bandeira preenchida laranja/amarela = prioridade Alta; bandeira apenas com contorno cinza = sem prioridade.",
+    "date_colors": "Vermelho/laranja forte para datas vencidas (Ontem), laranja para 'Hoje', cinza claro para datas futuras (Amanhã, sáb, dom).",
+    "avatars": "Círculo escuro sólido com iniciais brancas centralizadas (ex: 'EJ', 'E'); quando não há responsável, mostra ícone de contorno de pessoa em cinza."
+  }
+}

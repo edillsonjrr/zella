@@ -1,0 +1,109 @@
+@keyframes flow-button-dash {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+.flow-button-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+:host(.full-width) {
+  display: block;
+  width: 100%;
+
+  .flow-button-wrap {
+    display: block;
+    width: 100%;
+  }
+
+  .flow-button {
+    width: 100%;
+  }
+}
+
+.flow-button-outline {
+  position: absolute;
+  inset: 2px;
+  pointer-events: none;
+  opacity: 0;
+  transition: inset 0.2s ease-out, opacity 0.2s ease-out;
+  z-index: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .flow-button-wrap:hover .flow-button-outline {
+    inset: 0;
+    opacity: 1;
+  }
+
+  .flow-button-wrap:hover .flow-button-dash {
+    animation: flow-button-dash 1s linear infinite;
+  }
+
+  .flow-button:hover {
+    background-color: transparent;
+  }
+}
+
+.flow-button-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.flow-button {
+  position: relative;
+  z-index: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--border-input);
+  border-radius: 9999px;
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+  font-weight: 550;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  &--sm {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 0.8125rem;
+  }
+
+  &--default {
+    height: 36px;
+    padding: 0 16px;
+    font-size: 0.875rem;
+  }
+
+  &--lg {
+    height: 40px;
+    padding: 0 24px;
+    font-size: 0.875rem;
+  }
+
+  /* Ações secundárias (Cancelar/Fechar): mesma geometria e mesmo contorno
+     animado do primário, mas sem superfície preenchida — assim leem como
+     irmãos do botão principal sem competir com ele pela atenção. */
+  &--secondary {
+    background-color: transparent;
+    border-color: var(--border-default);
+    color: var(--text-secondary);
+
+    &:hover:not(:disabled) {
+      color: var(--text-primary);
+    }
+  }
+}

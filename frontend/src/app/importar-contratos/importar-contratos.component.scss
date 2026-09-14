@@ -1,0 +1,141 @@
+.instrucoes {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  p {
+    max-width: 600px;
+    margin: 0;
+  }
+}
+
+.section-divider {
+  margin: 24px 0;
+}
+
+.upload-area {
+  border: 2px dashed var(--border-default);
+  border-radius: var(--card-radius);
+  padding: 40px;
+  text-align: center;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--primary-500);
+    background-color: var(--primary-50);
+  }
+
+  input.sr-only:focus-visible + .upload-label {
+    outline: 3px solid var(--primary-400);
+    outline-offset: 3px;
+    border-radius: var(--input-radius);
+  }
+
+  .upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: var(--text-secondary);
+
+    app-icon {
+      font-size: var(--icon-5xl);
+      width: var(--icon-5xl);
+      height: var(--icon-5xl);
+      color: var(--primary-500);
+    }
+
+    span {
+      font-weight: 500;
+    }
+
+    small {
+      color: var(--text-tertiary);
+    }
+  }
+}
+
+.progresso-area {
+  margin-top: 24px;
+
+  span {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+}
+
+.resumo-validacao {
+  display: flex;
+  gap: 16px;
+  margin: 24px 0 16px;
+
+  .resumo-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: var(--badge-radius);
+    background-color: var(--bg-elevated);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+
+    app-icon {
+      font-size: var(--icon-md);
+      width: var(--icon-md);
+      height: var(--icon-md);
+      color: var(--success-500);
+    }
+
+    &--erro app-icon {
+      color: var(--danger-500);
+    }
+  }
+}
+
+.preview-table {
+  margin-top: 16px;
+
+  .erro-linha {
+    color: var(--danger-500);
+    font-size: 0.75rem;
+    margin-top: 4px;
+  }
+}
+
+.acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.sucesso-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px;
+  gap: 12px;
+
+  app-icon {
+    font-size: var(--icon-6xl);
+    width: var(--icon-6xl);
+    height: var(--icon-6xl);
+  }
+
+  h3 {
+    margin: 0;
+  }
+
+  p {
+    margin: 0 0 8px;
+    color: var(--text-secondary);
+  }
+}

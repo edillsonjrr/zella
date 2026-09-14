@@ -1,0 +1,135 @@
+<div class="page-header animate-fade-in">
+  <h1>QR Codes</h1>
+</div>
+
+<mat-card class="app-card animate-fade-in-up">
+  <mat-card-content>
+    <p class="qrcodes-intro">
+      Gere um QR Code por unidade, bloco, sala ou equipamento para abrir chamados rapidamente no local, sem
+      precisar navegar pelo sistema. Quem escanear cai direto no formulário de novo chamado, já com o local
+      preenchido.
+    </p>
+
+    <mat-tab-group [(selectedIndex)]="tabSelecionada" class="qrcodes-tabs" animationDuration="200ms">
+      <mat-tab label="Unidades">
+        <table mat-table [dataSource]="unidades()" class="app-table full-width">
+          <ng-container matColumnDef="sigla">
+            <th mat-header-cell *matHeaderCellDef>Sigla</th>
+            <td mat-cell *matCellDef="let u"><strong>{{ u.sigla }}</strong></td>
+          </ng-container>
+
+          <ng-container matColumnDef="nome">
+            <th mat-header-cell *matHeaderCellDef>Nome</th>
+            <td mat-cell *matCellDef="let u">{{ u.nome }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="acoes">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let u">
+              <app-flow-button (click)="gerarQrCodeUnidade(u)">
+                <app-icon class="btn-icon" name="qr_code" aria-hidden="true"></app-icon>
+                Gerar QR Code
+              </app-flow-button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="colunasUnidades"></tr>
+          <tr mat-row *matRowDef="let row; columns: colunasUnidades;"></tr>
+        </table>
+      </mat-tab>
+
+      <mat-tab label="Blocos">
+        @if (blocos().length) {
+          <table mat-table [dataSource]="blocos()" class="app-table full-width">
+            <ng-container matColumnDef="nome">
+              <th mat-header-cell *matHeaderCellDef>Bloco</th>
+              <td mat-cell *matCellDef="let b"><strong>{{ b.nome }}</strong></td>
+            </ng-container>
+
+            <ng-container matColumnDef="unidade">
+              <th mat-header-cell *matHeaderCellDef>Unidade</th>
+              <td mat-cell *matCellDef="let b">{{ nomeUnidade(b.unidadeId) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="acoes">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let b">
+                <app-flow-button (click)="gerarQrCodeBloco(b)">
+                  <app-icon class="btn-icon" name="qr_code" aria-hidden="true"></app-icon>
+                  Gerar QR Code
+                </app-flow-button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="colunasBlocos"></tr>
+            <tr mat-row *matRowDef="let row; columns: colunasBlocos;"></tr>
+          </table>
+        } @else {
+          <p class="qrcodes-empty">Nenhum bloco cadastrado ainda. Cadastre em Unidades &gt; Gerenciar estrutura.</p>
+        }
+      </mat-tab>
+
+      <mat-tab label="Salas">
+        @if (salas().length) {
+          <table mat-table [dataSource]="salas()" class="app-table full-width">
+            <ng-container matColumnDef="nome">
+              <th mat-header-cell *matHeaderCellDef>Sala</th>
+              <td mat-cell *matCellDef="let s"><strong>{{ s.nome }}</strong></td>
+            </ng-container>
+
+            <ng-container matColumnDef="localizacao">
+              <th mat-header-cell *matHeaderCellDef>Localização</th>
+              <td mat-cell *matCellDef="let s">{{ localizacaoSala().get(s.id) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="acoes">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let s">
+                <app-flow-button (click)="gerarQrCodeSala(s)">
+                  <app-icon class="btn-icon" name="qr_code" aria-hidden="true"></app-icon>
+                  Gerar QR Code
+                </app-flow-button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="colunasSalas"></tr>
+            <tr mat-row *matRowDef="let row; columns: colunasSalas;"></tr>
+          </table>
+        } @else {
+          <p class="qrcodes-empty">Nenhuma sala cadastrada ainda. Cadastre em Unidades &gt; Gerenciar estrutura.</p>
+        }
+      </mat-tab>
+
+      <mat-tab label="Equipamentos">
+        @if (equipamentos().length) {
+          <table mat-table [dataSource]="equipamentos()" class="app-table full-width">
+            <ng-container matColumnDef="nome">
+              <th mat-header-cell *matHeaderCellDef>Equipamento</th>
+              <td mat-cell *matCellDef="let e"><strong>{{ e.nome }}</strong></td>
+            </ng-container>
+
+            <ng-container matColumnDef="localizacao">
+              <th mat-header-cell *matHeaderCellDef>Localização</th>
+              <td mat-cell *matCellDef="let e">{{ localizacaoEquipamento().get(e.id) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="acoes">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let e">
+                <app-flow-button (click)="gerarQrCodeEquipamento(e)">
+                  <app-icon class="btn-icon" name="qr_code" aria-hidden="true"></app-icon>
+                  Gerar QR Code
+                </app-flow-button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="colunasEquipamentos"></tr>
+            <tr mat-row *matRowDef="let row; columns: colunasEquipamentos;"></tr>
+          </table>
+        } @else {
+          <p class="qrcodes-empty">Nenhum equipamento cadastrado ainda. Cadastre em Unidades &gt; Gerenciar estrutura.</p>
+        }
+      </mat-tab>
+    </mat-tab-group>
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,113 @@
+<div class="page-header animate-fade-in">
+  <h1>Histórico de ações</h1>
+</div>
+
+<div class="toolbar animate-fade-in">
+  <div class="toolbar-left">
+    <div class="busca-wrapper">
+      <app-icon name="search" class="busca-icone" aria-hidden="true"></app-icon>
+      <input
+        type="text"
+        class="busca-input"
+        name="busca"
+        autocomplete="off"
+        placeholder="Buscar por ação, usuário ou registro…"
+        [value]="termoBusca()"
+        (input)="atualizarBusca($any($event).target.value)"
+        aria-label="Buscar no histórico"
+      />
+      @if (termoBusca()) {
+        <button class="busca-limpar" (click)="atualizarBusca('')" aria-label="Limpar busca">
+          <app-icon name="close" aria-hidden="true"></app-icon>
+        </button>
+      }
+    </div>
+
+    <button class="toolbar-btn" [class.toolbar-btn--active]="filtroAlvo()" [matMenuTriggerFor]="menuAlvo">
+      <app-icon name="filter_list" aria-hidden="true"></app-icon>
+      <span>Tipo: {{ filtroAlvo() ? rotuloAlvo(filtroAlvo()!) : 'Todos' }}</span>
+    </button>
+    <mat-menu #menuAlvo="matMenu">
+      <button mat-menu-item (click)="selecionarAlvo(null)">Todos</button>
+      @for (alvo of alvos; track alvo[0]) {
+        <button mat-menu-item (click)="selecionarAlvo(alvo[0])">{{ alvo[1] }}</button>
+      }
+    </mat-menu>
+
+    <button class="toolbar-btn" [class.toolbar-btn--active]="filtroOperacao()" [matMenuTriggerFor]="menuOperacao">
+      <app-icon name="layers" aria-hidden="true"></app-icon>
+      <span>Ação: {{ filtroOperacao() ? filtroOperacao() : 'Todas' }}</span>
+    </button>
+    <mat-menu #menuOperacao="matMenu">
+      <button mat-menu-item (click)="selecionarOperacao(null)">Todas</button>
+      @for (op of operacoes; track op[0]) {
+        <button mat-menu-item (click)="selecionarOperacao(op[0])">{{ op[1] }}</button>
+      }
+    </mat-menu>
+
+    @if (filtrosAtivos()) {
+      <button class="toolbar-btn" (click)="limparFiltros()">
+        <app-icon name="delete_outline" aria-hidden="true"></app-icon>
+        <span>Limpar filtros</span>
+      </button>
+    }
+  </div>
+
+  <div class="toolbar-right">
+    <span class="contagem">{{ registros().length }} de {{ totalBruto() }}</span>
+  </div>
+</div>
+
+<mat-card class="app-card animate-fade-in-up">
+  <mat-card-content>
+    @if (!registros().length) {
+      <p class="vazio">
+        @if (filtrosAtivos()) {
+          Nenhuma ação encontrada com esses filtros.
+        } @else {
+          Nenhuma ação registrada ainda.
+        }
+      </p>
+    } @else {
+      <ul class="linha-do-tempo">
+        @for (registro of registros(); track registro.id) {
+          <li class="registro">
+            <div class="registro-icone" [class]="'registro-icone--' + registro.corClasse">
+              <app-icon [name]="registro.icone" aria-hidden="true"></app-icon>
+            </div>
+
+            <div class="registro-corpo">
+              <div class="registro-topo">
+                <span class="registro-descricao">{{ registro.descricao }}</span>
+                <span class="registro-quando">
+                  {{ registro.dataFormatada }} às {{ registro.horaFormatada }}
+                </span>
+              </div>
+
+              <div class="registro-meta">
+                <span class="autor">
+                  <span class="avatar">{{ registro.iniciais }}</span>
+                  {{ registro.usuarioNome }}
+                </span>
+                <span class="etiqueta">{{ rotuloAlvo(registro.alvo) }}</span>
+                @if (registro.origem === 'backend') {
+                  <span class="etiqueta etiqueta--origem" title="Registrado pelo servidor, junto com a ação">
+                    <app-icon name="lock" aria-hidden="true"></app-icon> servidor
+                  </span>
+                }
+              </div>
+
+              @if (registro.detalhesTexto.length) {
+                <ul class="registro-detalhes">
+                  @for (detalhe of registro.detalhesTexto; track detalhe) {
+                    <li>{{ detalhe }}</li>
+                  }
+                </ul>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </mat-card-content>
+</mat-card>

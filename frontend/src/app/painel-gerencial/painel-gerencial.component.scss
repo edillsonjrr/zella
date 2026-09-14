@@ -1,0 +1,246 @@
+:host {
+  display: block;
+  background-color: var(--bg-primary);
+  min-height: 100%;
+}
+
+.clickup-page {
+  padding: 0;
+}
+
+.page-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  min-height: 40px;
+
+  .title-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .workspace-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background-color: var(--primary-500);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 0;
+    }
+  }
+
+  .title-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+.segmented-control {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: 9999px;
+  padding: 2px;
+
+  .segmented-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 9999px;
+    border: none;
+    background-color: transparent;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        color: var(--text-primary);
+      }
+    }
+
+    &--active {
+      background-color: var(--bg-elevated);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-card);
+    }
+  }
+}
+
+.resumo-grupo {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.resumo-card {
+  border: 1px solid var(--border-default);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
+    border-color: var(--border-hover);
+  }
+
+  &--destaque {
+    .resumo-valor {
+      font-size: 2rem;
+    }
+
+    .resumo-label {
+      font-weight: 600;
+    }
+  }
+
+  mat-card-content {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+  }
+
+  .resumo-icone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    font-size: 22px;
+    background-color: var(--bg-elevated);
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+
+  .resumo-conteudo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .resumo-valor {
+    font-size: 1.625rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+
+  .resumo-label {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &--perigo {
+    border-left: 4px solid var(--danger-500);
+
+    .resumo-icone {
+      background-color: var(--danger-50);
+      color: var(--danger-500);
+    }
+  }
+
+  &--alerta {
+    border-left: 4px solid var(--warning-500);
+
+    .resumo-icone {
+      background-color: var(--warning-50);
+      color: var(--warning-500);
+    }
+  }
+}
+
+.graficos-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.grafico-card {
+  border: 1px solid var(--border-default);
+  transition: border-color var(--transition-fast);
+
+  &:hover {
+    border-color: var(--border-hover);
+  }
+
+  &--largo {
+    grid-column: 1 / -1;
+  }
+
+  mat-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 8px;
+
+    .section-icon {
+      width: 20px;
+      height: 20px;
+      font-size: 20px;
+      color: var(--text-secondary);
+    }
+
+    mat-card-title {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      margin: 0;
+    }
+  }
+
+  mat-card-content {
+    padding-top: 4px;
+  }
+}
+
+.estado-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: var(--text-secondary);
+  text-align: center;
+
+  app-icon {
+    color: var(--text-tertiary);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9375rem;
+  }
+}

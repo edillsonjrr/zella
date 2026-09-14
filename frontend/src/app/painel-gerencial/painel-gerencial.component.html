@@ -1,0 +1,191 @@
+<div class="clickup-page">
+  <header class="page-title-row animate-fade-in">
+    <div class="title-left">
+      <div class="workspace-badge">PG</div>
+      <h1>Painel Gerencial</h1>
+    </div>
+    <div class="title-right">
+      <div class="segmented-control">
+        <button class="segmented-btn" [class.segmented-btn--active]="periodoDias() === 30" (click)="selecionarPeriodo(30)">
+          <span>30 dias</span>
+        </button>
+        <button class="segmented-btn" [class.segmented-btn--active]="periodoDias() === 90" (click)="selecionarPeriodo(90)">
+          <span>90 dias</span>
+        </button>
+        <button class="segmented-btn" [class.segmented-btn--active]="periodoDias() === 180" (click)="selecionarPeriodo(180)">
+          <span>180 dias</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="resumo-grupo animate-fade-in-up">
+    <mat-card class="app-card resumo-card resumo-card--perigo resumo-card--destaque">
+      <mat-card-content>
+        <div class="resumo-icone"><app-icon name="warning" aria-hidden="true"></app-icon></div>
+        <div class="resumo-conteudo">
+          <span class="resumo-valor">{{ kpis().atrasados }}</span>
+          <span class="resumo-label">Chamados em atraso</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="app-card resumo-card">
+      <mat-card-content>
+        <div class="resumo-icone"><app-icon name="support_agent" aria-hidden="true"></app-icon></div>
+        <div class="resumo-conteudo">
+          <span class="resumo-valor">{{ kpis().abertos }}</span>
+          <span class="resumo-label">Chamados em aberto</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="app-card resumo-card">
+      <mat-card-content>
+        <div class="resumo-icone"><app-icon name="check_circle" aria-hidden="true"></app-icon></div>
+        <div class="resumo-conteudo">
+          <span class="resumo-valor">{{ kpis().taxaConclusao }}%</span>
+          <span class="resumo-label">Taxa de conclusão</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="app-card resumo-card resumo-card--alerta">
+      <mat-card-content>
+        <div class="resumo-icone"><app-icon name="description" aria-hidden="true"></app-icon></div>
+        <div class="resumo-conteudo">
+          <span class="resumo-valor">{{ kpis().contratosEmAtencao }}</span>
+          <span class="resumo-label">Contratos em atenção</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  @if (chamadosNoPeriodo().length === 0) {
+    <div class="estado-vazio">
+      <app-icon name="folder" size="32px" aria-hidden="true"></app-icon>
+      <p>Nenhum chamado no período selecionado.</p>
+    </div>
+  } @else {
+    <div class="graficos-grid animate-fade-in-up">
+      <mat-card class="app-card grafico-card grafico-card--largo">
+        <mat-card-header>
+          <app-icon class="section-icon" name="bar_chart" aria-hidden="true"></app-icon>
+          <mat-card-title>Volume de chamados</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <apx-chart
+            [series]="volumeChartOptions().series!"
+            [chart]="volumeChartOptions().chart!"
+            [xaxis]="volumeChartOptions().xaxis!"
+            [colors]="volumeChartOptions().colors!"
+            [stroke]="volumeChartOptions().stroke!"
+            [fill]="volumeChartOptions().fill!"
+            [dataLabels]="volumeChartOptions().dataLabels!"
+            [grid]="volumeChartOptions().grid!"
+            [tooltip]="volumeChartOptions().tooltip!"
+          ></apx-chart>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="app-card grafico-card">
+        <mat-card-header>
+          <app-icon class="section-icon" name="flag" aria-hidden="true"></app-icon>
+          <mat-card-title>Chamados por status</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <apx-chart
+            [series]="statusChartOptions().series!"
+            [chart]="statusChartOptions().chart!"
+            [labels]="statusChartOptions().labels!"
+            [colors]="statusChartOptions().colors!"
+            [legend]="statusChartOptions().legend!"
+            [dataLabels]="statusChartOptions().dataLabels!"
+            [plotOptions]="statusChartOptions().plotOptions!"
+            [tooltip]="statusChartOptions().tooltip!"
+          ></apx-chart>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="app-card grafico-card">
+        <mat-card-header>
+          <app-icon class="section-icon" name="location_on" aria-hidden="true"></app-icon>
+          <mat-card-title>Chamados por unidade</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <apx-chart
+            [series]="unidadeChartOptions().series!"
+            [chart]="unidadeChartOptions().chart!"
+            [xaxis]="unidadeChartOptions().xaxis!"
+            [colors]="unidadeChartOptions().colors!"
+            [plotOptions]="unidadeChartOptions().plotOptions!"
+            [legend]="unidadeChartOptions().legend!"
+            [dataLabels]="unidadeChartOptions().dataLabels!"
+            [grid]="unidadeChartOptions().grid!"
+            [tooltip]="unidadeChartOptions().tooltip!"
+          ></apx-chart>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="app-card grafico-card">
+        <mat-card-header>
+          <app-icon class="section-icon" name="description" aria-hidden="true"></app-icon>
+          <mat-card-title>Chamados por contrato</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <apx-chart
+            [series]="contratoChartOptions().series!"
+            [chart]="contratoChartOptions().chart!"
+            [xaxis]="contratoChartOptions().xaxis!"
+            [colors]="contratoChartOptions().colors!"
+            [plotOptions]="contratoChartOptions().plotOptions!"
+            [legend]="contratoChartOptions().legend!"
+            [dataLabels]="contratoChartOptions().dataLabels!"
+            [grid]="contratoChartOptions().grid!"
+            [tooltip]="contratoChartOptions().tooltip!"
+          ></apx-chart>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="app-card grafico-card">
+        <mat-card-header>
+          <app-icon class="section-icon" name="assignment" aria-hidden="true"></app-icon>
+          <mat-card-title>Ordens de serviço por situação</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <apx-chart
+            [series]="osChartOptions().series!"
+            [chart]="osChartOptions().chart!"
+            [xaxis]="osChartOptions().xaxis!"
+            [colors]="osChartOptions().colors!"
+            [plotOptions]="osChartOptions().plotOptions!"
+            [legend]="osChartOptions().legend!"
+            [dataLabels]="osChartOptions().dataLabels!"
+            [grid]="osChartOptions().grid!"
+            [tooltip]="osChartOptions().tooltip!"
+          ></apx-chart>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="app-card grafico-card">
+        <mat-card-header>
+          <app-icon class="section-icon" name="construction" aria-hidden="true"></app-icon>
+          <mat-card-title>Top equipamentos com mais chamados</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <apx-chart
+            [series]="equipamentoChartOptions().series!"
+            [chart]="equipamentoChartOptions().chart!"
+            [xaxis]="equipamentoChartOptions().xaxis!"
+            [colors]="equipamentoChartOptions().colors!"
+            [plotOptions]="equipamentoChartOptions().plotOptions!"
+            [legend]="equipamentoChartOptions().legend!"
+            [dataLabels]="equipamentoChartOptions().dataLabels!"
+            [grid]="equipamentoChartOptions().grid!"
+            [tooltip]="equipamentoChartOptions().tooltip!"
+          ></apx-chart>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
+</div>

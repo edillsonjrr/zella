@@ -1,0 +1,107 @@
+<div class="page-header animate-fade-in">
+  <h1>Ordens de Serviço</h1>
+  @if (podeCriar) {
+    <app-flow-button size="lg" (click)="abrirNovaOs()">
+      <app-icon class="btn-icon" name="add"></app-icon> Criar
+    </app-flow-button>
+  }
+</div>
+
+<mat-tab-group class="os-tabs" animationDuration="200ms">
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <app-icon class="tab-icon" name="view_agenda"></app-icon> Lista
+    </ng-template>
+
+    <mat-card class="app-card animate-fade-in-up">
+      <mat-card-content>
+        @if (podeCriar) {
+          <button type="button" class="criacao-inline" (click)="abrirNovaOs()">
+            <app-icon name="add"></app-icon>
+            <span>Criar nova ordem de serviço...</span>
+          </button>
+        }
+
+        <table mat-table [dataSource]="ordensView()" class="app-table full-width">
+          <ng-container matColumnDef="numero">
+            <th mat-header-cell *matHeaderCellDef>OS</th>
+            <td mat-cell *matCellDef="let o"><strong>{{ o.numero }}</strong></td>
+          </ng-container>
+
+          <ng-container matColumnDef="ativo">
+            <th mat-header-cell *matHeaderCellDef>Ativo</th>
+            <td mat-cell *matCellDef="let o">{{ o.ativo }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="contrato">
+            <th mat-header-cell *matHeaderCellDef>Contrato</th>
+            <td mat-cell *matCellDef="let o">{{ o.contrato }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="tecnico">
+            <th mat-header-cell *matHeaderCellDef>Técnico</th>
+            <td mat-cell *matCellDef="let o">
+              <div class="tecnico-cell">
+                <div class="tecnico-avatar">{{ o.tecnico.charAt(0) }}</div>
+                {{ o.tecnico }}
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let o">
+              <span class="badge" [ngClass]="badgeClass(o.situacao)">
+                <app-icon [name]="statusIcon(o.situacao)" aria-hidden="true"></app-icon>
+                {{ o.situacao }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="orcamento">
+            <th mat-header-cell *matHeaderCellDef>Orçamento</th>
+            <td mat-cell *matCellDef="let o">
+              <span class="badge" [ngClass]="orcamentoBadgeClass(o.orcamentoStatus)">
+                <app-icon [name]="orcamentoIcon(o.orcamentoStatus)"></app-icon>
+                {{ o.orcamentoStatus }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="data">
+            <th mat-header-cell *matHeaderCellDef>Data</th>
+            <td mat-cell *matCellDef="let o">{{ o.data | date:'dd/MM/yyyy' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="acoes">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let o">
+              <button mat-icon-button color="primary" [attr.aria-label]="'Visualizar OS ' + o.numero">
+                <app-icon name="visibility"></app-icon>
+              </button>
+            </td>
+          </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: displayedColumns;"
+        (click)="abrirDetalhe(row)"
+        (keydown.enter)="abrirDetalhe(row)"
+        (keydown.space)="$event.preventDefault(); abrirDetalhe(row)"
+        tabindex="0"
+        class="linha-clicavel"
+      ></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+  </mat-tab>
+
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <app-icon class="tab-icon" name="view_kanban"></app-icon> Quadro
+    </ng-template>
+
+    <app-ordens-servico-quadro [ordens]="ordens()" (abrirNovaOs)="abrirNovaOs()" (abrirDetalhe)="abrirDetalhe($event)"></app-ordens-servico-quadro>
+  </mat-tab>
+</mat-tab-group>

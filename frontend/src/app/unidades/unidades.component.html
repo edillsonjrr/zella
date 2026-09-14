@@ -1,0 +1,119 @@
+<div class="page-header animate-fade-in">
+  <h1>Unidades</h1>
+  <app-flow-button size="lg" (click)="nova()">
+    <app-icon class="btn-icon" name="add"></app-icon> Nova unidade
+  </app-flow-button>
+</div>
+
+<mat-card class="app-card animate-fade-in-up">
+  <mat-card-content>
+    @if (editandoId() !== null) {
+      <div class="form-inline">
+        <mat-form-field appearance="outline">
+          <mat-label>Sigla</mat-label>
+          <input matInput [(ngModel)]="sigla" name="sigla" maxlength="10" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="nome-field">
+          <mat-label>Nome</mat-label>
+          <input matInput [(ngModel)]="nome" name="nome" />
+        </mat-form-field>
+        <app-flow-button (click)="salvar()">
+          <app-icon class="btn-icon" name="save"></app-icon> Salvar
+        </app-flow-button>
+        <app-flow-button variant="secondary" type="button" (click)="cancelar()">Cancelar</app-flow-button>
+      </div>
+    }
+
+    <div class="arvore">
+      @for (u of unidades(); track u.id) {
+        <div
+          class="no no--unidade"
+          role="button"
+          tabindex="0"
+          [attr.aria-expanded]="unidadeExpandida(u.id)"
+          [attr.aria-label]="(unidadeExpandida(u.id) ? 'Recolher ' : 'Expandir ') + u.nome"
+          (click)="toggleUnidade(u.id)"
+          (keydown.enter)="toggleUnidade(u.id)"
+          (keydown.space)="$event.preventDefault(); toggleUnidade(u.id)"
+        >
+          <span class="no-toggle">
+            <app-icon class="no-seta" name="expand_more" [class.no-seta--fechada]="!unidadeExpandida(u.id)"></app-icon>
+          </span>
+          <span class="no-sigla">{{ u.sigla }}</span>
+          <span class="no-nome">{{ u.nome }}</span>
+          <span class="no-acoes" (click)="$event.stopPropagation()">
+            <button mat-icon-button (click)="gerenciarEstrutura(u)" aria-label="Gerenciar estrutura">
+              <app-icon name="account_tree"></app-icon>
+            </button>
+            <button mat-icon-button (click)="editar(u)" aria-label="Editar">
+              <app-icon name="edit"></app-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="excluir(u)" aria-label="Excluir">
+              <app-icon name="delete"></app-icon>
+            </button>
+          </span>
+        </div>
+
+        @if (unidadeExpandida(u.id)) {
+          @let blocos = dataService.getBlocosByUnidade(u.id);
+          @let salasSoltas = dataService.getSalasByUnidade(u.id);
+
+          @for (b of blocos; track b.id) {
+            <div
+              class="no no--bloco"
+              role="button"
+              tabindex="0"
+              [attr.aria-expanded]="blocoExpandido(b.id)"
+              [attr.aria-label]="(blocoExpandido(b.id) ? 'Recolher ' : 'Expandir ') + b.nome"
+              (click)="toggleBloco(b.id)"
+              (keydown.enter)="toggleBloco(b.id)"
+              (keydown.space)="$event.preventDefault(); toggleBloco(b.id)"
+            >
+              <span class="no-toggle">
+                <app-icon class="no-seta" name="expand_more" [class.no-seta--fechada]="!blocoExpandido(b.id)"></app-icon>
+              </span>
+              <app-icon class="no-icone" name="format_list_bulleted"></app-icon>
+              <span class="no-nome">{{ b.nome }}</span>
+              <span class="no-contagem">{{ dataService.getSalasByBloco(b.id).length }} sala(s)</span>
+            </div>
+
+            @if (blocoExpandido(b.id)) {
+              @let salasDoBloco = dataService.getSalasByBloco(b.id);
+              @if (salasDoBloco.length) {
+                @for (s of salasDoBloco; track s.id) {
+                  <div class="no no--sala">
+                    <app-icon class="no-icone" name="table_chart"></app-icon>
+                    <span class="no-nome">{{ s.nome }}</span>
+                  </div>
+                }
+              } @else {
+                <p class="no-vazio">Nenhuma sala neste bloco.</p>
+              }
+            }
+          }
+
+          @if (salasSoltas.length) {
+            <div class="no no--bloco no--salas-soltas">
+              <span class="no-espaco-toggle"></span>
+              <app-icon class="no-icone" name="table_chart"></app-icon>
+              <span class="no-nome">Salas sem bloco</span>
+              <span class="no-contagem">{{ salasSoltas.length }}</span>
+            </div>
+            @for (s of salasSoltas; track s.id) {
+              <div class="no no--sala">
+                <app-icon class="no-icone" name="table_chart"></app-icon>
+                <span class="no-nome">{{ s.nome }}</span>
+              </div>
+            }
+          }
+
+          @if (!blocos.length && !salasSoltas.length) {
+            <p class="no-vazio">Nenhum bloco ou sala cadastrado nesta unidade.</p>
+          }
+        }
+      }
+    </div>
+
+    <p class="tabela-hint">Clique na seta para ver blocos e salas. Use <app-icon name="account_tree" size="14px"></app-icon> para gerenciar a estrutura.</p>
+  </mat-card-content>
+</mat-card>

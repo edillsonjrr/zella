@@ -1,0 +1,90 @@
+:host {
+  display: block;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.criacao-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  border: 1px dashed var(--border-default);
+  border-radius: var(--button-radius);
+  color: var(--text-tertiary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
+
+  &:hover {
+    border-color: var(--primary-500);
+    background-color: var(--primary-50);
+    color: var(--primary-400);
+  }
+
+  app-icon {
+    font-size: var(--icon-md);
+    width: var(--icon-md);
+    height: var(--icon-md);
+  }
+}
+
+.os-tabs {
+  .mat-mdc-tab-labels {
+    border-bottom: 1px solid var(--border-default);
+  }
+
+  .mat-mdc-tab {
+    min-width: 100px;
+    height: 40px;
+    padding: 0 16px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-tertiary);
+
+    .tab-icon {
+      font-size: var(--icon-md);
+      width: var(--icon-md);
+      height: var(--icon-md);
+      margin-right: 8px;
+    }
+
+    &.mdc-tab--active {
+      color: var(--text-primary);
+    }
+  }
+
+  .mat-mdc-tab-body-content {
+    padding-top: 16px;
+  }
+}
+
+.tecnico-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+.tecnico-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--primary-50);
+  color: var(--primary-400);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.linha-clicavel {
+  cursor: pointer;
+}
+}

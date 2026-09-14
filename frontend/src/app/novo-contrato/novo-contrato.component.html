@@ -1,0 +1,119 @@
+@if (!isDialog) {
+  <div class="page-header animate-fade-in">
+    <h1>Novo Contrato</h1>
+  </div>
+}
+
+<mat-card class="app-card animate-fade-in-up standalone-card" [class.modal-card]="isDialog">
+  <mat-card-content>
+    <form (ngSubmit)="salvar()" class="modal-form">
+      <div class="modal-scrollable-header">
+        <div class="modal-title">
+          <div class="modal-icon">
+            <app-icon name="description" aria-hidden="true"></app-icon>
+          </div>
+          <div>
+            <h2>Novo Contrato</h2>
+            <span class="modal-subtitle">Cadastre um contrato e seus itens</span>
+          </div>
+        </div>
+        @if (isDialog) {
+          <button mat-icon-button type="button" class="modal-close" (click)="cancelar()" aria-label="Fechar">
+            <app-icon name="close" aria-hidden="true"></app-icon>
+          </button>
+        }
+      </div>
+
+      <div class="modal-scrollable-body">
+        <section class="form-section">
+          <div class="section-title">
+            <app-icon name="description" aria-hidden="true"></app-icon>
+            <h3>Informações do contrato</h3>
+          </div>
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Número do contrato</mat-label>
+              <input matInput [(ngModel)]="numero" name="numero" placeholder="Ex: CTR-2026-004…" required />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Empresa contratada</mat-label>
+              <mat-select [(ngModel)]="empresaContratadaId" name="empresaContratadaId" (selectionChange)="selecionarContratada($event.value)">
+                <mat-option value="">Nenhuma</mat-option>
+                @for (e of empresasContratadas(); track e.id) {
+                  <mat-option [value]="e.id">{{ e.nome }}</mat-option>
+                }
+              </mat-select>
+              <mat-hint>Quem presta o serviço. Gestor contratado e técnico dela verão este contrato.</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Fornecedor</mat-label>
+              <input matInput [(ngModel)]="fornecedor" name="fornecedor" placeholder="Ex: Segurança Patrimonial…" required />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Início da vigência</mat-label>
+              <input matInput type="date" [(ngModel)]="vigenciaInicio" name="vigenciaInicio" required />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Fim da vigência</mat-label>
+              <input matInput type="date" [(ngModel)]="vigenciaFim" name="vigenciaFim" required />
+            </mat-form-field>
+          </div>
+        </section>
+
+        <mat-divider class="section-divider"></mat-divider>
+
+        <section class="form-section">
+          <div class="section-title">
+            <app-icon name="format_list_bulleted" aria-hidden="true"></app-icon>
+            <h3>Itens contratados</h3>
+          </div>
+
+          <div class="itens-lista">
+            @for (item of itens; track $index) {
+              <div class="item-row-form item-row-form--ata">
+                <mat-form-field appearance="outline" class="item-nome">
+                  <mat-label>Item</mat-label>
+                  <input matInput [(ngModel)]="item.nome" [name]="'item-nome-' + $index" placeholder="Ex: Manutenção de câmeras…" required />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="item-unidade">
+                  <mat-label>Unid.</mat-label>
+                  <input matInput [(ngModel)]="item.unidadeMedida" [name]="'item-unidade-' + $index" placeholder="un" required />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="item-quantidade">
+                  <mat-label>Qtd</mat-label>
+                  <input matInput type="number" [(ngModel)]="item.quantidadeContratada" [name]="'item-qtd-' + $index" min="1" required />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="item-preco">
+                  <mat-label>Preço unit.</mat-label>
+                  <input matInput type="number" [(ngModel)]="item.precoUnitario" [name]="'item-preco-' + $index" min="0" step="0.01" required />
+                </mat-form-field>
+
+                <button mat-icon-button type="button" color="warn" (click)="removerItem($index)" [disabled]="itens.length === 1" [attr.aria-label]="'Remover item ' + ($index + 1)">
+                  <app-icon name="delete" aria-hidden="true"></app-icon>
+                </button>
+              </div>
+            }
+          </div>
+
+          <button mat-stroked-button type="button" (click)="adicionarItem()" class="btn-adicionar-item">
+            <app-icon name="add" aria-hidden="true"></app-icon> Adicionar item
+          </button>
+        </section>
+      </div>
+
+      <div class="modal-scrollable-footer">
+        <app-flow-button variant="secondary" type="button" (click)="cancelar()">Cancelar</app-flow-button>
+        <app-flow-button type="submit">
+          <app-icon class="btn-icon" name="save" aria-hidden="true"></app-icon> Salvar contrato
+        </app-flow-button>
+      </div>
+    </form>
+  </mat-card-content>
+</mat-card>

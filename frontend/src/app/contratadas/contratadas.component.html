@@ -1,0 +1,101 @@
+<div class="page-header animate-fade-in">
+  <h1>Empresas contratadas</h1>
+</div>
+
+<div class="contratadas-grid">
+  <mat-card class="app-card animate-fade-in-up">
+    <mat-card-content>
+      <form #contratadaForm="ngForm" (ngSubmit)="salvar(contratadaForm)" class="contratada-form" novalidate>
+        <div class="contratada-form-titulo">
+          <app-icon name="handyman" aria-hidden="true"></app-icon>
+          <div>
+            <h2>{{ isEdicao ? 'Editar contratada' : 'Nova contratada' }}</h2>
+            <span>Prestadora de serviço que aparece nos contratos e nos usuários contratados.</span>
+          </div>
+        </div>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Nome</mat-label>
+          <input matInput #nomeCtrl="ngModel" [(ngModel)]="nome" name="nome" placeholder="Ex: Elétrica Sul" required />
+          @if (nomeCtrl.invalid && nomeCtrl.touched) {
+            <mat-error>Informe o nome</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>CNPJ</mat-label>
+          <input matInput [(ngModel)]="cnpj" name="cnpj" placeholder="00.000.000/0000-00" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Contato</mat-label>
+          <input matInput [(ngModel)]="contato" name="contato" placeholder="Telefone ou e-mail" />
+        </mat-form-field>
+
+        @if (erro()) {
+          <p class="contratada-erro" role="alert">{{ erro() }}</p>
+        }
+
+        <div class="contratada-form-acoes">
+          @if (isEdicao) {
+            <app-flow-button variant="secondary" type="button" (click)="limpar(contratadaForm)">Cancelar</app-flow-button>
+          }
+          <app-flow-button type="submit">
+            <app-icon class="btn-icon" name="save" aria-hidden="true"></app-icon>
+            {{ isEdicao ? 'Salvar' : 'Cadastrar' }}
+          </app-flow-button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="app-card animate-fade-in-up">
+    <mat-card-content>
+      @if (empresas().length === 0) {
+        <p class="contratadas-vazio">Nenhuma empresa contratada cadastrada.</p>
+      } @else {
+        <table mat-table [dataSource]="empresas()" class="app-table full-width">
+          <ng-container matColumnDef="nome">
+            <th mat-header-cell *matHeaderCellDef>Nome</th>
+            <td mat-cell *matCellDef="let e">{{ e.nome }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="cnpj">
+            <th mat-header-cell *matHeaderCellDef>CNPJ</th>
+            <td mat-cell *matCellDef="let e">{{ e.cnpj || '-' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="contato">
+            <th mat-header-cell *matHeaderCellDef>Contato</th>
+            <td mat-cell *matCellDef="let e">{{ e.contato || '-' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="usuarios">
+            <th mat-header-cell *matHeaderCellDef>Usuários</th>
+            <td mat-cell *matCellDef="let e">{{ usuariosDe(e.id) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="contratos">
+            <th mat-header-cell *matHeaderCellDef>Contratos</th>
+            <td mat-cell *matCellDef="let e">{{ contratosDe(e.id) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="acoes">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let e">
+              <button mat-icon-button (click)="editar(e)" aria-label="Editar">
+                <app-icon name="edit"></app-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="excluir(e)" aria-label="Excluir">
+                <app-icon name="delete"></app-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

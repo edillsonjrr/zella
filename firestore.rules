@@ -1,0 +1,292 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Sessão anônima: é o convidado que escaneou um QR Code. Ele não lê nem
+    // escreve nada direto — tudo o que pode fazer passa pela Cloud Function
+    // criarChamado, que confere o token do QR.
+    function convidado() {
+      return request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
+
+    // O perfil e a empresa vêm do token (custom claim gravado por
+    // functions/src/perfis.ts), nunca de uma coleção: as regras não
+    // conseguem consultar o cadastro, e mesmo que conseguissem, quem escreve
+    // o cadastro poderia se promover.
+    function perfil() {
+      return request.auth.token.perfil;
+    }
+
+    // Quem opera a plataforma. Sem cadastro em empresa, enxerga a lista de
+    // empresas, e só. Com cadastro (a empresa de demonstração), entra nela
+    // como gestor comum e carrega a marca `adminPlataforma` no token, que
+    // mantém a tela de Empresas aberta. O que está dentro das outras
+    // empresas continua fechado: o token só tem uma empresaId.
+    function adminPlataforma() {
+      return request.auth != null
+        && (perfil() == 'admin_plataforma'
+          || ('adminPlataforma' in request.auth.token && request.auth.token.adminPlataforma == true));
+    }
+
+    // Cada cliente é um documento aqui, e TODAS as coleções de negócio vivem
+    // dentro dele. É esse aninhamento, junto com `daEmpresa()`, que isola um
+    // cliente do outro: o caminho de tudo que a pessoa lê começa pelo id da
+    // empresa que está no token dela.
+    match /empresasClientes/{empresaId} {
+
+      function daEmpresa() {
+        return request.auth.token.empresaId == empresaId;
+      }
+
+      // Usuário de verdade: entrou por e-mail/senha ou Google, tem cadastro
+      // com perfil E o cadastro é desta empresa. Conta do Auth sem cadastro
+      // não lê nada.
+      function usuario() {
+        return request.auth != null
+          && !convidado()
+          && perfil() in ['cliente', 'gestor', 'gestor_contratado', 'tecnico']
+          && daEmpresa();
+      }
+
+      function gestor() {
+        return usuario() && perfil() == 'gestor';
+      }
+
+      // Quem lida com contrato, orçamento e saldo. Cliente e técnico ficam
+      // de fora: é a mesma linha do mapa de rotas do frontend (permissoes.ts).
+      function gestorOuContratado() {
+        return usuario() && perfil() in ['gestor', 'gestor_contratado'];
+      }
+
+      // Cabeçalho da empresa: o admin lista todas e liga/desliga; quem é da
+      // empresa lê a própria (nome no topo da tela). Criar é só pela
+      // Cloud Function criarEmpresa, que também cadastra o primeiro gestor.
+      allow read: if adminPlataforma() || usuario();
+      allow update: if adminPlataforma()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ativa', 'nome']);
+      allow create, delete: if false;
+
+      // Leitura liberada por coleção, uma a uma, em vez de um curinga.
+      //
+      // A diferença importa: as regras do Firestore são somadas, nunca
+      // subtraídas. Com um curinga liberando tudo, nenhuma regra mais
+      // específica conseguiria proteger uma coleção depois. `contadores`
+      // simplesmente não aparece, e leitura não declarada é negada.
+      match /unidades/{id} {
+        allow read: if usuario();
+        allow write: if gestor();
+      }
+
+      match /blocos/{id} {
+        allow read: if usuario();
+        allow write: if gestor();
+      }
+
+      match /salas/{id} {
+        allow read: if usuario();
+        allow write: if gestor();
+      }
+
+      match /equipamentos/{id} {
+        allow read: if usuario();
+        allow write: if gestor();
+      }
+
+      match /usuarios/{id} {
+        allow read: if usuario();
+        allow write: if gestor();
+        // "Minha conta": a pessoa só troca o próprio nome. Perfil, e-mail e
+        // vínculos continuam sendo do gestor.
+        allow update: if usuario()
+          && request.auth.token.usuarioId == id
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome'])
+          && request.resource.data.nome is string
+          && request.resource.data.nome.size() <= 200;
+      }
+
+      // Empresas prestadoras de serviço do cliente. Cadastro simples do
+      // gestor; usuários contratados e contratos apontam pra cá.
+      match /empresasContratadas/{id} {
+        allow read: if usuario();
+        allow write: if gestor();
+      }
+
+      // Plano de manutenção preventiva é cadastro simples: quem gera efeito
+      // (o chamado) é a função agendada, não este documento.
+      match /planosManutencao/{id} {
+        allow read, write: if gestor();
+      }
+
+      // Chamado, OS e Orçamento têm máquina de estado (situação/status) que
+      // mexe em saldo ou em mais de um documento por vez — só as Cloud
+      // Functions escrevem, via Admin SDK, que ignora estas regras.
+      // Isolamento dentro do cliente: o cliente enxerga só a própria
+      // unidade; gestor contratado e técnico só o que é da própria empresa
+      // contratada. Como a regra compara campo do documento, a consulta do
+      // app precisa filtrar pelo mesmo campo (where), senão é negada inteira.
+      function daMinhaUnidade() {
+        return resource.data.unidadeId == request.auth.token.unidadeId;
+      }
+
+      function daMinhaContratada() {
+        return resource.data.empresaContratadaId == request.auth.token.empresaContratadaId;
+      }
+
+      // Gestor contratado E técnico leem o que é da empresa contratada deles.
+      // O técnico entra porque é ele quem monta o orçamento: sem ler o
+      // contrato, os itens e o orçamento, o formulário dele fica vazio.
+      function daContratadaDoRegistro() {
+        return usuario() && perfil() in ['gestor_contratado', 'tecnico'] && daMinhaContratada();
+      }
+
+      match /chamados/{id} {
+        allow read: if usuario() && (perfil() != 'cliente' || daMinhaUnidade());
+      }
+
+      match /ordensServico/{id} {
+        allow read: if usuario() && (
+          perfil() == 'gestor'
+          || (perfil() == 'cliente' && daMinhaUnidade())
+          || (perfil() in ['gestor_contratado', 'tecnico'] && daMinhaContratada())
+        );
+      }
+
+      match /orcamentos/{id} {
+        allow read: if gestor() || daContratadaDoRegistro();
+      }
+
+      // Contrato é do cliente: só o gestor cria, edita e apaga. A contratada
+      // lê os contratos dela e nada mais — o que foi acordado não é editado
+      // por quem presta o serviço.
+      //
+      // Vigência e quantidade contratada nem o gestor altera por aqui: depois
+      // que o contrato existe, essas duas coisas só mudam por aditivo (Cloud
+      // Function aditivarContrato), que confere saldo e deixa registro.
+      match /contratos/{id} {
+        allow read: if gestor() || daContratadaDoRegistro();
+        allow create, delete: if gestor();
+        allow update: if gestor()
+          && request.resource.data.vigenciaFim == resource.data.vigenciaFim
+          && request.resource.data.vigenciaInicio == resource.data.vigenciaInicio
+          && (!('totalAditivos' in request.resource.data) || !('totalAditivos' in resource.data)
+              || request.resource.data.totalAditivos == resource.data.totalAditivos);
+
+        // Contratada só chega aos itens dos próprios contratos. `get` custa
+        // uma leitura por avaliação, mas é o que permite conferir o dono
+        // sem repetir o campo em cada item.
+        function contratoDaContratada() {
+          return get(/databases/$(database)/documents/empresasClientes/$(empresaId)/contratos/$(id)).data.empresaContratadaId
+            == request.auth.token.empresaContratadaId;
+        }
+
+        function leItens() {
+          return gestor() || (usuario() && perfil() in ['gestor_contratado', 'tecnico'] && contratoDaContratada());
+        }
+
+        // Item do contrato: o gestor cria (estado inicial zerado), renomeia,
+        // troca unidade e preço, e apaga. Os 3 campos de saldo E a
+        // quantidade contratada só mudam pelas Cloud Functions: saldo na
+        // aprovação/execução/cancelamento de OS, quantidade no aditivo. O
+        // `empresaId` repetido no item é o que a leitura por collection
+        // group (abaixo) consegue filtrar — por isso tem que bater com o
+        // caminho.
+        match /itens/{itemId} {
+          allow read: if leItens();
+          allow create: if gestor()
+            && request.resource.data.empresaId == empresaId
+            && request.resource.data.quantidadeContratada >= 0
+            && request.resource.data.quantidadeReservada == 0
+            && request.resource.data.quantidadeConsumida == 0
+            && request.resource.data.quantidadeDisponivel == request.resource.data.quantidadeContratada;
+
+          allow update: if gestor()
+            && request.resource.data.empresaId == resource.data.empresaId
+            && request.resource.data.quantidadeContratada == resource.data.quantidadeContratada
+            && request.resource.data.quantidadeReservada == resource.data.quantidadeReservada
+            && request.resource.data.quantidadeConsumida == resource.data.quantidadeConsumida
+            && request.resource.data.quantidadeDisponivel == resource.data.quantidadeDisponivel;
+
+          allow delete: if gestor();
+        }
+
+        // Aditivos: histórico do que mudou no contrato. Só leitura; quem
+        // escreve é a Cloud Function.
+        match /aditivos/{aditivoId} {
+          allow read: if leItens();
+          allow write: if false;
+        }
+      }
+
+      // Log de auditoria: append-only e com forma fechada.
+      //
+      // O histórico só tem valor se ninguém puder reescrevê-lo, então update
+      // e delete ficam negados pra todo mundo — inclusive pra quem criou a
+      // entrada. (As Cloud Functions passam por cima via Admin SDK, que
+      // ignora rules; é assim que elas gravam as próprias entradas com
+      // origem 'backend'.)
+      //
+      // No create, a regra amarra a autoria ao usuário logado e fecha o
+      // formato: como a entrada é indelével, uma entrada forjada ficaria no
+      // histórico pra sempre. Então valem só os valores de alvo e operação
+      // que o app conhece, a ação tem que ser a concatenação dos dois, o
+      // conjunto de campos é fixo e os textos têm teto de tamanho. O
+      // convidado do QR Code não escreve log nenhum: as ações dele são
+      // registradas pela Cloud Function, dentro da mesma transação.
+      match /logs/{id} {
+        allow create: if gestorOuContratado()
+          && request.resource.data.usuarioUid == request.auth.uid
+          && request.resource.data.usuarioEmail == request.auth.token.email
+          && request.resource.data.origem == 'app'
+          && request.resource.data.alvo in [
+               'unidade', 'bloco', 'sala', 'equipamento', 'usuario',
+               'empresaContratada', 'contrato', 'itemContrato', 'planoManutencao',
+               'chamado', 'ordemServico', 'orcamento'
+             ]
+          && request.resource.data.operacao in ['criar', 'editar', 'excluir', 'transicao', 'importar']
+          && request.resource.data.acao == request.resource.data.alvo + '.' + request.resource.data.operacao
+          && request.resource.data.id == id
+          && request.resource.data.alvoId is string
+          && request.resource.data.alvoPaiId is string
+          && request.resource.data.data is string
+          && request.resource.data.descricao is string
+          && request.resource.data.descricao.size() <= 500
+          && request.resource.data.alvoRotulo is string
+          && request.resource.data.alvoRotulo.size() <= 200
+          && request.resource.data.usuarioNome is string
+          && request.resource.data.usuarioNome.size() <= 200
+          && request.resource.data.keys().hasOnly([
+               'id', 'acao', 'alvo', 'operacao', 'descricao', 'data',
+               'usuarioUid', 'usuarioNome', 'usuarioEmail',
+               'alvoId', 'alvoRotulo', 'alvoPaiId', 'detalhes', 'origem'
+             ]);
+
+        // Só o gestor lê o histórico — é a tela dele, e a regra é o que
+        // impede outro perfil de puxar a coleção direto pelo SDK.
+        allow read: if gestor();
+        allow update, delete: if false;
+      }
+
+      // Sem regra declarada, e é de propósito: `contadores` é a numeração
+      // sequencial, exclusiva das Cloud Functions.
+    }
+
+    // A tela de contratos lê os itens por collection group, e uma consulta
+    // dessas casa com este caminho, não com o match aninhado acima. Numa
+    // consulta assim as regras não enxergam o caminho do documento, só os
+    // campos — por isso o item carrega `empresaId`, e a consulta do app
+    // precisa filtrar por ele (where empresaId == token.empresaId), senão é
+    // negada inteira.
+    // Só o gestor usa a consulta por grupo; a contratada lê os itens
+    // contrato a contrato, pelo match aninhado, que consegue conferir o dono.
+    match /{caminho=**}/itens/{itemId} {
+      allow read: if request.auth != null
+        && !convidado()
+        && request.auth.token.perfil == 'gestor'
+        && resource.data.empresaId == request.auth.token.empresaId;
+    }
+
+    // `qrLinks` (tokens de QR Code válidos) fica na raiz e sem regra: é
+    // exclusiva das Cloud Functions. Para o cliente, tudo negado.
+  }
+}

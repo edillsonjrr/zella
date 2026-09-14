@@ -1,0 +1,108 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.li-wrap {
+  position: relative;
+  width: 100%;
+  // Reserva espaço acima do input pro label flutuar sem depender da margem
+  // do elemento anterior — sem isso, dentro de um modal com scroll
+  // (overflow-y:auto), o topo do label ficava cortado quando não havia
+  // margem suficiente do vizinho de cima.
+  padding-top: 14px;
+}
+
+.li-input {
+  display: block;
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-input);
+  border-radius: var(--input-radius);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  // styles.scss define `::placeholder { color: ... !important }` global —
+  // precisa de !important aqui pra esconder o placeholder até o campo focar.
+  &::placeholder {
+    color: transparent !important;
+  }
+
+  &:focus::placeholder {
+    color: var(--text-tertiary) !important;
+  }
+
+  &--password {
+    padding-right: 40px;
+  }
+
+  &:hover:not(:disabled):not(:focus) {
+    border-color: var(--primary-400);
+  }
+
+  &:focus {
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px var(--primary-50);
+  }
+
+  &:disabled {
+    color: var(--text-disabled);
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+}
+
+.li-label {
+  position: absolute;
+  top: 14px;
+  bottom: 0;
+  left: 10px;
+  margin: auto 0;
+  height: fit-content;
+  padding: 0 6px;
+  font-size: 0.9375rem;
+  color: var(--text-tertiary);
+  background-color: var(--bg-tertiary);
+  pointer-events: none;
+  white-space: nowrap;
+  transform-origin: left top;
+  transition: transform 0.15s ease, color 0.15s ease, font-size 0.15s ease;
+}
+
+.li-input:focus + .li-label {
+  color: var(--primary-400);
+}
+
+.li-input:not(:placeholder-shown) + .li-label,
+.li-input:focus + .li-label {
+  transform: translateY(-24px) scale(0.85);
+}
+
+.li-toggle {
+  position: absolute;
+  top: 14px;
+  right: 0;
+  bottom: 0;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+}
+
+.li-disabled .li-label {
+  color: var(--text-disabled);
+}

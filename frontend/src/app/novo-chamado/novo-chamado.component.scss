@@ -1,0 +1,326 @@
+:host {
+  display: block;
+}
+
+.standalone-card {
+  &.modal-card {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+
+    &:hover {
+      background: transparent !important;
+    }
+
+    .mat-mdc-card-content {
+      padding: 0 !important;
+    }
+  }
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.modal-scrollable-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+  padding: 16px 20px 12px;
+
+  .modal-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    .modal-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--primary-50);
+      color: var(--primary-500);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      app-icon {
+        font-size: var(--icon-2xl);
+        width: var(--icon-2xl);
+        height: var(--icon-2xl);
+      }
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .modal-subtitle {
+      font-size: 0.8125rem;
+      color: var(--text-tertiary);
+    }
+  }
+
+  .modal-close {
+    color: var(--text-tertiary);
+    margin: -8px -8px 0 0;
+
+    &:hover {
+      color: var(--text-primary);
+      background-color: var(--bg-elevated);
+    }
+  }
+}
+
+.modal-scrollable-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 20px;
+}
+
+.modal-scrollable-footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--border-default);
+
+  button {
+    height: 40px;
+    font-weight: 600;
+  }
+}
+
+.form-section {
+  margin-bottom: 12px;
+
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+
+  app-icon {
+    font-size: var(--icon-md);
+    width: var(--icon-md);
+    height: var(--icon-md);
+    color: var(--primary-500);
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+
+  // O app-label-input reserva 14px de espaço acima de si (ver
+  // label-input.component.scss) pro label flutuante não ser cortado pelo
+  // scroll do modal — isso empurra o próprio input 14px pra baixo. O
+  // mat-form-field ao lado (Unidade) não tem essa reserva, então sem essa
+  // margem os dois campos da mesma linha ficam desalinhados verticalmente.
+  > mat-form-field {
+    margin-top: 14px;
+  }
+}
+
+.section-divider {
+  margin: 12px 0;
+  border-top-color: var(--border-default);
+}
+
+.li-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.li-error {
+  font-size: 0.75rem;
+  color: var(--danger-500);
+}
+
+.upload-area {
+  border: 2px dashed var(--border-default);
+  border-radius: var(--card-radius);
+  padding: 12px;
+  text-align: center;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--primary-500);
+    background-color: var(--primary-50);
+  }
+
+  input.sr-only:focus-visible + .upload-label {
+    outline: 3px solid var(--primary-400);
+    outline-offset: 3px;
+    border-radius: var(--input-radius);
+  }
+
+  .upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: var(--text-secondary);
+
+    app-icon {
+      font-size: var(--icon-2xl);
+      width: var(--icon-2xl);
+      height: var(--icon-2xl);
+      color: var(--primary-500);
+    }
+
+    span {
+      font-weight: 500;
+      font-size: 0.875rem;
+    }
+
+    small {
+      color: var(--text-tertiary);
+    }
+  }
+}
+
+.foto-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+
+  img {
+    max-width: 100%;
+    max-height: 240px;
+    border-radius: var(--button-radius);
+    box-shadow: var(--shadow-card);
+  }
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.qr-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: var(--text-secondary);
+
+  h3 {
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+    max-width: 320px;
+  }
+
+  app-icon {
+    font-size: var(--icon-3xl);
+    width: var(--icon-3xl);
+    height: var(--icon-3xl);
+    color: var(--danger-500);
+  }
+}
+
+.qr-status-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-default);
+  border-top-color: var(--primary-500);
+  border-radius: 50%;
+  animation: qr-status-spin 700ms linear infinite;
+}
+
+@keyframes qr-status-spin {
+  to { transform: rotate(360deg); }
+}
+
+.qr-status--sucesso app-icon {
+  color: var(--success-500);
+}
+
+.qr-inline-erro {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  border-radius: var(--input-radius);
+  background-color: var(--danger-50);
+  color: var(--danger-500);
+  font-size: 0.8125rem;
+
+  app-icon {
+    flex-shrink: 0;
+    font-size: var(--icon-sm);
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+  }
+}
+
+// Unidade em modo leitura, no formulário do convidado: ele chegou por um QR
+// Code que já define onde o chamado cai, então não há o que escolher.
+.qr-unidade {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: var(--surface-subtle, transparent);
+
+  app-icon {
+    color: var(--primary-500);
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+  }
+
+  strong {
+    color: var(--text-primary);
+  }
+}
+
+.qr-unidade-rotulo {
+  font-size: 12px;
+  color: var(--text-secondary);
+}

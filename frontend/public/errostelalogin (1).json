@@ -1,0 +1,50 @@
+{
+  "contexto": {
+    "projeto": "Gestão de Manutenção",
+    "tela": "Tela de Login",
+    "url": "http://localhost:4200/login",
+    "framework": "Angular (standalone components) + Vite dev server",
+    "arquivo_provavel": "src/app/login/login.component.ts",
+    "biblioteca_ui": "Angular Material (mat-form-field, appearance=\"outline\")",
+    "objetivo": "Corrigir os erros abaixo e refatorar a tela de login"
+  },
+  "erros": [
+    {
+      "id": 1,
+      "tipo": "erro_compilacao",
+      "severidade": "alta",
+      "titulo": "Array 'imports' do @Component não pode ser resolvido estaticamente",
+      "mensagem_original": "TS-991010: 'imports' must be an array of components, directives, pipes, or NgModules. Value could not be determined statically.",
+      "localizacao": {
+        "arquivo": "src/app/login/login.component.ts",
+        "linha": 21,
+        "coluna": 4
+      },
+      "descricao": "O compilador AOT do Angular exige que o array 'imports' do decorator @Component de um componente standalone seja um array literal de referências diretas a classes (componentes, diretivas, pipes ou NgModules). No login.component.ts, esse array provavelmente está sendo montado de forma dinâmica (ex: variável externa, spread de outra lista, expressão condicional/ternária, resultado de função), o que impede a análise estática e quebra a build.",
+      "como_reproduzir": "Abrir http://localhost:4200/login e rolar a tela para baixo; o overlay de erro do Vite aparece automaticamente.",
+      "sugestao_correcao": "Editar o decorator @Component do login.component.ts e substituir o valor de 'imports' por um array literal contendo apenas as classes necessárias diretamente, por exemplo: imports: [CommonModule, ReactiveFormsModule, MatIconModule, MatInputModule, MatFormFieldModule, MatButtonModule, MatCheckboxModule]. Remover qualquer lógica computada (spread, ternário, variável) desse array.",
+      "prioridade": "corrigir primeiro, pois impede a compilação/execução correta do componente"
+    },
+    {
+      "id": 2,
+      "tipo": "bug_visual_css",
+      "severidade": "media",
+      "titulo": "Label sobreposto ao placeholder nos campos de E-mail e Senha",
+      "descricao": "Nos campos 'E-mail' e 'Senha' (mat-form-field appearance=\"outline\"), o label (ex: 'E-mail*') aparece sobreposto ao texto de placeholder (ex: 'seu@email.com') dentro do input, em vez do label flutuar acima do campo como é o comportamento padrão do Angular Material.",
+      "evidencias_dom": {
+        "label_html": "<label matformfieldfloatinglabel class=\"mdc-floating-label mat-mdc-floating-label\" ng-reflect-floating=\"false\" ...><mat-label>E-mail</mat-label>...</label>",
+        "input_html": "<input matinput type=\"email\" name=\"email\" placeholder=\"seu@email.com\" required class=\"mat-mdc-input-element ...\" id=\"mat-input-0\">",
+        "form_field_class": "mat-mdc-form-field full-width mat-mdc-form-field-type-mat-input mat-mdc-form-field-has-icon-suffix mat-form-field-appearance-outline mat-form-field-hide-placeholder mat-primary ...",
+        "observacao": "A classe 'mat-form-field-hide-placeholder' está presente (o Angular detectou corretamente que o label não está flutuando e tentou esconder o placeholder nativo), mas visualmente o placeholder continua visível por trás do label, indicando que o CSS responsável por essa regra não está sendo aplicado."
+      },
+      "hipoteses_causa": [
+        "Tema do Angular Material não está totalmente importado/carregado (falta @use '@angular/material' as mat; mat.core(); ou CSS pré-compilado do tema em styles.scss/angular.json)",
+        "CSS global do projeto sobrescrevendo a regra '.mat-form-field-hide-placeholder input::placeholder { color: transparent }' com maior especificidade ou !important",
+        "Versão do Angular Material desalinhada com a versão do Angular, causando classes MDC sem os estilos correspondentes"
+      ],
+      "sugestao_correcao": "1) Verificar se '@angular/material' está com o tema corretamente importado no styles.scss/styles.css do projeto (incluir os estilos base do Material, ex.: @import '@angular/material/prebuilt-themes/...css' ou os mixins do tema custom). 2) Procurar por regras CSS globais que definam estilo para 'input::placeholder' e que possam estar sobrescrevendo o comportamento padrão do Material, e remover/ajustar essas regras para respeitar a classe 'mat-form-field-hide-placeholder'. 3) Como alternativa mais simples, remover o atributo placeholder dos inputs de e-mail e senha (deixando apenas o mat-label), já que a duplicidade label+placeholder é o que está causando a sobreposição visual.",
+      "prioridade": "corrigir após o erro de compilação, é um problema de UX/CSS"
+    }
+  ],
+  "resumo_para_refatoracao": "A tela de login (login.component.ts e seu template/estilos associados) precisa de duas correções: (1) tornar o array 'imports' do @Component estático/literal para eliminar o erro de compilação do Angular AOT; (2) resolver a duplicidade visual entre mat-label e placeholder nos campos de e-mail e senha, seja corrigindo o carregamento do tema do Angular Material, seja removendo os placeholders redundantes. Nenhum erro adicional foi encontrado no console do navegador durante a inspeção (apenas logs normais de desenvolvimento do Vite/Angular)."
+}

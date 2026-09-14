@@ -1,0 +1,276 @@
+:host {
+  display: block;
+}
+
+.quadro-container {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  min-height: calc(100vh - 320px);
+}
+
+.quadro-coluna {
+  flex: 0 0 280px;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+}
+
+.coluna-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 0 4px;
+  min-height: 28px;
+
+  .coluna-titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .titulo-texto {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .contador {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      background: var(--bg-elevated);
+      padding: 2px 8px;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+  }
+
+  button {
+    color: var(--text-tertiary);
+    width: 28px;
+    height: 28px;
+    padding: 2px;
+    flex-shrink: 0;
+
+    app-icon {
+      font-size: var(--icon-md);
+      width: var(--icon-md);
+      height: var(--icon-md);
+    }
+  }
+}
+
+.criacao-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  border: 1px dashed var(--border-default);
+  border-radius: var(--button-radius);
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
+
+  &:hover {
+    border-color: var(--primary-500);
+    background-color: var(--primary-50);
+    color: var(--primary-400);
+  }
+
+  app-icon {
+    font-size: var(--icon-sm);
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+  }
+}
+
+.coluna-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+  border-radius: var(--card-radius);
+  border: 1px dashed transparent;
+  padding: 4px;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+/* Enquanto um card está sendo arrastado, o CDK marca as listas que aceitam
+   o drop — só essas ganham destaque, então o alvo válido fica óbvio. */
+.cdk-drop-list-dragging.coluna-cards--alvo,
+.coluna-cards--alvo.cdk-drop-list-receiving {
+  border-color: var(--primary-500);
+  background-color: var(--primary-50);
+}
+
+.coluna-vazia {
+  padding: 16px 8px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.status-dot {
+  &--info { background-color: var(--info-500); }
+  &--warning { background-color: var(--warning-500); }
+  &--warning-accent { background-color: var(--warning-600, var(--warning-500)); }
+  &--primary { background-color: var(--primary-500); }
+  &--primary-accent { background-color: var(--primary-600); }
+  &--success { background-color: var(--success-500); }
+  &--danger { background-color: var(--danger-500); }
+}
+
+.chamado-card {
+  padding: 12px;
+  cursor: grab;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
+    border-color: var(--border-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+  }
+
+  &.cdk-drag-dragging {
+    cursor: grabbing;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+
+    .chamado-numero {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-tertiary);
+    }
+
+    .os-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--primary-400);
+      background: var(--primary-50);
+      padding: 2px 8px;
+      border-radius: var(--badge-radius);
+
+      app-icon {
+        font-size: var(--icon-2xs);
+        width: var(--icon-2xs);
+        height: var(--icon-2xs);
+      }
+    }
+  }
+
+  .chamado-equipamento {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+
+  .chamado-unidade {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-bottom: 10px;
+  }
+
+  .chamado-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+
+    .responsavel {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .avatar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary-50);
+      color: var(--primary-400);
+      font-size: 0.625rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .data {
+      flex-shrink: 0;
+    }
+  }
+}
+
+/* Card "fantasma" que segue o cursor e buraco deixado na coluna de origem. */
+.cdk-drag-preview {
+  box-shadow: var(--shadow-card-hover);
+  border-radius: var(--card-radius);
+  opacity: 0.95;
+}
+
+.card-placeholder {
+  height: 92px;
+  border: 1px dashed var(--primary-500);
+  border-radius: var(--card-radius);
+  background: var(--primary-50);
+}
+
+.cdk-drag-animating,
+.cdk-drop-list-dragging .chamado-card:not(.cdk-drag-placeholder) {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+@media (max-width: 768px) {
+  .quadro-container {
+    min-height: 60vh;
+  }
+
+  .quadro-coluna {
+    flex-basis: 260px;
+  }
+}

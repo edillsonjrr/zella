@@ -1,0 +1,100 @@
+<mat-card class="app-card animate-fade-in-up standalone-card modal-card">
+  <mat-card-content>
+    <form (ngSubmit)="salvar(usuarioForm)" #usuarioForm="ngForm" class="modal-form" novalidate>
+      <div class="modal-scrollable-header">
+        <div class="modal-title">
+          <div class="modal-icon">
+            <app-icon name="person" aria-hidden="true"></app-icon>
+          </div>
+          <div>
+            <h2>{{ isEdicao ? 'Editar usuário' : 'Novo usuário' }}</h2>
+            <span class="modal-subtitle">{{ isEdicao ? 'Atualize os dados do usuário' : 'Cadastre um novo usuário' }}</span>
+          </div>
+        </div>
+        <button mat-icon-button type="button" class="modal-close" (click)="cancelar()" aria-label="Fechar">
+          <app-icon name="close" aria-hidden="true"></app-icon>
+        </button>
+      </div>
+
+      <div class="modal-scrollable-body">
+        <section class="form-section">
+          <div class="section-title">
+            <app-icon name="person" aria-hidden="true"></app-icon>
+            <h3>Dados do usuário</h3>
+          </div>
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Nome</mat-label>
+              <input matInput #nomeCtrl="ngModel" [(ngModel)]="nome" name="nome" placeholder="Ex: Maria Silva…" required />
+              @if (nomeCtrl.invalid && nomeCtrl.touched) {
+                <mat-error>Informe o nome</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>E-mail</mat-label>
+              <input matInput #emailCtrl="ngModel" [(ngModel)]="email" name="email" type="email" placeholder="Ex: maria@empresa.com…" required email />
+              @if (emailCtrl.invalid && emailCtrl.touched) {
+                <mat-error>Informe um e-mail válido</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Perfil</mat-label>
+              <mat-select #perfilCtrl="ngModel" [(ngModel)]="perfil" name="perfil" required>
+                @for (p of perfis; track p.value) {
+                  <mat-option [value]="p.value">{{ p.label }}</mat-option>
+                }
+              </mat-select>
+              @if (perfilCtrl.invalid && perfilCtrl.touched) {
+                <mat-error>Selecione o perfil</mat-error>
+              }
+            </mat-form-field>
+
+            @if (exigeContratada) {
+              <mat-form-field appearance="outline">
+                <mat-label>Empresa contratada</mat-label>
+                <mat-select #contratadaCtrl="ngModel" [(ngModel)]="empresaContratadaId" name="empresaContratadaId" required>
+                  @for (e of empresasContratadas(); track e.id) {
+                    <mat-option [value]="e.id">{{ e.nome }}</mat-option>
+                  }
+                </mat-select>
+                @if (contratadaCtrl.invalid && contratadaCtrl.touched) {
+                  <mat-error>Selecione a empresa contratada</mat-error>
+                }
+                @if (empresasContratadas().length === 0) {
+                  <mat-hint>Cadastre a empresa em Contratadas antes.</mat-hint>
+                }
+              </mat-form-field>
+            }
+
+            @if (perfil === 'cliente') {
+              <mat-form-field appearance="outline">
+                <mat-label>Unidade</mat-label>
+                <mat-select #unidadeCtrl="ngModel" [(ngModel)]="unidadeId" name="unidadeId" required>
+                  @for (u of unidades(); track u.id) {
+                    <mat-option [value]="u.id">{{ u.nome }}</mat-option>
+                  }
+                </mat-select>
+                @if (unidadeCtrl.invalid && unidadeCtrl.touched) {
+                  <mat-error>Selecione a unidade do cliente</mat-error>
+                }
+              </mat-form-field>
+            }
+          </div>
+        </section>
+      </div>
+
+      @if (erro) {
+        <p class="form-erro" role="alert">{{ erro }}</p>
+      }
+
+      <div class="modal-scrollable-footer">
+        <app-flow-button variant="secondary" type="button" (click)="cancelar()">Cancelar</app-flow-button>
+        <app-flow-button type="submit">
+          <app-icon class="btn-icon" name="save" aria-hidden="true"></app-icon> Salvar usuário
+        </app-flow-button>
+      </div>
+    </form>
+  </mat-card-content>
+</mat-card>

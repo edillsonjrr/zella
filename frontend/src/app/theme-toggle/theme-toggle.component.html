@@ -1,0 +1,30 @@
+<label class="theme-toggle" [class.is-dark]="isDarkMode()" [class.is-light]="!isDarkMode()" aria-label="Alternar tema">
+  <input type="checkbox" [checked]="isDarkMode()" (change)="toggleTheme()">
+  <span class="toggle-track">
+    <span class="stars">
+      <span class="star star-1"></span>
+      <span class="star star-2"></span>
+      <span class="star star-3"></span>
+      <span class="star star-4"></span>
+    </span>
+    <span class="clouds">
+      <span class="cloud cloud-1"></span>
+      <span class="cloud cloud-2"></span>
+    </span>
+    <span class="toggle-thumb">
+      <span class="face face-night">
+        <span class="eye eye-left"></span>
+        <span class="eye eye-right"></span>
+        <span class="mouth"></span>
+      </span>
+      <span class="face face-day">
+        <span class="eye eye-left"></span>
+        <span class="eye eye-right"></span>
+        <span class="mouth"></span>
+      </span>
+      <span class="crater crater-1"></span>
+      <span class="crater crater-2"></span>
+      <span class="crater crater-3"></span>
+    </span>
+  </span>
+</label>

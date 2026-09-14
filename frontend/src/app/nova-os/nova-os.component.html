@@ -1,0 +1,109 @@
+@if (!isDialog) {
+  <div class="page-header animate-fade-in">
+    <h1>Nova Ordem de Serviço</h1>
+  </div>
+}
+
+<mat-card class="app-card animate-fade-in-up standalone-card" [class.modal-card]="isDialog">
+  <mat-card-content>
+    <form (ngSubmit)="salvar(osForm)" #osForm="ngForm" class="modal-form" novalidate>
+      <div class="modal-scrollable-header">
+        <div class="modal-title">
+          <div class="modal-icon">
+            <app-icon name="assignment" aria-hidden="true"></app-icon>
+          </div>
+          <div>
+            <h2>Nova Ordem de Serviço</h2>
+            <span class="modal-subtitle">Crie uma OS vinculada a um contrato</span>
+          </div>
+        </div>
+        @if (isDialog) {
+          <button mat-icon-button type="button" class="modal-close" (click)="cancelar()" aria-label="Fechar">
+            <app-icon name="close" aria-hidden="true"></app-icon>
+          </button>
+        }
+      </div>
+
+      <div class="modal-scrollable-body">
+        @if (chamadoOrigem) {
+          <div class="chamado-origem">
+            <app-icon name="support_agent" aria-hidden="true"></app-icon>
+            <span>Chamado de origem: <strong>{{ chamadoOrigem.numero }}</strong> — {{ chamadoOrigem.equipamento }}</span>
+          </div>
+        } @else {
+          <section class="form-section">
+            <div class="section-title">
+              <app-icon name="support_agent" aria-hidden="true"></app-icon>
+              <h3>Chamado de origem</h3>
+            </div>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Chamado</mat-label>
+              <mat-select #chamadoCtrl="ngModel" [(ngModel)]="chamadoSelecionadoId" name="chamadoOrigemId" (ngModelChange)="selecionarChamado($event)" required>
+                @for (c of chamadosDisponiveis(); track c.id) {
+                  <mat-option [value]="c.id">{{ c.numero }} — {{ c.equipamento }}</mat-option>
+                }
+              </mat-select>
+              @if (chamadoCtrl.invalid && chamadoCtrl.touched) {
+                <mat-error>Selecione o chamado que originou esta OS</mat-error>
+              }
+            </mat-form-field>
+          </section>
+
+          <mat-divider class="section-divider"></mat-divider>
+        }
+
+        <section class="form-section">
+          <div class="section-title">
+            <app-icon name="handyman" aria-hidden="true"></app-icon>
+            <h3>Informações da OS</h3>
+          </div>
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Ativo / Equipamento</mat-label>
+              <input matInput #ativoCtrl="ngModel" [(ngModel)]="ativo" name="ativo" placeholder="Ex: Ar Split - Sala 101…" required />
+              @if (ativoCtrl.invalid && ativoCtrl.touched) {
+                <mat-error>Informe o ativo/equipamento</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Contrato / Ata</mat-label>
+              <mat-select #contratoCtrl="ngModel" [(ngModel)]="contratoId" name="contratoId" required>
+                @for (c of contratos(); track c.id) {
+                  <mat-option [value]="c.id">{{ c.numero }} — {{ c.fornecedor }}</mat-option>
+                }
+              </mat-select>
+              @if (contratoCtrl.invalid && contratoCtrl.touched) {
+                <mat-error>Selecione o contrato</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Técnico Responsável</mat-label>
+              <mat-select #tecnicoCtrl="ngModel" [(ngModel)]="tecnicoId" name="tecnicoId" required>
+                @for (t of tecnicos(); track t.id) {
+                  <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+                }
+              </mat-select>
+              @if (tecnicoCtrl.invalid && tecnicoCtrl.touched) {
+                <mat-error>Selecione o técnico</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Diagnóstico Técnico</mat-label>
+              <textarea matInput rows="3" [(ngModel)]="diagnostico" name="diagnostico" placeholder="Descreva o diagnóstico e o serviço necessário…"></textarea>
+            </mat-form-field>
+          </div>
+        </section>
+      </div>
+
+      <div class="modal-scrollable-footer">
+        <app-flow-button variant="secondary" type="button" (click)="cancelar()">Cancelar</app-flow-button>
+        <app-flow-button type="submit">
+          <app-icon class="btn-icon" name="save" aria-hidden="true"></app-icon> Salvar OS
+        </app-flow-button>
+      </div>
+    </form>
+  </mat-card-content>
+</mat-card>

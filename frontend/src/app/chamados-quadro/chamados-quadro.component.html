@@ -1,0 +1,75 @@
+<div class="quadro-container" cdkDropListGroup>
+  @for (coluna of colunas; track coluna.status) {
+    <div class="quadro-coluna">
+      <div class="coluna-header">
+        <div class="coluna-titulo">
+          <span class="status-dot" [class]="'status-dot--' + coluna.corClasse"></span>
+          <span class="titulo-texto">{{ coluna.titulo }}</span>
+          <span class="contador">{{ coluna.chamados.length }}</span>
+        </div>
+        @if (coluna.status === 'Aberto') {
+          <button mat-icon-button (click)="onAbrirNovoChamado()" aria-label="Adicionar chamado">
+            <app-icon name="add"></app-icon>
+          </button>
+        }
+      </div>
+
+      @if (coluna.status === 'Aberto') {
+        <button type="button" class="criacao-inline" (click)="onAbrirNovoChamado()">
+          <app-icon name="add"></app-icon>
+          <span>Adicionar chamado...</span>
+        </button>
+      }
+
+      <div
+        class="coluna-cards"
+        cdkDropList
+        [cdkDropListData]="coluna"
+        [cdkDropListEnterPredicate]="coluna.aceita"
+        [class.coluna-cards--alvo]="!!coluna.acao"
+        (cdkDropListDropped)="soltar($event, coluna)"
+        [matTooltip]="motivoBloqueio(coluna)"
+        matTooltipPosition="above"
+      >
+        @for (chamado of coluna.chamados; track chamado.id) {
+          <mat-card
+            class="chamado-card app-card"
+            cdkDrag
+            [cdkDragData]="chamado"
+            role="button"
+            tabindex="0"
+            [attr.aria-label]="'Abrir chamado ' + chamado.numero + ' — ' + chamado.equipamento"
+            (click)="onAbrirDetalhe(chamado)"
+            (keydown.enter)="onAbrirDetalhe(chamado)"
+            (keydown.space)="$event.preventDefault(); onAbrirDetalhe(chamado)"
+          >
+            <div class="card-placeholder" *cdkDragPlaceholder></div>
+            <mat-card-content>
+              <div class="card-header">
+                <span class="chamado-numero">{{ chamado.numero }}</span>
+                @if (chamado.osNumero) {
+                  <span class="os-tag">
+                    <app-icon name="assignment" aria-hidden="true"></app-icon> {{ chamado.osNumero }}
+                  </span>
+                }
+              </div>
+              <div class="chamado-equipamento">{{ chamado.equipamento }}</div>
+              <div class="chamado-unidade">{{ chamado.unidadeSigla }}</div>
+              <div class="chamado-meta">
+                <span class="responsavel">
+                  <span class="avatar">{{ chamado.responsavelIniciais }}</span>
+                  {{ chamado.responsavelNome }}
+                </span>
+                <span class="data">{{ chamado.dataCriacao | date:'dd/MM/yyyy' }}</span>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+
+        @if (!coluna.chamados.length) {
+          <div class="coluna-vazia">Nenhum chamado</div>
+        }
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,80 @@
+<div class="page-header animate-fade-in">
+  <h1>Contratos</h1>
+  @if (podeCriar) {
+    <app-flow-button size="lg" (click)="abrirNovoContrato()">
+      <app-icon class="btn-icon" name="add"></app-icon> Criar
+    </app-flow-button>
+  }
+</div>
+
+<mat-card class="app-card animate-fade-in-up">
+  <mat-card-header>
+    <app-icon class="section-icon" color="primary" name="description"></app-icon>
+    <mat-card-title>Contratos Vigentes</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (podeCriar) {
+      <button type="button" class="criacao-inline" (click)="abrirNovoContrato()">
+        <app-icon name="add"></app-icon>
+        <span>Cadastrar novo contrato...</span>
+      </button>
+    }
+
+    <table mat-table [dataSource]="contratosView()" class="app-table full-width">
+      <ng-container matColumnDef="numero">
+        <th mat-header-cell *matHeaderCellDef>Número</th>
+        <td mat-cell *matCellDef="let c"><strong>{{ c.numero }}</strong></td>
+      </ng-container>
+
+      <ng-container matColumnDef="fornecedor">
+        <th mat-header-cell *matHeaderCellDef>Fornecedor</th>
+        <td mat-cell *matCellDef="let c">{{ c.fornecedor }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="vigencia">
+        <th mat-header-cell *matHeaderCellDef>Vigência</th>
+        <td mat-cell *matCellDef="let c">{{ c.vigencia }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="itens">
+        <th mat-header-cell *matHeaderCellDef>Itens</th>
+        <td mat-cell *matCellDef="let c">{{ c.itensCount }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="unidades">
+        <th mat-header-cell *matHeaderCellDef>Unidades disponíveis</th>
+        <td mat-cell *matCellDef="let c"><strong>{{ c.unidadesDisponiveis }} / {{ c.totalUnidades }}</strong></td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let c">
+          <span class="badge" [class.badge--ativo]="c.status === 'Ativo' && !c.vencimento" [class.badge--critico]="c.status === 'Crítico' || !!c.vencimento">
+            <app-icon [name]="c.status === 'Crítico' || c.vencimento ? 'error' : 'check_circle'"></app-icon>
+            {{ c.vencimento || c.status }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="acoes">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let c" (click)="$event.stopPropagation()">
+          <button mat-icon-button color="primary" (click)="abrirDetalhe(c)" [attr.aria-label]="'Visualizar contrato ' + c.numero">
+            <app-icon name="visibility"></app-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: displayedColumns;"
+        (click)="abrirDetalhe(row)"
+        (keydown.enter)="abrirDetalhe(row)"
+        (keydown.space)="$event.preventDefault(); abrirDetalhe(row)"
+        tabindex="0"
+        class="linha-clicavel"
+      ></tr>
+    </table>
+  </mat-card-content>
+</mat-card>

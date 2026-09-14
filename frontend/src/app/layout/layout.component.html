@@ -1,0 +1,45 @@
+<div class="app-shell">
+  <app-rail></app-rail>
+
+  <div class="main-area">
+    <mat-toolbar class="toolbar">
+      <div class="toolbar-left">
+        <a class="toolbar-brand" routerLink="/" aria-label="Zella — início">
+          <app-logo [size]="26" [mark]="false"></app-logo>
+        </a>
+      </div>
+      <div class="toolbar-right">
+        <app-theme-toggle></app-theme-toggle>
+
+        <button mat-icon-button [matMenuTriggerFor]="menuUsuario" class="user-menu-trigger" aria-label="Perfil do usuário">
+          <div class="user-avatar">{{ usuarioLogado().nome.charAt(0) }}</div>
+        </button>
+
+        <mat-menu #menuUsuario="matMenu" class="usuario-menu" xPosition="before">
+          <div class="usuario-menu-header">
+            <span class="usuario-menu-nome">{{ usuarioLogado().nome }}</span>
+            <span class="usuario-menu-perfil">{{ usuarioLogado().perfil }}</span>
+            @if (usuarioLogado().empresaNome) {
+              <span class="usuario-menu-perfil">{{ usuarioLogado().empresaNome }}</span>
+            }
+          </div>
+          <mat-divider></mat-divider>
+          @if (usuarioLogado().empresaId) {
+            <button mat-menu-item routerLink="/minha-conta">
+              <app-icon name="person"></app-icon>
+              <span>Minha conta</span>
+            </button>
+          }
+          <button mat-menu-item (click)="sair()">
+            <app-icon name="logout"></app-icon>
+            <span>Sair</span>
+          </button>
+        </mat-menu>
+      </div>
+    </mat-toolbar>
+
+    <main id="main-content" class="content" tabindex="-1">
+      <router-outlet />
+    </main>
+  </div>
+</div>

@@ -1,0 +1,162 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.painel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px;
+  gap: 16px;
+
+  .painel-titulo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    .painel-icone {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--primary-50);
+      color: var(--primary-500);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      app-icon {
+        font-size: var(--icon-2xl);
+        width: var(--icon-2xl);
+        height: var(--icon-2xl);
+      }
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .painel-subtitulo {
+      font-size: 0.8125rem;
+      color: var(--text-tertiary);
+    }
+  }
+
+  button {
+    color: var(--text-tertiary);
+    margin: -8px -8px 0 0;
+
+    &:hover {
+      color: var(--text-primary);
+      background-color: var(--bg-elevated);
+    }
+  }
+}
+
+.painel-divider {
+  border-top-color: var(--border-default);
+}
+
+.painel-conteudo {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+
+  &--bloco {
+    margin-bottom: 20px;
+  }
+
+  .campo-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-tertiary);
+  }
+
+  .campo-valor {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+
+  .campo-descricao {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+  }
+}
+
+.foto-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px;
+  border: 1px dashed var(--border-default);
+  border-radius: var(--button-radius);
+  color: var(--text-tertiary);
+  font-size: 0.8125rem;
+
+  app-icon {
+    font-size: var(--icon-3xl);
+    width: var(--icon-3xl);
+    height: var(--icon-3xl);
+  }
+}
+
+.painel-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 20px 20px;
+  border-top: 1px solid var(--border-default);
+
+  button {
+    height: 40px;
+    font-weight: 600;
+  }
+}
+
+.responsavel-select {
+  margin: 0;
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+.foto-evidencia {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  border-radius: var(--button-radius);
+}
+
+.foto-link {
+  display: block;
+}
+
+.acao-erro {
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  border-radius: var(--button-radius);
+  background: var(--danger-50);
+  color: var(--danger-500);
+  font-size: 0.8125rem;
+}

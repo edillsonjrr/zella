@@ -1,0 +1,22 @@
+<button type="button" class="historico-toggle" (click)="alternar()" [attr.aria-expanded]="aberto()">
+  <app-icon name="clock" aria-hidden="true"></app-icon>
+  <span>{{ titulo }}</span>
+  <app-icon class="historico-seta" name="expand_more" [class.historico-seta--aberta]="aberto()" aria-hidden="true"></app-icon>
+</button>
+
+@if (aberto()) {
+  @if (carregando()) {
+    <p class="historico-vazio">Carregando…</p>
+  } @else if (!eventos().length) {
+    <p class="historico-vazio">Nenhuma ação registrada.</p>
+  } @else {
+    <ul class="historico-lista">
+      @for (evento of eventos(); track evento.id) {
+        <li>
+          <span class="historico-descricao">{{ evento.descricao }}</span>
+          <span class="historico-meta">{{ evento.usuarioNome }} · {{ formatarDataHora(evento.data) }}</span>
+        </li>
+      }
+    </ul>
+  }
+}

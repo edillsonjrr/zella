@@ -1,0 +1,16 @@
+rules_version = '2';
+
+// Foto de evidência dos chamados. A escrita é exclusiva da Cloud Function
+// criarChamado (Admin SDK ignora estas regras): o convidado do QR Code anexa
+// foto sem ter permissão nenhuma aqui. A leitura segue o mesmo isolamento do
+// Firestore — só quem tem no token o id da empresa dona do caminho.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /empresasClientes/{empresaId}/{resto=**} {
+      allow read: if request.auth != null
+        && request.auth.token.firebase.sign_in_provider != 'anonymous'
+        && request.auth.token.empresaId == empresaId;
+      allow write: if false;
+    }
+  }
+}

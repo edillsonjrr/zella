@@ -1,0 +1,36 @@
+.qrcodes-intro {
+  margin: 0 0 20px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 640px;
+}
+
+.qrcodes-tabs {
+  .mat-mdc-tab-labels {
+    border-bottom: 1px solid var(--border-default);
+  }
+
+  .mat-mdc-tab {
+    min-width: 100px;
+    height: 40px;
+    padding: 0 16px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-tertiary);
+
+    &.mdc-tab--active {
+      color: var(--text-primary);
+    }
+  }
+
+  .app-table {
+    margin-top: 16px;
+  }
+}
+
+.qrcodes-empty {
+  margin: 20px 0 0;
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+}

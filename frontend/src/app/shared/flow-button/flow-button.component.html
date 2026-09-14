@@ -1,0 +1,12 @@
+<span class="flow-button-wrap">
+  <span class="flow-button-outline" [style.border-radius.px]="raio">
+    @if (caminhoSvg) {
+      <svg [attr.width]="largura()" [attr.height]="altura()" [attr.viewBox]="'0 0 ' + largura() + ' ' + altura()" aria-hidden="true" preserveAspectRatio="none" class="flow-button-svg">
+        <path [attr.d]="caminhoSvg" fill="none" [attr.stroke]="borderColor" stroke-width="1" stroke-dasharray="6,4" class="flow-button-dash" />
+      </svg>
+    }
+  </span>
+  <button #botao [type]="type" [disabled]="disabled" class="flow-button" [class]="'flow-button--' + size + ' flow-button--' + variant">
+    <ng-content></ng-content>
+  </button>
+</span>

@@ -1,0 +1,178 @@
+<div class="page-header animate-fade-in">
+  <h1>Empresas clientes</h1>
+</div>
+
+<div class="empresas-grid">
+  <mat-card class="app-card animate-fade-in-up">
+    <mat-card-content>
+      <form #empresaForm="ngForm" (ngSubmit)="criar(empresaForm)" class="empresa-form" novalidate>
+        <div class="empresa-form-titulo">
+          <app-icon name="business" aria-hidden="true"></app-icon>
+          <div>
+            <h2>Nova empresa</h2>
+            <span>Cria a empresa e convida o primeiro gestor dela.</span>
+          </div>
+        </div>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Nome da empresa</mat-label>
+          <input matInput #nomeCtrl="ngModel" [(ngModel)]="nome" name="nome" placeholder="Ex: Senai DF" required />
+          @if (nomeCtrl.invalid && nomeCtrl.touched) {
+            <mat-error>Informe o nome da empresa</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Nome do gestor</mat-label>
+          <input matInput #gestorNomeCtrl="ngModel" [(ngModel)]="gestorNome" name="gestorNome" placeholder="Ex: Maria Silva" required />
+          @if (gestorNomeCtrl.invalid && gestorNomeCtrl.touched) {
+            <mat-error>Informe o nome do gestor</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>E-mail do gestor</mat-label>
+          <input matInput #gestorEmailCtrl="ngModel" [(ngModel)]="gestorEmail" name="gestorEmail" type="email" placeholder="maria@empresa.com" required email />
+          @if (gestorEmailCtrl.invalid && gestorEmailCtrl.touched) {
+            <mat-error>Informe um e-mail válido</mat-error>
+          }
+        </mat-form-field>
+
+        @if (erro()) {
+          <p class="empresa-msg empresa-msg--erro" role="alert">{{ erro() }}</p>
+        }
+        @if (sucesso()) {
+          <p class="empresa-msg empresa-msg--ok" role="status">{{ sucesso() }}</p>
+        }
+
+        <app-flow-button type="submit" [disabled]="salvando()">
+          <app-icon class="btn-icon" name="add" aria-hidden="true"></app-icon>
+          {{ salvando() ? 'Criando...' : 'Criar empresa' }}
+        </app-flow-button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="app-card animate-fade-in-up empresas-lista">
+    <mat-card-content>
+      <div class="empresas-lista-cabecalho">
+        <div>
+          <h2>Empresas cadastradas</h2>
+          <span>{{ empresas().length }} no total · {{ totalAtivas() }} ativas</span>
+        </div>
+        <label class="empresas-busca">
+          <app-icon name="search" aria-hidden="true"></app-icon>
+          <input
+            type="search"
+            placeholder="Buscar por nome ou e-mail"
+            aria-label="Buscar empresa"
+            [value]="filtro()"
+            (input)="filtro.set($any($event.target).value)"
+          />
+        </label>
+      </div>
+
+      @if (empresas().length === 0) {
+        <p class="empresas-vazio">Nenhuma empresa cadastrada ainda.</p>
+      } @else if (empresasFiltradas().length === 0) {
+        <p class="empresas-vazio">Nenhuma empresa corresponde a "{{ filtro() }}".</p>
+      } @else {
+        <table mat-table [dataSource]="empresasFiltradas()" class="app-table full-width">
+          <ng-container matColumnDef="nome">
+            <th mat-header-cell *matHeaderCellDef>Empresa</th>
+            <td mat-cell *matCellDef="let e">
+              @if (editandoId() === e.id) {
+                <form class="empresa-edicao" (ngSubmit)="salvarEdicao(e)">
+                  <input
+                    class="empresa-edicao-input"
+                    [(ngModel)]="nomeEditado"
+                    name="nomeEditado"
+                    aria-label="Novo nome da empresa"
+                    required
+                    autofocus
+                    (keydown.escape)="cancelarEdicao()"
+                  />
+                  <button mat-icon-button type="submit" matTooltip="Salvar" aria-label="Salvar nome" [disabled]="salvandoEdicao() || !nomeEditado.trim()">
+                    <app-icon name="save"></app-icon>
+                  </button>
+                  <button mat-icon-button type="button" matTooltip="Cancelar" aria-label="Cancelar edição" (click)="cancelarEdicao()" [disabled]="salvandoEdicao()">
+                    <app-icon name="close"></app-icon>
+                  </button>
+                </form>
+              } @else {
+                <span class="empresa-nome">{{ e.nome }}</span>
+                <span class="empresa-id">{{ e.id }}</span>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="gestorEmail">
+            <th mat-header-cell *matHeaderCellDef>Primeiro gestor</th>
+            <td mat-cell *matCellDef="let e">{{ e.gestorEmail ?? '-' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="situacao">
+            <th mat-header-cell *matHeaderCellDef>Situação</th>
+            <td mat-cell *matCellDef="let e">
+              <span class="empresa-situacao" [class.empresa-situacao--inativa]="!e.ativa">
+                {{ e.ativa ? 'Ativa' : 'Desativada' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="acoes">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let e" class="empresa-acoes">
+              <button
+                mat-icon-button
+                (click)="editar(e)"
+                matTooltip="Renomear"
+                [attr.aria-label]="'Renomear ' + e.nome"
+                [disabled]="editandoId() === e.id"
+              >
+                <app-icon name="edit"></app-icon>
+              </button>
+              <button
+                mat-icon-button
+                (click)="alternarAtiva(e)"
+                [matTooltip]="e.ativa ? 'Desativar acesso' : 'Reativar acesso'"
+                [attr.aria-label]="e.ativa ? 'Desativar ' + e.nome : 'Reativar ' + e.nome"
+              >
+                <app-icon [name]="e.ativa ? 'block' : 'check_circle'"></app-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="app-card animate-fade-in-up empresas-migracao">
+    <mat-card-content>
+      <h2>Migração dos dados antigos</h2>
+      <p>
+        Copia os dados que estão na raiz do banco (de antes das empresas) para dentro de uma
+        empresa. Não apaga nada da raiz. Temporário: some depois do teste guiado.
+      </p>
+      <div class="empresas-migracao-campos">
+        <mat-form-field appearance="outline">
+          <mat-label>Id da empresa de destino</mat-label>
+          <input matInput [(ngModel)]="migracaoEmpresaId" name="migracaoEmpresaId" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Nome (se a empresa ainda não existir)</mat-label>
+          <input matInput [(ngModel)]="migracaoNome" name="migracaoNome" />
+        </mat-form-field>
+        <app-flow-button variant="secondary" type="button" [disabled]="migrando() || !migracaoEmpresaId" (click)="migrarRaiz()">
+          {{ migrando() ? 'Migrando...' : 'Migrar dados da raiz' }}
+        </app-flow-button>
+      </div>
+      @if (migracaoResultado()) {
+        <p class="empresa-msg empresa-msg--ok" role="status">{{ migracaoResultado() }}</p>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

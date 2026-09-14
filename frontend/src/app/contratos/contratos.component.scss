@@ -1,0 +1,62 @@
+:host {
+  display: block;
+}
+
+.app-card {
+  mat-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 8px;
+
+    .section-icon {
+      width: 22px;
+      height: 22px;
+      font-size: 22px;
+    }
+
+    mat-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0;
+    }
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+.criacao-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  border: 1px dashed var(--border-default);
+  border-radius: var(--button-radius);
+  color: var(--text-tertiary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
+
+  &:hover {
+    border-color: var(--primary-500);
+    background-color: var(--primary-50);
+    color: var(--primary-400);
+  }
+
+  app-icon {
+    font-size: var(--icon-md);
+    width: var(--icon-md);
+    height: var(--icon-md);
+  }
+}
+
+.linha-clicavel {
+  cursor: pointer;
+}

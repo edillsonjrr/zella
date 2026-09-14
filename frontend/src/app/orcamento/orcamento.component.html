@@ -1,0 +1,100 @@
+<div class="orcamento-header">
+  <div class="orcamento-titulo">
+    <div class="orcamento-icone">
+      <app-icon name="request_quote"></app-icon>
+    </div>
+    <div>
+      <h2>Orçamento</h2>
+      <span class="orcamento-subtitulo">{{ os.numero }}</span>
+    </div>
+  </div>
+  <button mat-icon-button (click)="fechar()" aria-label="Fechar">
+    <app-icon name="close"></app-icon>
+  </button>
+</div>
+
+<mat-divider class="orcamento-divider"></mat-divider>
+
+<div class="orcamento-body">
+  @if (modoLeitura()) {
+    <div class="alerta-status">
+      <app-icon name="info"></app-icon>
+      <span>Orçamento {{ orcamentoExistente()?.situacao?.toLowerCase() ?? 'da OS ' + os.situacao.toLowerCase() }}. Não é possível editar.</span>
+    </div>
+  } @else if (orcamentoExistente()?.situacao === 'Rejeitado' || orcamentoExistente()?.situacao === 'Substituído') {
+    <div class="alerta-status">
+      <app-icon name="info"></app-icon>
+      <span>O orçamento anterior foi {{ orcamentoExistente()?.situacao?.toLowerCase() }}. Ajuste os itens e envie um novo.</span>
+    </div>
+  }
+
+  <section class="form-section">
+    <div class="section-title">
+      <app-icon name="inventory_2"></app-icon>
+      <h3>Itens do Contrato</h3>
+    </div>
+    <p class="section-hint">Selecione os itens e quantidades do orçamento</p>
+
+    <div class="itens-lista">
+      @for (item of itensSelecionados(); track item.itemContratoId) {
+        <mat-card class="item-card" [class.item-card--indisponivel]="item.saldo === 0">
+          <div class="item-row">
+            <mat-checkbox
+              [(ngModel)]="item.selecionado"
+              [name]="'chk-' + item.itemContratoId"
+              [disabled]="modoLeitura() || item.saldo === 0"
+              color="primary"
+            ></mat-checkbox>
+
+            <div class="item-info">
+              <strong>{{ item.nome }}</strong>
+              <span class="item-meta">Unidade: {{ item.unidadeMedida }}</span>
+              <span class="item-meta item-meta--saldo" [class.item-meta--critico]="item.saldo < 10">
+                Saldo: {{ item.saldo }}
+              </span>
+              <span class="item-meta">Preço unit. (contrato): {{ item.precoUnitario | currency:'BRL' }}</span>
+            </div>
+          </div>
+
+          @if (item.selecionado && item.saldo > 0) {
+            <mat-form-field appearance="outline" class="item-qtd">
+              <mat-label>Qtd</mat-label>
+              <input
+                matInput
+                type="number"
+                min="1"
+                [max]="item.saldo"
+                [(ngModel)]="item.quantidade"
+                [name]="'qtd-' + item.itemContratoId"
+                [disabled]="modoLeitura()"
+              />
+            </mat-form-field>
+          }
+        </mat-card>
+      }
+    </div>
+  </section>
+
+  <mat-divider class="orcamento-divider"></mat-divider>
+
+  <div class="orcamento-total">
+    <span>Total do orçamento</span>
+    <strong>{{ total() | currency:'BRL' }}</strong>
+  </div>
+
+  @if (erro()) {
+    <p class="alerta-status alerta-status--erro" role="alert">
+      <app-icon name="warning"></app-icon>
+      <span>{{ erro() }}</span>
+    </p>
+  }
+</div>
+
+<div class="orcamento-footer">
+  <app-flow-button variant="secondary" type="button" (click)="fechar()">Fechar</app-flow-button>
+  @if (!modoLeitura()) {
+    <app-flow-button type="button" (click)="salvar()" [disabled]="salvando()">
+      <app-icon class="btn-icon" name="save"></app-icon> {{ salvando() ? 'Enviando…' : 'Salvar orçamento' }}
+    </app-flow-button>
+  }
+</div>

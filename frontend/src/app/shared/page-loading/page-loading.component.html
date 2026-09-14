@@ -1,0 +1,11 @@
+@if (loading()) {
+  <div class="route-progress" role="progressbar" aria-label="Carregando página" aria-valuemin="0" aria-valuemax="100" aria-valuetext="Carregamento em andamento, tempo estimado indeterminado"></div>
+  <span class="sr-only" role="status">Carregando conteúdo da página.</span>
+  <section class="page-skeleton" aria-busy="true" aria-label="Carregando conteúdo">
+    <div class="page-skeleton-spinner"><app-spinner size="lg" [brand]="true" label="Carregando página"></app-spinner></div>
+    <div class="skeleton skeleton-title"></div>
+    <div class="skeleton-actions"><div class="skeleton skeleton-button"></div><div class="skeleton skeleton-button skeleton-button--short"></div></div>
+    <div class="skeleton-grid">@for (item of [1, 2, 3, 4]; track item) { <div class="skeleton-card"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-value"></div></div> }</div>
+    <div class="skeleton-panel"><div class="skeleton skeleton-line skeleton-line--wide"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div></div>
+  </section>
+}

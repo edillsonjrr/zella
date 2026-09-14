@@ -1,0 +1,110 @@
+<div class="page-header animate-fade-in">
+  <h1>Manutenção preventiva</h1>
+  <div class="acoes-header">
+    <app-flow-button variant="secondary" size="lg" (click)="gerarAgora()" [disabled]="gerando()">
+      <app-icon class="btn-icon" name="clock"></app-icon> {{ gerando() ? 'Gerando…' : 'Gerar agora' }}
+    </app-flow-button>
+    <app-flow-button size="lg" (click)="novo()">
+      <app-icon class="btn-icon" name="add"></app-icon> Novo plano
+    </app-flow-button>
+  </div>
+</div>
+
+@if (resultadoGeracao()) {
+  <p class="resultado-geracao">{{ resultadoGeracao() }}</p>
+}
+
+<div class="resumo animate-fade-in">
+  <div class="resumo-card">
+    <span class="resumo-valor">{{ resumo().total }}</span>
+    <span class="resumo-label">Planos ativos</span>
+  </div>
+  <div class="resumo-card" [class.resumo-card--alerta]="resumo().atrasados > 0">
+    <span class="resumo-valor">{{ resumo().atrasados }}</span>
+    <span class="resumo-label">Atrasados</span>
+  </div>
+  <div class="resumo-card">
+    <span class="resumo-valor">{{ resumo().proximos }}</span>
+    <span class="resumo-label">Vencendo</span>
+  </div>
+  <div class="resumo-card">
+    <span class="resumo-valor">{{ resumo().execucoesAno }}</span>
+    <span class="resumo-label">Execuções/ano</span>
+  </div>
+  @if (custoAnualPrevisto() > 0) {
+    <div class="resumo-card resumo-card--destaque">
+      <span class="resumo-valor">{{ formatarMoeda(custoAnualPrevisto()) }}</span>
+      <span class="resumo-label">Custo anual previsto</span>
+    </div>
+  }
+</div>
+
+<mat-card class="app-card animate-fade-in-up">
+  <mat-card-content>
+    @if (!planos().length) {
+      <p class="vazio">
+        Nenhum plano cadastrado. Um plano gera o chamado sozinho na data certa — o resto do fluxo
+        (OS, orçamento, execução) segue igual ao de sempre.
+      </p>
+    } @else {
+      <table mat-table [dataSource]="planos()" class="app-table full-width">
+        <ng-container matColumnDef="nome">
+          <th mat-header-cell *matHeaderCellDef>Plano</th>
+          <td mat-cell *matCellDef="let p">
+            <strong>{{ p.nome }}</strong>
+            @if (p.itemNome) {
+              <span class="item-vinculado">{{ p.itemNome }}</span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="equipamento">
+          <th mat-header-cell *matHeaderCellDef>Equipamento</th>
+          <td mat-cell *matCellDef="let p">
+            {{ p.equipamentoNome }}
+            <span class="local">{{ p.local }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="periodicidade">
+          <th mat-header-cell *matHeaderCellDef>Periodicidade</th>
+          <td mat-cell *matCellDef="let p">{{ p.periodicidadeLabel }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="proxima">
+          <th mat-header-cell *matHeaderCellDef>Próxima</th>
+          <td mat-cell *matCellDef="let p">{{ p.proximaFormatada }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="situacao">
+          <th mat-header-cell *matHeaderCellDef>Situação</th>
+          <td mat-cell *matCellDef="let p">
+            <span class="badge-situacao" [class]="'badge-situacao--' + p.situacao">{{ p.situacaoLabel }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="acoes">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let p">
+            <div class="acoes">
+              <button mat-icon-button (click)="editar(p)" [attr.aria-label]="'Editar ' + p.nome">
+                <app-icon name="edit"></app-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="excluir(p)" [attr.aria-label]="'Excluir ' + p.nome">
+                <app-icon name="delete"></app-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    }
+
+    <button type="button" class="criacao-inline" (click)="novo()">
+      <app-icon name="add"></app-icon>
+      <span>Adicionar plano preventivo...</span>
+    </button>
+  </mat-card-content>
+</mat-card>

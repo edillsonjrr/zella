@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Zella</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#111111">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- Tipografia inspirada no Trello: a interface do Trello usa a Atlassian
+       Sans, derivada da Inter Variable, por isso a Inter é a fonte principal
+       da UI (ver --font-sans em styles.scss). A DM Sans entra só no wordmark
+       da logo, como alternativa aberta à Charlie Display, fonte proprietária
+       da marca Trello. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@700&display=swap" rel="stylesheet">
+</head>
+<body class="mat-typography">
+  <!-- Aplica o tema salvo antes de o Angular subir. Sem isto o body fica
+       escuro até o botão de tema (dentro do layout) ser criado, e o skeleton
+       da primeira navegação e a tela de login saem sempre pretos no tema
+       claro. A chave é a mesma do ThemeToggleComponent. -->
+  <script>
+    try {
+      if (localStorage.getItem('gm-theme') === 'light') {
+        document.body.classList.add('light-mode');
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute('content', '#ffffff');
+      }
+    } catch (e) {}
+  </script>
+  <app-root></app-root>
+</body>
+</html>

@@ -1,0 +1,123 @@
+{
+  "pagina_analisada": "Dashboard - Gestão de Ativos, Chamados e Contratos (localhost:4200/dashboard)",
+  "data_analise": "2026-08-21",
+  "metodologia": "Heurísticas de Nielsen, WCAG 2.1 AA, princípios de UX para dashboards (hierarquia visual, densidade de dados, consistência, acessibilidade)",
+  "melhorias": [
+    {
+      "id": 1,
+      "categoria": "Primeira impressão / Fluxo",
+      "severidade": "alta",
+      "problema": "O modal 'Novo Chamado' aparece aberto por cima do dashboard já no carregamento da página, obrigando o usuário a fechá-lo antes de ver qualquer conteúdo.",
+      "recomendacao": "Modais só devem abrir por ação explícita do usuário (clique em 'Novo chamado'). Verificar se há um bug de estado inicial disparando o modal automaticamente.",
+      "principio": "Heurística de Nielsen: controle e liberdade do usuário"
+    },
+    {
+      "id": 2,
+      "categoria": "Segurança / Confiança",
+      "severidade": "alta",
+      "problema": "Existe um seletor 'Usuário (mock)' visível no cabeçalho, expondo um mecanismo de teste/desenvolvimento em uma tela que parece de produção.",
+      "recomendacao": "Remover ou ocultar seletores de dados mock em builds de produção; se for ambiente de homologação, sinalizar claramente com uma faixa 'Ambiente de testes'.",
+      "principio": "Confiança e credibilidade (Nielsen)"
+    },
+    {
+      "id": 3,
+      "categoria": "Navegação",
+      "severidade": "media",
+      "problema": "Rótulos do menu lateral são truncados (ex.: 'Planejad...'), dificultando o entendimento do destino do link.",
+      "recomendacao": "Aumentar a largura do menu, usar tooltip ao passar o mouse, ou abreviar de forma intencional (ex.: 'Planej.') em vez de cortar com reticências.",
+      "principio": "Visibilidade e clareza da navegação"
+    },
+    {
+      "id": 4,
+      "categoria": "Navegação",
+      "severidade": "baixa",
+      "problema": "O badge numérico vermelho '20' no ícone de Planejamento não tem legenda nem tooltip explicando o que representa (pendências? notificações?).",
+      "recomendacao": "Adicionar tooltip ou texto de apoio explicando o significado do contador.",
+      "principio": "Heurística de Nielsen: reconhecimento em vez de memorização"
+    },
+    {
+      "id": 5,
+      "categoria": "Hierarquia visual",
+      "severidade": "alta",
+      "problema": "Os 8 cartões de KPI (Chamados, Abertos, Em atendimento, Finalizados, Total de OS, OS abertas/vistoria, OS aprovadas, OS executadas) têm o mesmo tamanho, peso e cor, sem diferenciação entre métricas críticas e secundárias.",
+      "recomendacao": "Aplicar hierarquia visual: destacar KPIs mais críticos (ex. 'Abertos', 'Em atendimento') com cor/tamanho maior; usar ícones e cores semânticas (vermelho para pendências críticas, verde para concluídos).",
+      "principio": "Princípio de hierarquia visual em dashboards (UXPin)"
+    },
+    {
+      "id": 6,
+      "categoria": "Acessibilidade / Contraste",
+      "severidade": "alta",
+      "problema": "Tema escuro com muitos textos secundários em cinza sobre fundo escuro (labels dos cartões, cabeçalhos de tabela, nomes de responsáveis), com contraste aparentemente abaixo do mínimo WCAG AA (4.5:1 para texto normal).",
+      "recomendacao": "Auditar contraste com ferramenta (ex. axe, Lighthouse) e ajustar cores de texto secundário para atingir no mínimo AA.",
+      "principio": "WCAG 2.1 - Contraste mínimo (1.4.3)"
+    },
+    {
+      "id": 7,
+      "categoria": "Acessibilidade",
+      "severidade": "media",
+      "problema": "Status e prioridade são comunicados só por cor (bolinhas azul/roxo para status, tags vermelha/cinza para prioridade 'Alta'/'Baixa'), sem ícone ou padrão adicional — problemático para usuários daltônicos.",
+      "recomendacao": "Adicionar ícones ou padrões (ex. seta, exclamação) além da cor para transmitir prioridade e status.",
+      "principio": "WCAG 2.1 - Uso de cor (1.4.1)"
+    },
+    {
+      "id": 8,
+      "categoria": "Consistência visual",
+      "severidade": "media",
+      "problema": "Os indicadores de status 'Em orçamento' e 'Executado' usam tons de roxo muito parecidos entre si, dificultando distingui-los rapidamente na lista agrupada.",
+      "recomendacao": "Usar uma paleta de status com maior distinção perceptual (ex. azul, roxo, verde, cinza) e manter a mesma paleta em todo o sistema.",
+      "principio": "Consistência e padrões (Nielsen)"
+    },
+    {
+      "id": 9,
+      "categoria": "Avatares / Identificação",
+      "severidade": "baixa",
+      "problema": "Os avatares de iniciais dos responsáveis ('NA', 'EN') usam a mesma cor (verde-azulado), reduzindo a capacidade de diferenciar rapidamente pessoas distintas na tabela.",
+      "recomendacao": "Gerar cor de avatar de forma determinística por usuário (hash do nome/ID), garantindo cores distintas entre pessoas diferentes.",
+      "principio": "Escaneabilidade e reconhecimento visual"
+    },
+    {
+      "id": 10,
+      "categoria": "Densidade de informação",
+      "severidade": "media",
+      "problema": "A listagem agrupada por status repete o cabeçalho de colunas (Chamado, Responsável, Unidade, OS, Data, Prioridade) em cada grupo, aumentando o scroll e a repetição visual.",
+      "recomendacao": "Usar cabeçalho fixo (sticky) único no topo da tabela, ou colapsar grupos por padrão com contadores visíveis, exibindo detalhes sob demanda.",
+      "principio": "Redução de carga cognitiva / progressive disclosure"
+    },
+    {
+      "id": 11,
+      "categoria": "Clareza de dados",
+      "severidade": "baixa",
+      "problema": "A coluna 'OS' exibe apenas um traço '—' quando vazia, sem explicação (ex. 'Sem OS vinculada').",
+      "recomendacao": "Substituir por um rótulo textual curto ou tooltip explicando o estado vazio.",
+      "principio": "Heurística de Nielsen: reconhecimento em vez de memorização"
+    },
+    {
+      "id": 12,
+      "categoria": "Busca e filtros",
+      "severidade": "media",
+      "problema": "Não há campo de busca para localizar um chamado/OS específico, apenas filtro de status ('Status: Todos') e ordenação por data.",
+      "recomendacao": "Adicionar campo de busca por número de chamado, equipamento ou responsável, especialmente pensando em crescimento do volume de dados.",
+      "principio": "Eficiência de uso para usuários frequentes"
+    },
+    {
+      "id": 13,
+      "categoria": "Affordance de controles",
+      "severidade": "baixa",
+      "problema": "Os botões 'Agrupar por status' e 'Lista' têm estilos visuais diferentes (um preenchido, outro contornado) sem deixar claro se são abas exclusivas ou toggles independentes.",
+      "recomendacao": "Padronizar como um componente de toggle/tabs claro (ex. segmented control) com estado ativo bem definido.",
+      "principio": "Affordance e feedback visual"
+    }
+  ],
+  "resumo": {
+    "total_problemas": 13,
+    "alta_severidade": 3,
+    "media_severidade": 6,
+    "baixa_severidade": 4,
+    "temas_recorrentes": [
+      "Falta de hierarquia visual entre KPIs",
+      "Contraste e uso exclusivo de cor para status/prioridade (acessibilidade)",
+      "Elementos de teste/mock expostos na interface",
+      "Truncamento de texto  na navegação"
+    ]
+  }
+}

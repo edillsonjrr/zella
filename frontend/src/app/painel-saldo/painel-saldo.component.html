@@ -1,0 +1,95 @@
+<div class="page-header animate-fade-in">
+  <h1>Painel de Saldo</h1>
+</div>
+
+<div class="saldo-toolbar">
+  <div class="toolbar-left">
+    <mat-form-field appearance="outline" class="contrato-select">
+      <mat-label>Contrato</mat-label>
+      <mat-select [value]="contratoSelecionado()" (selectionChange)="selecionarContrato($event.value)" [compareWith]="compararContratos">
+        <mat-option [value]="null">Selecione um contrato</mat-option>
+        @for (c of contratos(); track c.id) {
+          <mat-option [value]="c">{{ c.numero }} — {{ c.fornecedor }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div class="toolbar-right">
+    <button mat-stroked-button routerLink="/contratos/importar">
+      <app-icon name="upload_file"></app-icon> Importar
+    </button>
+  </div>
+</div>
+
+<mat-card class="app-card animate-fade-in-up">
+  <mat-card-header>
+    <app-icon class="section-icon" color="primary" name="account_balance_wallet"></app-icon>
+    <mat-card-title>
+      @if (contratoSelecionado(); as c) {
+        Saldo do contrato {{ c.numero }}
+      } @else {
+        Selecione um contrato
+      }
+    </mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (contratoSelecionado(); as c) {
+      @if (itensFiltrados().length > 0) {
+        <table mat-table [dataSource]="itensFiltrados()" class="app-table full-width">
+          <ng-container matColumnDef="item">
+            <th mat-header-cell *matHeaderCellDef>Item</th>
+            <td mat-cell *matCellDef="let i"><strong>{{ i.item }}</strong></td>
+          </ng-container>
+
+          <ng-container matColumnDef="contratado">
+            <th mat-header-cell *matHeaderCellDef>Contratado</th>
+            <td mat-cell *matCellDef="let i">{{ i.contratado }} {{ i.unidadeMedida }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="consumido">
+            <th mat-header-cell *matHeaderCellDef>Consumido</th>
+            <td mat-cell *matCellDef="let i">{{ i.consumido }} {{ i.unidadeMedida }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="reservado">
+            <th mat-header-cell *matHeaderCellDef>Reservado</th>
+            <td mat-cell *matCellDef="let i">{{ i.reservado }} {{ i.unidadeMedida }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="disponivel">
+            <th mat-header-cell *matHeaderCellDef>Disponível</th>
+            <td mat-cell *matCellDef="let i" [class.critico]="i.disponivel === 0 || percentual(i) > 90">
+              <strong>{{ i.disponivel }} {{ i.unidadeMedida }}</strong>
+              @if (i.disponivel === 0) {
+                <app-icon class="alerta-icon" name="warning"></app-icon>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="alerta">
+            <th mat-header-cell *matHeaderCellDef>Utilização</th>
+            <td mat-cell *matCellDef="let i">
+              <div class="progresso">
+                <span class="progresso-valor" [class.critico]="percentual(i) > 90">{{ percentual(i) }}%</span>
+                <mat-progress-bar mode="determinate" [value]="percentual(i)" [color]="percentual(i) > 90 ? 'warn' : 'primary'"></mat-progress-bar>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="abrirDetalhe(row)" class="linha-clicavel"></tr>
+        </table>
+      } @else {
+        <div class="estado-vazio">
+          <app-icon name="info" size="48px"></app-icon>
+          <p>Nenhum item encontrado para o contrato <strong>{{ c.numero }}</strong>.</p>
+        </div>
+      }
+    } @else {
+      <div class="estado-vazio">
+        <app-icon name="account_balance_wallet" size="48px"></app-icon>
+        <p>Escolha um contrato no topo para visualizar o saldo dos itens.</p>
+      </div>
+    }
+  </mat-card-content>
+</mat-card>

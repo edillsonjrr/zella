@@ -1,0 +1,182 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 72px;
+  height: 100%;
+  min-height: 0;
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--border-default);
+  padding: 12px 6px;
+  flex-shrink: 0;
+}
+
+.rail-top,
+.rail-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* O topo pode encolher; se ainda assim a lista não couber, ela rola
+   sozinha em vez de empurrar o rodapé para fora da tela. */
+.rail-top {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.rail-scroll {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar { display: none; }
+}
+
+.rail-bottom {
+  padding-top: 8px;
+
+  .rail-divider { margin-bottom: 4px; }
+}
+
+/* Telas baixas (notebook com barra de tarefas): itens mais compactos. */
+@media (max-height: 760px) {
+  .rail { padding: 8px 6px; }
+  .rail-item { min-height: 52px; }
+  .rail-label { margin-top: 2px; }
+}
+
+.rail-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  text-decoration: none;
+  transition: transform 0.15s ease;
+
+  &:hover { transform: scale(1.05); }
+  &:focus-visible { outline: 2px solid var(--primary-400); outline-offset: 3px; }
+}
+
+.rail-divider {
+  width: 32px;
+  height: 1px;
+  background-color: var(--border-default);
+  margin-bottom: 12px;
+}
+
+.rail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  min-height: 62px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  transition: background-color 0.15s ease, color 0.15s ease;
+  text-decoration: none;
+  padding: 4px 2px;
+
+  &:hover {
+    background-color: var(--rail-hover-bg);
+    color: var(--text-primary);
+
+    .rail-item-inner app-icon {
+      transform: scale(1.05);
+    }
+  }
+
+  &.active {
+    background-color: var(--rail-active-bg);
+    color: var(--text-primary);
+
+    app-icon {
+      color: var(--text-primary);
+    }
+  }
+
+  &--upgrade {
+    color: var(--warning-500);
+
+    &:hover {
+      background-color: var(--warning-50);
+      color: var(--warning-500);
+    }
+
+    app-icon {
+      color: var(--warning-500);
+    }
+  }
+}
+
+.rail-item-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+
+  app-icon {
+    font-size: 20px;
+    transition: transform 0.2s ease-in-out;
+  }
+}
+
+.rail-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  margin-top: 4px;
+  max-width: 56px;
+  text-align: center;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.rail-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background-color: var(--text-primary);
+  color: var(--danger-500);
+  font-size: 9px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: var(--shadow-card);
+
+  &--dot {
+    width: 9px;
+    min-width: 9px;
+    height: 9px;
+    padding: 0;
+  }
+}

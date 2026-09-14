@@ -1,0 +1,120 @@
+:host {
+  display: block;
+}
+
+.app-card {
+  mat-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 8px;
+
+    .section-icon {
+      width: 22px;
+      height: 22px;
+      font-size: 22px;
+    }
+
+    mat-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0;
+    }
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+.progresso {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 150px;
+
+  mat-progress-bar {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+}
+
+.progresso-valor {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 38px;
+  text-align: right;
+}
+
+.critico {
+  color: var(--danger-500);
+}
+
+.alerta-icon {
+  font-size: var(--icon-sm);
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  color: var(--danger-500);
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.saldo-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  min-height: 36px;
+
+  .toolbar-left,
+  .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  button {
+    font-size: 0.8125rem;
+    font-weight: 500;
+
+    app-icon {
+      font-size: 18px;
+      margin-right: 6px;
+    }
+  }
+}
+
+.contrato-select {
+  min-width: 320px;
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+.estado-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: var(--text-secondary);
+  text-align: center;
+
+  app-icon {
+    color: var(--text-tertiary);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9375rem;
+  }
+}
+
+.linha-clicavel {
+  cursor: pointer;
+}

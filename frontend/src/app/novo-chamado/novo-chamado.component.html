@@ -1,0 +1,165 @@
+@if (!isDialog) {
+  <div class="page-header animate-fade-in">
+    <h1>Novo Chamado</h1>
+  </div>
+}
+
+<mat-card class="app-card animate-fade-in-up standalone-card" [class.modal-card]="isDialog">
+  <mat-card-content>
+    <form (ngSubmit)="salvar(chamadoForm)" #chamadoForm="ngForm" class="modal-form" novalidate>
+      <div class="modal-scrollable-header">
+        <div class="modal-title">
+          <div class="modal-icon">
+            <app-icon name="support_agent" aria-hidden="true"></app-icon>
+          </div>
+          <div>
+            <h2>Novo Chamado</h2>
+            <span class="modal-subtitle">Abra um novo chamado de manutenção</span>
+          </div>
+        </div>
+        @if (isDialog) {
+          <button mat-icon-button type="button" class="modal-close" (click)="cancelar()" aria-label="Fechar">
+            <app-icon name="close" aria-hidden="true"></app-icon>
+          </button>
+        }
+      </div>
+
+      <div class="modal-scrollable-body">
+        @if (chamadoEnviado(); as numero) {
+          <div class="qr-status qr-status--sucesso" role="status">
+            <app-icon name="check_circle" aria-hidden="true"></app-icon>
+            <h3>Chamado {{ numero }} registrado</h3>
+            <p>Recebemos sua solicitação. A equipe de manutenção vai acompanhar a partir daqui.</p>
+          </div>
+        } @else if (validandoQrToken()) {
+          <div class="qr-status" role="status">
+            <div class="qr-status-spinner" aria-hidden="true"></div>
+            <p>Validando o link do QR Code…</p>
+          </div>
+        } @else if (qrTokenExpirado()) {
+          <div class="qr-status qr-status--erro" role="alert">
+            <app-icon name="warning" aria-hidden="true"></app-icon>
+            <h3>Link expirado</h3>
+            <p>Esse QR Code só vale por 3 minutos depois de escaneado. Peça para escanear o código novamente.</p>
+          </div>
+        } @else {
+          @if (erroEnvioQrCode(); as erro) {
+            <div class="qr-inline-erro" role="alert">
+              <app-icon name="warning" aria-hidden="true"></app-icon>
+              <span>{{ erro }}</span>
+            </div>
+          }
+        <section class="form-section">
+          <div class="section-title">
+            <app-icon name="handyman" aria-hidden="true"></app-icon>
+            <h3>Informações do equipamento</h3>
+          </div>
+          <div class="form-grid">
+            <div class="full-width li-field">
+              <app-label-input label="Equipamento" #equipamentoCtrl="ngModel" [(ngModel)]="equipamento" name="equipamento" autocomplete="off" placeholder="Ex: Ar Split - Sala 101…" required></app-label-input>
+              @if (equipamentoCtrl.invalid && equipamentoCtrl.touched) {
+                <span class="li-error">Informe o equipamento</span>
+              }
+            </div>
+
+            @if (ehConvidado()) {
+              <!-- O convidado não escolhe a unidade: ela vem travada pelo QR
+                   Code e é o backend que a resolve pelo token. Aqui é só
+                   leitura, pra ele conferir onde o chamado vai cair. -->
+              <div class="qr-unidade" aria-live="polite">
+                <app-icon name="location_on" aria-hidden="true"></app-icon>
+                <div>
+                  <span class="qr-unidade-rotulo">Unidade</span>
+                  <strong>{{ unidadeNomeQrCode() ?? 'Identificada pelo QR Code' }}</strong>
+                </div>
+              </div>
+            } @else {
+              <mat-form-field appearance="outline">
+                <mat-label>Unidade</mat-label>
+                <mat-select #unidadeCtrl="ngModel" [(ngModel)]="unidadeId" name="unidadeId" [disabled]="usuarioLogado().perfil === 'cliente' || unidadeViaQrCode" required>
+                  @for (u of unidades(); track u.id) {
+                    <mat-option [value]="u.id">{{ u.nome }}</mat-option>
+                  }
+                </mat-select>
+                @if (unidadeCtrl.invalid && unidadeCtrl.touched) {
+                  <mat-error>Selecione a unidade</mat-error>
+                }
+              </mat-form-field>
+
+              <div class="li-field">
+                <app-label-input label="Número de série" [(ngModel)]="numeroSerie" name="numeroSerie" autocomplete="off" [spellcheckOn]="false" placeholder="Ex: SN123456…"></app-label-input>
+              </div>
+            }
+
+            <div class="li-field">
+              <app-label-input [label]="ehConvidado() ? 'Seu nome' : 'Solicitante'" #solicitanteCtrl="ngModel" [(ngModel)]="solicitante" name="solicitante" autocomplete="name" required></app-label-input>
+              @if (solicitanteCtrl.invalid && solicitanteCtrl.touched) {
+                <span class="li-error">Informe seu nome</span>
+              }
+            </div>
+          </div>
+        </section>
+
+        <mat-divider class="section-divider"></mat-divider>
+
+        <section class="form-section">
+          <div class="section-title">
+            <app-icon name="report_problem" aria-hidden="true"></app-icon>
+            <h3>Problema relatado</h3>
+          </div>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Descrição do problema</mat-label>
+            <textarea matInput #descricaoCtrl="ngModel" rows="3" [(ngModel)]="descricao" name="descricao" placeholder="Descreva o defeito, sintomas e localização…" required></textarea>
+            @if (descricaoCtrl.invalid && descricaoCtrl.touched) {
+              <mat-error>Descreva o problema</mat-error>
+            }
+          </mat-form-field>
+        </section>
+
+        <mat-divider class="section-divider"></mat-divider>
+
+        <section class="form-section">
+          <div class="section-title">
+            <app-icon name="photo_camera" aria-hidden="true"></app-icon>
+            <h3>Foto de evidência</h3>
+          </div>
+          @if (!fotoPreview) {
+            <div class="upload-area">
+              <input type="file" accept="image/*" id="foto" (change)="onFotoSelecionada($event)" class="sr-only" />
+              <label for="foto" class="upload-label">
+                <app-icon name="cloud_upload" aria-hidden="true"></app-icon>
+                <span>Clique para adicionar uma foto</span>
+                <small>JPEG, PNG ou WEBP</small>
+              </label>
+            </div>
+          } @else {
+            <div class="foto-preview">
+              <img [src]="fotoPreview" alt="Pré-visualização da foto de evidência" />
+              <button mat-stroked-button type="button" color="warn" (click)="removerFoto()">
+                <app-icon name="delete" aria-hidden="true"></app-icon> Remover foto
+              </button>
+            </div>
+          }
+        </section>
+        }
+      </div>
+
+      <div class="modal-scrollable-footer">
+        @if (chamadoEnviado()) {
+          <app-flow-button type="button" (click)="cancelar()">Fechar</app-flow-button>
+        } @else {
+          <app-flow-button variant="secondary" type="button" (click)="cancelar()">Cancelar</app-flow-button>
+          @if (!validandoQrToken() && !qrTokenExpirado()) {
+            <app-flow-button type="submit" [disabled]="enviandoQrCode()">
+              @if (enviandoQrCode()) {
+                <app-spinner size="sm" label="Enviando"></app-spinner> Enviando…
+              } @else {
+                <app-icon class="btn-icon" name="save" aria-hidden="true"></app-icon> Salvar chamado
+              }
+            </app-flow-button>
+          }
+        }
+      </div>
+    </form>
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,148 @@
+<div class="painel-header">
+  <div class="painel-titulo">
+    <div class="painel-icone">
+      <app-icon name="description"></app-icon>
+    </div>
+    <div>
+      <h2>{{ contrato.numero }}</h2>
+      <span class="painel-subtitulo">{{ contrato.fornecedor }}</span>
+    </div>
+  </div>
+  <button mat-icon-button (click)="fechar()" aria-label="Fechar">
+    <app-icon name="close"></app-icon>
+  </button>
+</div>
+
+<mat-divider class="painel-divider"></mat-divider>
+
+<div class="painel-conteudo">
+  <div class="campo">
+    <span class="campo-label">Status</span>
+    <span class="badge" [class.badge--ativo]="contrato.status === 'Ativo'" [class.badge--critico]="contrato.status === 'Crítico'">
+      <app-icon [name]="contrato.status === 'Crítico' ? 'error' : 'check_circle'"></app-icon>
+      {{ contrato.status }}
+    </span>
+  </div>
+
+  <div class="campo">
+    <span class="campo-label">Vigência</span>
+    <span class="campo-valor">{{ contratoAtual().vigenciaInicio | date:'dd/MM/yyyy' }} a {{ contratoAtual().vigenciaFim | date:'dd/MM/yyyy' }}</span>
+  </div>
+
+  @if (contratoAtual().totalAditivos; as aditivos) {
+    <div class="campo">
+      <span class="campo-label">Aditivos</span>
+      <span class="campo-valor">{{ aditivos }} registrado(s) — detalhes no histórico abaixo</span>
+    </div>
+  }
+
+  <div class="campo">
+    <span class="campo-label">Itens contratados</span>
+    <span class="campo-valor">{{ contratoAtual().itens.length }}</span>
+  </div>
+
+  <div class="campo">
+    <span class="campo-label">Unidades disponíveis</span>
+    <span class="campo-valor campo-valor--destaque">{{ totalDisponivel() }} / {{ totalContratado() }}</span>
+  </div>
+
+  <div class="campo">
+    <span class="campo-label">Reservado / Consumido</span>
+    <span class="campo-valor">{{ totalReservado() }} / {{ totalConsumido() }}</span>
+  </div>
+
+  <mat-divider class="painel-divider"></mat-divider>
+
+  <div class="campo campo--bloco">
+    <span class="campo-label">Utilização</span>
+    <div class="utilizacao">
+      <span class="utilizacao-valor" [class.critico]="percentualUtilizado() > 90">{{ percentualUtilizado() }}%</span>
+      <mat-progress-bar mode="determinate" [value]="percentualUtilizado()" [color]="percentualUtilizado() > 90 ? 'warn' : 'primary'"></mat-progress-bar>
+    </div>
+  </div>
+
+  <mat-divider class="painel-divider"></mat-divider>
+
+  <div class="campo campo--bloco">
+    <span class="campo-label">Itens da ata</span>
+    <table mat-table [dataSource]="contratoAtual().itens" class="app-table full-width">
+      <ng-container matColumnDef="item">
+        <th mat-header-cell *matHeaderCellDef>Item</th>
+        <td mat-cell *matCellDef="let i"><strong>{{ i.nome }}</strong></td>
+      </ng-container>
+
+      <ng-container matColumnDef="unidade">
+        <th mat-header-cell *matHeaderCellDef>Unid.</th>
+        <td mat-cell *matCellDef="let i">{{ i.unidadeMedida }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="contratado">
+        <th mat-header-cell *matHeaderCellDef>Contratado</th>
+        <td mat-cell *matCellDef="let i">{{ i.quantidadeContratada }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="disponivel">
+        <th mat-header-cell *matHeaderCellDef>Disponível</th>
+        <td mat-cell *matCellDef="let i" [class.critico]="percentualItem(i) > 90">
+          <strong>{{ i.quantidadeDisponivel }}</strong>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="preco">
+        <th mat-header-cell *matHeaderCellDef>Preço unit.</th>
+        <td mat-cell *matCellDef="let i">{{ formatarMoeda(i.precoUnitario) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="acoes">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let i">
+          <div class="item-acoes">
+            <button mat-icon-button (click)="editarItem(i)" [attr.aria-label]="'Editar ' + i.nome">
+              <app-icon name="edit"></app-icon>
+            </button>
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="excluirItem(i)"
+              [disabled]="i.quantidadeReservada > 0 || i.quantidadeConsumida > 0"
+              [attr.title]="i.quantidadeReservada > 0 || i.quantidadeConsumida > 0 ? 'Item com saldo reservado ou consumido não pode ser removido' : 'Remover item'"
+              [attr.aria-label]="'Remover ' + i.nome"
+            >
+              <app-icon name="delete"></app-icon>
+            </button>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    @if (podeEditar) {
+      <button type="button" class="criacao-inline" (click)="abrirNovoItem()">
+        <app-icon name="add"></app-icon>
+        <span>Adicionar item...</span>
+      </button>
+    }
+  </div>
+
+  <mat-divider class="painel-divider"></mat-divider>
+
+  <div class="campo campo--bloco">
+    <app-historico-registro [alvoPaiId]="contrato.id" titulo="Histórico deste contrato"></app-historico-registro>
+  </div>
+</div>
+
+<div class="painel-acoes">
+  @if (podeEditar && contratoAtual().status !== 'Encerrado') {
+    <app-flow-button class="full-width" (click)="abrirAditivo()">
+      <app-icon class="btn-icon" name="create"></app-icon> Registrar aditivo
+    </app-flow-button>
+  }
+  @if (temOS()) {
+    <app-flow-button class="full-width" (click)="abrirOS()">
+      <app-icon class="btn-icon" name="assignment"></app-icon> Ver OS
+    </app-flow-button>
+  }
+  <app-flow-button variant="secondary" class="full-width" type="button" (click)="fechar()">Fechar</app-flow-button>
+</div>

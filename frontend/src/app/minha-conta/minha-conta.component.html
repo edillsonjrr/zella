@@ -1,0 +1,63 @@
+<div class="page-header animate-fade-in">
+  <h1>Minha conta</h1>
+</div>
+
+<div class="conta-grid">
+  <mat-card class="app-card animate-fade-in-up">
+    <mat-card-content>
+      <form #contaForm="ngForm" (ngSubmit)="salvarNome(contaForm)" class="conta-form" novalidate>
+        <div class="conta-titulo">
+          <app-icon name="person" aria-hidden="true"></app-icon>
+          <div>
+            <h2>Seus dados</h2>
+            <span>Só o nome pode ser alterado aqui. Perfil e vínculos são definidos pelo gestor.</span>
+          </div>
+        </div>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Nome</mat-label>
+          <input matInput #nomeCtrl="ngModel" [(ngModel)]="nome" name="nome" required maxlength="200" />
+          @if (nomeCtrl.invalid && nomeCtrl.touched) {
+            <mat-error>Informe o nome</mat-error>
+          }
+        </mat-form-field>
+
+        <dl class="conta-dados">
+          <dt>E-mail</dt>
+          <dd>{{ usuario().email }}</dd>
+          <dt>Perfil</dt>
+          <dd>{{ perfilRotulo }}</dd>
+          @if (usuario().empresaNome) {
+            <dt>Empresa</dt>
+            <dd>{{ usuario().empresaNome }}</dd>
+          }
+          @if (unidadeNome) {
+            <dt>Unidade</dt>
+            <dd>{{ unidadeNome }}</dd>
+          }
+          @if (contratadaNome) {
+            <dt>Empresa contratada</dt>
+            <dd>{{ contratadaNome }}</dd>
+          }
+        </dl>
+
+        @if (erro()) {
+          <p class="conta-msg conta-msg--erro" role="alert">{{ erro() }}</p>
+        }
+        @if (aviso()) {
+          <p class="conta-msg conta-msg--ok" role="status">{{ aviso() }}</p>
+        }
+
+        <div class="conta-acoes">
+          <app-flow-button variant="secondary" type="button" (click)="alterarSenha()">
+            <app-icon class="btn-icon" name="lock" aria-hidden="true"></app-icon> Alterar senha
+          </app-flow-button>
+          <app-flow-button type="submit" [disabled]="salvando()">
+            <app-icon class="btn-icon" name="save" aria-hidden="true"></app-icon>
+            {{ salvando() ? 'Salvando...' : 'Salvar nome' }}
+          </app-flow-button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>
