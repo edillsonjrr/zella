@@ -229,6 +229,34 @@ service cloud.firestore {
         }
       }
 
+      // Notificações internas (sino). Escritas só pelas Cloud Functions.
+      // Cada pessoa lê as endereçadas a ela (paraUsuarioId) ou ao perfil
+      // dela — e, sendo da contratada, só as da própria contratada. Como a
+      // regra compara campos, a consulta do app leva os mesmos `where`.
+      // A única escrita permitida é marcar como lida: acrescentar o PRÓPRIO
+      // id em `lidaPor`, sem tirar ninguém e sem tocar em mais nada.
+      match /notificacoes/{id} {
+        allow read: if usuario() && (
+          resource.data.paraUsuarioId == request.auth.token.usuarioId
+          || (resource.data.paraPerfil == perfil()
+              && (!('empresaContratadaId' in resource.data)
+                  || resource.data.empresaContratadaId == null
+                  || resource.data.empresaContratadaId == request.auth.token.empresaContratadaId))
+        );
+        allow update: if usuario()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lidaPor'])
+          && request.resource.data.lidaPor.hasAll(resource.data.lidaPor)
+          && request.resource.data.lidaPor.size() == resource.data.lidaPor.size() + 1
+          && request.resource.data.lidaPor.removeAll(resource.data.lidaPor).hasOnly([request.auth.token.usuarioId]);
+        allow create, delete: if false;
+      }
+
+      // Monitor de rotinas (preventiva agendada): só leitura, só gestor.
+      match /operacao/{id} {
+        allow read: if gestor();
+        allow write: if false;
+      }
+
       // Log de auditoria: append-only e com forma fechada.
       //
       // O histórico só tem valor se ninguém puder reescrevê-lo, então update

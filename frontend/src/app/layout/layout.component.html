@@ -10,6 +10,9 @@
       </div>
       <div class="toolbar-right">
         <app-theme-toggle></app-theme-toggle>
+        @if (usuarioLogado().empresaId) {
+          <app-notificacoes></app-notificacoes>
+        }
 
         <button mat-icon-button [matMenuTriggerFor]="menuUsuario" class="user-menu-trigger" aria-label="Perfil do usuário">
           <div class="user-avatar">{{ usuarioLogado().nome.charAt(0) }}</div>

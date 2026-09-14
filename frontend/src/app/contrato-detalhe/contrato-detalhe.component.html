@@ -161,6 +161,12 @@
     <app-flow-button class="full-width" (click)="abrirAditivo()">
       <app-icon class="btn-icon" name="create"></app-icon> Registrar aditivo
     </app-flow-button>
+    <button mat-stroked-button color="warn" class="full-width" type="button" (click)="encerrarContrato()">
+      <app-icon class="btn-icon" name="lock"></app-icon> Encerrar contrato
+    </button>
+  }
+  @if (contratoAtual().status === 'Encerrado' && contratoAtual().motivoEncerramento) {
+    <p class="campo-aviso">Encerrado em {{ contratoAtual().encerradoEm | date:'dd/MM/yyyy' }}: {{ contratoAtual().motivoEncerramento }}</p>
   }
   <app-flow-button variant="secondary" class="full-width" type="button" (click)="fechar()">Fechar</app-flow-button>
 </div>

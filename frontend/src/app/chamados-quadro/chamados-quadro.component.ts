@@ -123,7 +123,9 @@ export class ChamadosQuadroComponent {
     const orcamento = os ? this.dataService.getOrcamentoByOS(os.id) : undefined;
 
     const gestor = this.auth.isGestor();
-    const contratada = this.auth.isGestorContratado() || this.auth.isTecnico();
+    // Técnico só mexe na OS designada a ele (ou sem técnico designado).
+    const designado = !this.auth.isTecnico() || !os?.tecnicoId || os.tecnicoId === this.auth.usuarioLogado().id;
+    const contratada = (this.auth.isGestorContratado() || this.auth.isTecnico()) && designado;
 
     switch (coluna.acao) {
       case 'criar-os':

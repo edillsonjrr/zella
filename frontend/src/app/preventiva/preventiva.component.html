@@ -14,6 +14,11 @@
   <p class="resultado-geracao">{{ resultadoGeracao() }}</p>
 }
 
+<p class="monitor monitor--{{ monitor().nivel }}" role="status">
+  <app-icon [name]="monitor().nivel === 'ok' ? 'check_circle' : monitor().nivel === 'erro' ? 'error' : 'info'"></app-icon>
+  {{ monitor().texto }}
+</p>
+
 <div class="resumo animate-fade-in">
   <div class="resumo-card">
     <span class="resumo-valor">{{ resumo().total }}</span>

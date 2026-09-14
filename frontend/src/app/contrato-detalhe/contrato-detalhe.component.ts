@@ -121,6 +121,22 @@ export class ContratoDetalheComponent {
     }
   }
 
+  async encerrarContrato(): Promise<void> {
+    const c = this.contratoAtual();
+    const motivo = await this.dialogo.perguntar(`Encerrar o contrato ${c.numero}?`, 'Motivo', {
+      mensagem: 'O saldo disponível restante é zerado e OS ainda em orçamento são canceladas (os chamados voltam a Aberto). OS aprovadas precisam ser executadas ou canceladas antes.',
+      confirmar: 'Encerrar contrato',
+      perigo: true
+    });
+    if (motivo === null) return;
+    try {
+      const r = await this.dataService.encerrarContrato(c.id, motivo);
+      if (r.osCanceladas.length) this.feedback.announce(`OS canceladas: ${r.osCanceladas.join(', ')}.`);
+    } catch (e) {
+      this.feedback.announce(e instanceof Error ? e.message : 'Não foi possível encerrar o contrato.', 'assertive');
+    }
+  }
+
   abrirOS(os: OrdemServico): void {
     this.dialog.open(OsDetalheComponent, {
       panelClass: 'os-detalhe-dialog',

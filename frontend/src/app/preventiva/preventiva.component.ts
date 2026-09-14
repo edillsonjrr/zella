@@ -123,6 +123,19 @@ export class PreventivaComponent {
   }
 
   gerando = signal(false);
+
+  // Monitor do job agendado (operacao/preventiva): avisa quando a última
+  // execução automática passou de 26 h ou terminou com erro.
+  monitor = computed(() => {
+    const op = this.dataService.operacaoPreventiva();
+    if (!op) return { nivel: 'aviso' as const, texto: 'A geração automática ainda não registrou nenhuma execução. Ela roda todo dia às 6h; até lá, use "Gerar agora".' };
+    if (op.ultimoErro) return { nivel: 'erro' as const, texto: `Última execução (${op.ultimaOrigem}) falhou: ${op.ultimoErro}` };
+    if (!op.ultimaAgendada) return { nivel: 'aviso' as const, texto: 'Nenhuma execução agendada registrada ainda (só manuais).' };
+    const horas = (Date.now() - new Date(op.ultimaAgendada).getTime()) / 3600000;
+    if (horas > 26) return { nivel: 'erro' as const, texto: `A geração automática não roda há ${Math.floor(horas)} h. Confira o agendamento no Firebase.` };
+    const r = op.ultimoResultado;
+    return { nivel: 'ok' as const, texto: `Geração automática em dia (última há ${Math.floor(horas)} h${r ? `: ${r.gerados} gerado(s), ${r.duplicados} repetido(s), ${r.ignorados} ignorado(s)` : ''}).` };
+  });
   resultadoGeracao = signal<string>('');
 
   async gerarAgora(): Promise<void> {

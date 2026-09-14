@@ -100,3 +100,15 @@ export function exigirMesmaContratada(ctx: ContextoEmpresa, dono: { empresaContr
     throw new HttpsError('permission-denied', 'Este registro pertence a outra empresa contratada.');
   }
 }
+
+/**
+ * Técnico só orça e executa a OS designada a ele. OS sem técnico designado
+ * fica aberta a qualquer técnico da contratada; o gestor contratado pode
+ * sempre (e pode redesignar pela função atribuirTecnicoOS).
+ */
+export function exigirTecnicoDesignado(ctx: ContextoEmpresa, os: { tecnicoId?: string | null } | undefined): void {
+  if (ctx.perfil !== 'tecnico') return;
+  if (os?.tecnicoId && os.tecnicoId !== ctx.usuarioId) {
+    throw new HttpsError('permission-denied', 'Esta OS está designada a outro técnico.');
+  }
+}

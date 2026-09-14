@@ -12,6 +12,12 @@ import { DataService } from '../shared/data.service';
 import { HistoricoRegistroComponent } from '../shared/historico-registro/historico-registro.component';
 import { AuthService } from '../shared/auth.service';
 import { OrcamentoComponent } from '../orcamento/orcamento.component';
+import { ExecutarOsDialogComponent, type ExecutarOsResultado } from './executar-os-dialog.component';
+import { AprovarOrcamentoDialogComponent, type AprovarOrcamentoResultado } from './aprovar-orcamento-dialog.component';
+import { UiFeedbackService } from '../shared/ui-feedback.service';
+import { FormsModule } from '@angular/forms';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import type { OrdemServico } from '../shared/models';
 
 @Component({
@@ -26,6 +32,9 @@ import type { OrdemServico } from '../shared/models';
     FlowButtonComponent,
     MatDividerModule,
     MatTableModule,
+    FormsModule,
+    MatSelectModule,
+    MatFormFieldModule,
     HistoricoRegistroComponent
   ],
   templateUrl: './os-detalhe.component.html',
@@ -36,6 +45,10 @@ export class OsDetalheComponent {
   private dataService = inject(DataService);
   private auth = inject(AuthService);
   private dialog = inject(MatDialog);
+  private feedback = inject(UiFeedbackService);
+
+  erroAcao = '';
+  tecnicoSelecionado = '';
 
   // A OS chega pelo MAT_DIALOG_DATA como retrato do momento em que o painel
   // abriu. Como as ações daqui (orçamento, aprovação, execução) mudam a
@@ -45,7 +58,13 @@ export class OsDetalheComponent {
   private readonly ordemAtual = computed(() => this.dataService.getOSById(this.ordemInicial.id) ?? this.ordemInicial);
   private readonly orcamentoAtual = computed(() => this.dataService.getOrcamentoByOS(this.ordemInicial.id));
 
-  displayedColumns: string[] = ['item', 'quantidade', 'precoUnitario'];
+  get displayedColumns(): string[] {
+    return this.ordem.itensExecutados?.length ? ['item', 'quantidade', 'precoUnitario', 'executado'] : ['item', 'quantidade', 'precoUnitario'];
+  }
+
+  executadoDe(itemContratoId: string): number | undefined {
+    return this.ordem.itensExecutados?.find(i => i.itemContratoId === itemContratoId)?.executado;
+  }
 
   get ordem(): OrdemServico {
     return this.ordemAtual();
@@ -62,6 +81,11 @@ export class OsDetalheComponent {
   ativo = this.chamado?.equipamento ?? '-';
   contratoLabel = this.contrato ? `${this.contrato.numero} — ${this.contrato.fornecedor}` : '-';
   tecnicoNome = this.tecnico?.nome ?? '-';
+
+  get tecnicoNomeAtual(): string {
+    const id = this.ordem.tecnicoId;
+    return id ? (this.dataService.getUsuarioById(id)?.nome ?? '-') : 'Sem técnico designado';
+  }
 
   get totalOrcamento(): number {
     return this.orcamento?.itens.reduce((acc, item) => acc + item.quantidade * item.precoUnitario, 0) ?? 0;
@@ -84,7 +108,36 @@ export class OsDetalheComponent {
   // orçamento recusado precisa poder ser refeito, senão a OS fica presa.
   podeCriarOrcamento(): boolean {
     return (this.auth.isTecnico() || this.auth.isGestorContratado()) &&
+      this.designadoAMim() &&
       ['Aberta', 'Em vistoria', 'Rejeitada'].includes(this.ordem.situacao);
+  }
+
+  // Técnico só age na OS designada a ele (ou sem técnico). Espelha
+  // exigirTecnicoDesignado() no backend.
+  designadoAMim(): boolean {
+    if (!this.auth.isTecnico()) return true;
+    const t = this.ordem.tecnicoId;
+    return !t || t === this.auth.usuarioLogado().id;
+  }
+
+  // Gestor do cliente e gestor da contratada designam/trocam o técnico
+  // enquanto a OS não foi executada.
+  podeDesignarTecnico(): boolean {
+    return (this.auth.isGestor() || this.auth.isGestorContratado()) &&
+      !['Executada', 'Encerrada', 'Cancelada'].includes(this.ordem.situacao);
+  }
+
+  tecnicosDaContratada = computed(() =>
+    this.dataService.usuarios().filter(u => u.perfil === 'tecnico' && (!this.ordem.empresaContratadaId || u.empresaContratadaId === this.ordem.empresaContratadaId))
+  );
+
+  async designarTecnico(tecnicoId: string): Promise<void> {
+    this.erroAcao = '';
+    try {
+      await this.dataService.atribuirTecnicoOS(this.ordem.id, tecnicoId || null);
+    } catch (e) {
+      this.erroAcao = e instanceof Error ? e.message : 'Não foi possível designar o técnico.';
+    }
   }
 
   // Aprovar e rejeitar é do gestor do cliente: é o saldo do contrato dele.
@@ -98,6 +151,7 @@ export class OsDetalheComponent {
 
   podeExecutar(): boolean {
     return (this.auth.isTecnico() || this.auth.isGestorContratado()) &&
+      this.designadoAMim() &&
       this.ordem.situacao === 'Aprovada';
   }
 
@@ -113,22 +167,63 @@ export class OsDetalheComponent {
   }
 
   aprovarOrcamento(): void {
-    if (this.orcamento) {
-      this.dataService.aprovarOrcamento(this.orcamento.id);
-    }
-    this.fechar();
+    const orcamento = this.orcamento;
+    if (!orcamento) return;
+    const ref = this.dialog.open(AprovarOrcamentoDialogComponent, {
+      panelClass: 'usuario-form-dialog',
+      width: '520px',
+      maxWidth: '95vw',
+      data: { numeroOS: this.ordem.numero, orcamento }
+    });
+    ref.afterClosed().subscribe(async (r: AprovarOrcamentoResultado | undefined) => {
+      if (!r) return;
+      this.erroAcao = '';
+      try {
+        await this.dataService.aprovarOrcamento(orcamento.id, r.ajustes, r.observacao);
+        this.fechar();
+      } catch (e) {
+        this.erroAcao = e instanceof Error ? e.message : 'Não foi possível aprovar.';
+      }
+    });
   }
 
-  rejeitarOrcamento(): void {
-    if (this.orcamento) {
-      this.dataService.rejeitarOrcamento(this.orcamento.id);
+  async rejeitarOrcamento(): Promise<void> {
+    if (!this.orcamento) return;
+    this.erroAcao = '';
+    try {
+      await this.dataService.rejeitarOrcamento(this.orcamento.id);
+      this.fechar();
+    } catch (e) {
+      this.erroAcao = e instanceof Error ? e.message : 'Não foi possível rejeitar.';
     }
-    this.fechar();
   }
 
   executarOS(): void {
-    this.dataService.executarOS(this.ordem.id);
-    this.fechar();
+    const orcamento = this.orcamento;
+    if (!orcamento) {
+      // OS aprovada sem orçamento carregado: executa por inteiro.
+      this.executar();
+      return;
+    }
+    const ref = this.dialog.open(ExecutarOsDialogComponent, {
+      panelClass: 'usuario-form-dialog',
+      width: '520px',
+      maxWidth: '95vw',
+      data: { numeroOS: this.ordem.numero, orcamento }
+    });
+    ref.afterClosed().subscribe((r: ExecutarOsResultado | undefined) => {
+      if (r) this.executar(r);
+    });
+  }
+
+  private async executar(r?: ExecutarOsResultado): Promise<void> {
+    this.erroAcao = '';
+    try {
+      await this.dataService.executarOS(this.ordem.id, r?.itens, r?.observacao);
+      this.fechar();
+    } catch (e) {
+      this.erroAcao = e instanceof Error ? e.message : 'Não foi possível executar a OS.';
+    }
   }
 
   badgeClass(status: string): string {

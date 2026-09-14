@@ -8,6 +8,7 @@ import { RailComponent } from '../rail/rail.component';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { IconComponent } from '../shared/icon/icon.component';
 import { LogoComponent } from '../shared/logo/logo.component';
+import { NotificacoesComponent } from '../shared/notificacoes/notificacoes.component';
 import { AuthService } from '../shared/auth.service';
 
 @Component({
@@ -22,7 +23,8 @@ import { AuthService } from '../shared/auth.service';
     RailComponent,
     ThemeToggleComponent,
     LogoComponent,
-    IconComponent
+    IconComponent,
+    NotificacoesComponent
   ],
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.scss'

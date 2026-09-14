@@ -163,3 +163,19 @@
   color: var(--primary-400);
   font-size: 0.8125rem;
 }
+
+
+.monitor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: var(--button-radius);
+  font-size: 0.8125rem;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+
+  &--ok { color: var(--success-500, var(--text-secondary)); }
+  &--erro { background: var(--danger-50, var(--bg-elevated)); color: var(--danger-500); }
+}

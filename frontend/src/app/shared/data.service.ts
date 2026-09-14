@@ -15,11 +15,12 @@ import {
   query,
   setDoc,
   updateDoc,
+  arrayUnion,
   writeBatch,
   type Unsubscribe
 } from 'firebase/firestore';
 import { db, functions } from './firebase';
-import type { Unidade, Bloco, Sala, Equipamento, Contrato, ItemContrato, Chamado, OrdemServico, Orcamento, OrcamentoPedidoItem, Usuario, LogEntrada, PlanoManutencao, EmpresaContratada } from './models';
+import type { Unidade, Bloco, Sala, Equipamento, Contrato, ItemContrato, Chamado, OrdemServico, Orcamento, OrcamentoPedidoItem, Usuario, LogEntrada, PlanoManutencao, EmpresaContratada, Notificacao, OperacaoPreventiva } from './models';
 import { UiFeedbackService } from './ui-feedback.service';
 import { LogService } from './log.service';
 
@@ -52,6 +53,10 @@ export class DataService {
   private readonly usuariosSig = signal<Usuario[]>([]);
   private readonly planosManutencaoSig = signal<PlanoManutencao[]>([]);
   private readonly empresasContratadasSig = signal<EmpresaContratada[]>([]);
+  // Notificações vêm de duas consultas (pra mim / pro meu perfil), unidas aqui.
+  private readonly notificacoesPessoais = signal<Notificacao[]>([]);
+  private readonly notificacoesPerfil = signal<Notificacao[]>([]);
+  readonly operacaoPreventiva = signal<OperacaoPreventiva | null>(null);
 
   readonly unidades: Signal<Unidade[]> = this.unidadesSig.asReadonly();
   readonly blocos: Signal<Bloco[]> = this.blocosSig.asReadonly();
@@ -63,6 +68,10 @@ export class DataService {
   readonly usuarios: Signal<Usuario[]> = this.usuariosSig.asReadonly();
   readonly planosManutencao: Signal<PlanoManutencao[]> = this.planosManutencaoSig.asReadonly();
   readonly empresasContratadas: Signal<EmpresaContratada[]> = this.empresasContratadasSig.asReadonly();
+  readonly notificacoes = computed<Notificacao[]>(() => {
+    const vistos = new Set<string>();
+    return [...this.notificacoesPessoais(), ...this.notificacoesPerfil()].filter(n => !vistos.has(n.id) && vistos.add(n.id));
+  });
 
   // O log cresce sem teto, então — diferente das outras coleções — só as
   // entradas mais recentes ficam em memória. O histórico completo de um
@@ -86,6 +95,8 @@ export class DataService {
   // negócio vivem em empresasClientes/{empresaId}/..., e é assim que um
   // cliente não enxerga o outro (as rules conferem o mesmo id no token).
   private empresaId = '';
+  // Id do cadastro (usuarios/{id}) da sessão; é o que vai em lidaPor.
+  private usuarioAtualId = '';
 
   col(nome: string): CollectionReference {
     return collection(db, 'empresasClientes', this.empresaId, nome);
@@ -109,6 +120,7 @@ export class DataService {
   iniciar(sessao: Usuario): void {
     this.parar();
     this.empresaId = sessao.empresaId ?? '';
+    this.usuarioAtualId = sessao.id;
     const perfil = sessao.perfil;
     const gestor = perfil === 'gestor';
     const cliente = perfil === 'cliente';
@@ -157,6 +169,26 @@ export class DataService {
       : undefined);
 
     if (gestor) ouvir('planosManutencao', this.planosManutencaoSig);
+
+    // Notificações: as endereçadas a mim e as do meu perfil (a contratada
+    // só vê as da própria contratada). As rules exigem exatamente estes
+    // filtros; sem eles a consulta é negada inteira.
+    if (sessao.id) {
+      ouvir('notificacoes', this.notificacoesPessoais,
+        query(this.col('notificacoes'), where('paraUsuarioId', '==', sessao.id), orderBy('data', 'desc'), limit(50)));
+    }
+    if (['cliente', 'gestor', 'gestor_contratado', 'tecnico'].includes(perfil)) {
+      const filtros = [where('paraPerfil', '==', perfil)];
+      if (daContratada) filtros.push(where('empresaContratadaId', '==', sessao.empresaContratadaId ?? ''));
+      ouvir('notificacoes', this.notificacoesPerfil,
+        query(this.col('notificacoes'), ...filtros, orderBy('data', 'desc'), limit(50)));
+    }
+
+    if (gestor) {
+      ligar(onSnapshot(this.docRef('operacao', 'preventiva'), snap => {
+        this.operacaoPreventiva.set(snap.exists() ? (snap.data() as OperacaoPreventiva) : null);
+      }, erroDeLeitura('operacao/preventiva')));
+    }
 
     // Gestor contratado e técnico leem contratos, itens e orçamentos da
     // própria contratada: o técnico precisa deles pra montar o orçamento.
@@ -228,7 +260,7 @@ export class DataService {
     for (const sig of [
       this.unidadesSig, this.blocosSig, this.salasSig, this.equipamentosSig, this.chamadosSig,
       this.ordensServicoSig, this.orcamentosSig, this.usuariosSig, this.planosManutencaoSig, this.empresasContratadasSig,
-      this.logs, this.contratosCabecalho
+      this.logs, this.contratosCabecalho, this.notificacoesPessoais, this.notificacoesPerfil
     ]) {
       (sig as WritableSignal<unknown[]>).set([]);
     }
@@ -781,10 +813,10 @@ export class DataService {
     return res.data.numero;
   }
 
-  async aprovarOrcamento(orcamentoId: string): Promise<void> {
-    const aprovar = httpsCallable<{ orcamentoId: string }, { ok: true }>(functions, 'aprovarOrcamento');
-    await aprovar({ orcamentoId });
-    this.feedback.announce('Orçamento aprovado.');
+  async aprovarOrcamento(orcamentoId: string, ajustes?: { itemContratoId: string; quantidade: number }[], observacao?: string): Promise<void> {
+    const aprovar = httpsCallable<{ orcamentoId: string; ajustes?: { itemContratoId: string; quantidade: number }[]; observacao?: string }, { ok: true }>(functions, 'aprovarOrcamento');
+    await aprovar({ orcamentoId, ...(ajustes?.length ? { ajustes } : {}), ...(observacao ? { observacao } : {}) });
+    this.feedback.announce(ajustes?.length ? 'Orçamento aprovado com ajustes.' : 'Orçamento aprovado.');
   }
 
   async rejeitarOrcamento(orcamentoId: string): Promise<void> {
@@ -793,9 +825,9 @@ export class DataService {
     this.feedback.announce('Orçamento rejeitado.');
   }
 
-  async executarOS(osId: string): Promise<void> {
-    const executar = httpsCallable<{ osId: string }, { ok: true }>(functions, 'executarOS');
-    await executar({ osId });
+  async executarOS(osId: string, itens?: { itemContratoId: string; quantidadeExecutada: number }[], observacao?: string): Promise<void> {
+    const executar = httpsCallable<{ osId: string; itens?: { itemContratoId: string; quantidadeExecutada: number }[]; observacao?: string }, { ok: true }>(functions, 'executarOS');
+    await executar({ osId, ...(itens ? { itens } : {}), ...(observacao ? { observacao } : {}) });
     this.feedback.announce('Ordem de serviço marcada como executada.');
   }
 
@@ -803,6 +835,31 @@ export class DataService {
     const encerrar = httpsCallable<{ chamadoId: string }, { ok: true }>(functions, 'encerrarChamado');
     await encerrar({ chamadoId });
     this.feedback.announce('Chamado encerrado.');
+  }
+
+  async atribuirTecnicoOS(osId: string, tecnicoId: string | null): Promise<void> {
+    const atribuir = httpsCallable<{ osId: string; tecnicoId: string | null }, { ok: true }>(functions, 'atribuirTecnicoOS');
+    await atribuir({ osId, tecnicoId });
+    this.feedback.announce(tecnicoId ? 'Técnico designado.' : 'Técnico removido da OS.');
+  }
+
+  async encerrarContrato(contratoId: string, motivo: string): Promise<{ disponivelZerado: number; osCanceladas: string[] }> {
+    const encerrar = httpsCallable<{ contratoId: string; motivo: string }, { disponivelZerado: number; osCanceladas: string[] }>(functions, 'encerrarContrato');
+    const r = await encerrar({ contratoId, motivo });
+    this.feedback.announce('Contrato encerrado.');
+    return r.data;
+  }
+
+  // Marca como lida acrescentando o próprio id em `lidaPor` (única escrita
+  // que as rules deixam em notificacoes).
+  async marcarNotificacaoLida(notificacaoId: string): Promise<void> {
+    const meuId = this.usuarioAtualId;
+    if (!meuId) return;
+    try {
+      await updateDoc(this.docRef('notificacoes', notificacaoId), { lidaPor: arrayUnion(meuId) });
+    } catch (e) {
+      erroDeLeitura('notificacoes')(e as Error);
+    }
   }
 
   async atribuirResponsavelChamado(chamadoId: string, gestorId: string | undefined): Promise<void> {

@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { db, colecao, exigirPerfil } from './admin';
 import { registrarLog, resolverAutor } from './logs';
+import { notificar } from './notificacoes';
 import type { AditivoContrato } from './types';
 
 export interface AditivarContratoInput {
@@ -168,4 +169,130 @@ export const aditivarContrato = onCall<AditivarContratoInput>(async (request) =>
   });
 
   return { numero };
+});
+
+/**
+ * Encerramento formal do contrato (gestor).
+ *
+ * Só encerra se não houver reserva pendente: OS "Aprovada" ainda não
+ * executada segura saldo reservado, e encerrar por cima deixaria essa
+ * reserva presa. A função lista essas OS pra que o gestor execute ou
+ * cancele os chamados antes. OS em orçamento (Aberta/Em vistoria/Rejeitada)
+ * não têm reserva e são canceladas junto, com o chamado voltando a
+ * "Aberto" pra ganhar OS em outro contrato. O disponível restante é
+ * zerado (o contrato não sustenta mais consumo) e fica registrado no
+ * aditivo de encerramento.
+ */
+export const encerrarContrato = onCall<{ contratoId: string; motivo: string }>(async (request) => {
+  const { empresaId } = exigirPerfil(request, ['gestor']);
+  const contratoId = request.data?.contratoId;
+  const motivo = (request.data?.motivo ?? '').trim().slice(0, 500);
+  if (!contratoId) {
+    throw new HttpsError('invalid-argument', 'Informe o contrato.');
+  }
+  if (!motivo) {
+    throw new HttpsError('invalid-argument', 'Informe o motivo do encerramento.');
+  }
+
+  const contratoRef = colecao(empresaId, 'contratos').doc(contratoId);
+  const autor = await resolverAutor(request, empresaId);
+
+  // Leituras de coleção não entram na transação: as OS do contrato são
+  // listadas antes, e dentro da transação cada uma é relida por id.
+  const osDoContrato = await colecao(empresaId, 'ordensServico').where('contratoId', '==', contratoId).get();
+  const itensSnap = await contratoRef.collection('itens').get();
+
+  const resultado = await db.runTransaction(async (tx) => {
+    const contratoSnap = await tx.get(contratoRef);
+    if (!contratoSnap.exists) {
+      throw new HttpsError('not-found', 'Contrato não encontrado.');
+    }
+    const contrato = contratoSnap.data()!;
+    if (contrato.status === 'Encerrado') {
+      throw new HttpsError('failed-precondition', `O contrato ${contrato.numero} já está encerrado.`);
+    }
+
+    const osSnaps = await Promise.all(osDoContrato.docs.map((d) => tx.get(d.ref)));
+    const comReserva = osSnaps.filter((s) => s.exists && s.data()!.situacao === 'Aprovada');
+    if (comReserva.length) {
+      const numeros = comReserva.map((s) => s.data()!.numero).join(', ');
+      throw new HttpsError(
+        'failed-precondition',
+        `Há ${comReserva.length} OS aprovada(s) com saldo reservado neste contrato (${numeros}). Execute ou cancele os chamados antes de encerrar.`
+      );
+    }
+
+    const emOrcamento = osSnaps.filter((s) => s.exists && ['Aberta', 'Em vistoria', 'Rejeitada'].includes(s.data()!.situacao));
+    const chamadoSnaps = await Promise.all(emOrcamento.map((s) => tx.get(colecao(empresaId, 'chamados').doc(s.data()!.chamadoId))));
+    const itemSnaps = await Promise.all(itensSnap.docs.map((d) => tx.get(d.ref)));
+
+    // Escritas.
+    let disponivelZerado = 0;
+    const itensEncerrados: { itemContratoId: string; nome: string; disponivelZerado: number }[] = [];
+    itemSnaps.forEach((snap) => {
+      if (!snap.exists) return;
+      const d = snap.data()!;
+      const disp = Number(d.quantidadeDisponivel) || 0;
+      if (disp > 0) {
+        tx.update(snap.ref, { quantidadeDisponivel: 0, quantidadeContratada: (Number(d.quantidadeContratada) || 0) - disp });
+        disponivelZerado += disp;
+      }
+      itensEncerrados.push({ itemContratoId: snap.id, nome: d.nome as string, disponivelZerado: disp });
+    });
+
+    const osCanceladas: string[] = [];
+    emOrcamento.forEach((s, i) => {
+      tx.update(s.ref, { situacao: 'Cancelada' });
+      osCanceladas.push(s.data()!.numero as string);
+      const ch = chamadoSnaps[i];
+      if (ch.exists) {
+        tx.update(ch.ref, { status: 'Aberto', ordemServicoId: FieldValue.delete() });
+      }
+    });
+
+    const numeroAditivo = (Number(contrato.totalAditivos) || 0) + 1;
+    const aditivoRef = contratoRef.collection('aditivos').doc();
+    tx.set(aditivoRef, {
+      id: aditivoRef.id,
+      numero: numeroAditivo,
+      contratoId,
+      data: new Date().toISOString(),
+      motivo: `Encerramento: ${motivo}`,
+      encerramento: true,
+      itens: itensEncerrados.map((i) => ({ itemContratoId: i.itemContratoId, nome: i.nome, quantidadeContratada: { de: i.disponivelZerado, para: 0 } })),
+      autorUid: autor.uid,
+      autorNome: autor.nome
+    });
+
+    tx.update(contratoRef, {
+      status: 'Encerrado',
+      totalAditivos: numeroAditivo,
+      encerradoEm: new Date().toISOString().split('T')[0],
+      motivoEncerramento: motivo
+    });
+
+    registrarLog(tx, empresaId, autor, {
+      alvo: 'contrato',
+      operacao: 'transicao',
+      descricao: `Encerrou o contrato ${contrato.numero} — ${motivo}`,
+      alvoId: contratoId,
+      alvoRotulo: contrato.numero as string,
+      detalhes: { status: { de: contrato.status, para: 'Encerrado' }, disponivelZerado, osCanceladas }
+    });
+
+    if (contrato.empresaContratadaId) {
+      notificar(tx, empresaId, {
+        paraPerfil: 'gestor_contratado',
+        empresaContratadaId: contrato.empresaContratadaId,
+        titulo: `Contrato ${contrato.numero} encerrado`,
+        texto: osCanceladas.length ? `OS canceladas junto: ${osCanceladas.join(', ')}.` : 'Nenhuma OS pendente foi afetada.',
+        link: '/contratos',
+        alvo: { tipo: 'contrato', id: contratoId, numero: contrato.numero as string }
+      });
+    }
+
+    return { disponivelZerado, osCanceladas };
+  });
+
+  return resultado;
 });

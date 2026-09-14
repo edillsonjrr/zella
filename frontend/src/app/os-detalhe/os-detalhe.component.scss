@@ -117,3 +117,18 @@
     font-weight: 600;
   }
 }
+
+
+.campo-select {
+  width: 100%;
+  margin-top: 2px;
+}
+
+.acao-erro {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: var(--button-radius);
+  background: var(--danger-50, var(--bg-elevated));
+  color: var(--danger-500);
+  font-size: 0.8rem;
+}

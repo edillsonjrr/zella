@@ -87,6 +87,9 @@ export interface ContratoCabecalho {
   status: StatusContrato;
   // Quantos aditivos o contrato já recebeu (functions/src/aditivos.ts).
   totalAditivos?: number;
+  // Preenchidos pelo encerramento formal (encerrarContrato).
+  encerradoEm?: string;
+  motivoEncerramento?: string;
 }
 
 // No app o contrato carrega os itens junto (cabeçalho + subcoleção).
@@ -171,6 +174,11 @@ export interface Orcamento {
   situacao: SituacaoOrcamento;
   itens: OrcamentoItem[];
   dataCriacao: string;
+  // Quando o gestor ajustou quantidades ao aprovar: `itens` passa a ser o
+  // aprovado e `itensOriginais` o que a contratada tinha proposto.
+  ajustadoPeloGestor?: boolean;
+  itensOriginais?: OrcamentoItem[];
+  observacaoAprovacao?: string;
 }
 
 // O que a tela manda ao criar orçamento: só item e quantidade. Nome e preço
@@ -196,6 +204,42 @@ export interface OrdemServico {
   situacao: SituacaoOS;
   orcamentoId?: string;
   dataCriacao: string;
+  // Preenchidos na execução (executarOS). `itensExecutados` guarda orçado ×
+  // executado por item; a diferença voltou ao disponível do contrato.
+  dataExecucao?: string;
+  executadoPor?: string;
+  itensExecutados?: { itemContratoId: string; nome: string; orcado: number; executado: number }[];
+  observacaoExecucao?: string;
+}
+
+/* Notificações ------------------------------------------------------------ */
+
+// Aviso interno (sino no topo). Endereçado a um perfil inteiro ou a uma
+// pessoa; com `empresaContratadaId`, só à contratada indicada. Um documento
+// por evento; `lidaPor` guarda quem já leu.
+export interface Notificacao {
+  id: string;
+  paraPerfil?: PerfilEmpresa;
+  paraUsuarioId?: string;
+  empresaContratadaId?: string;
+  titulo: string;
+  texto: string;
+  link?: string;
+  alvo?: { tipo: 'chamado' | 'ordemServico' | 'orcamento' | 'contrato'; id: string; numero?: string };
+  data: string;
+  lidaPor: string[];
+}
+
+// Monitor da preventiva agendada (operacao/preventiva da empresa).
+export interface OperacaoPreventiva {
+  ultimaExecucao?: string;
+  ultimaOrigem?: 'agendada' | 'manual';
+  ultimoResultado?: { gerados: number; duplicados: number; ignorados: number } | null;
+  ultimoErro?: string | null;
+  ultimaAgendada?: string;
+  ultimaAgendadaOk?: boolean;
+  ultimaGeracao?: string;
+  totalExecucoes?: number;
 }
 
 /* Usuários ---------------------------------------------------------------- */

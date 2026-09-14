@@ -1,7 +1,8 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { db, colecao, exigirPerfil, exigirMesmaContratada } from './admin';
+import { db, colecao, exigirPerfil, exigirMesmaContratada, exigirTecnicoDesignado } from './admin';
 import { proximoNumero } from './contadores';
 import { registrarLog, resolverAutor } from './logs';
+import { notificar } from './notificacoes';
 import type { Orcamento, OrcamentoItem } from './types';
 
 // O que a tela manda: só item e quantidade. Nome e preço são copiados do
@@ -46,6 +47,7 @@ export const criarOrcamento = onCall<CriarOrcamentoInput>(async (request) => {
     }
     const os = osSnap.data()!;
     exigirMesmaContratada(ctx, os as { empresaContratadaId?: string });
+    exigirTecnicoDesignado(ctx, os as { tecnicoId?: string });
     if (!SITUACOES_OS_ABERTAS_A_ORCAMENTO.includes(os.situacao)) {
       throw new HttpsError('failed-precondition', `A OS ${os.numero} está ${os.situacao} e não aceita novo orçamento.`);
     }
@@ -117,6 +119,14 @@ export const criarOrcamento = onCall<CriarOrcamentoInput>(async (request) => {
         substituiu: substituido
       }
     });
+
+    notificar(tx, empresaId, {
+      paraPerfil: 'gestor',
+      titulo: `Orçamento pendente na OS ${os.numero}`,
+      texto: `${autor.nome} enviou um orçamento com ${itens.length} item(ns), total R$ ${itens.reduce((s, i) => s + i.quantidade * i.precoUnitario, 0).toFixed(2)}. Aguarda sua aprovação.`,
+      link: '/ordens-servico',
+      alvo: { tipo: 'orcamento', id: orcamentoRef.id, numero: os.numero as string }
+    });
   });
 
   return { id: orcamentoRef.id };
@@ -134,11 +144,35 @@ function agregarPorItem(itens: OrcamentoItem[]): Map<string, number> {
 
 // Aprovar e rejeitar são do gestor do cliente: é o saldo do contrato dele
 // que a aprovação compromete. A contratada propõe, não decide.
-export const aprovarOrcamento = onCall<{ orcamentoId: string }>(async (request) => {
+export interface AprovarOrcamentoInput {
+  orcamentoId: string;
+  // Ajuste do gestor na hora de aprovar: quantidade final por item do
+  // orçamento (só pra baixo ou igual; pra cima a contratada reenvia). Quem
+  // não aparece fica como foi orçado. Zero remove o item.
+  ajustes?: { itemContratoId: string; quantidade: number }[];
+  observacao?: string;
+}
+
+export const aprovarOrcamento = onCall<AprovarOrcamentoInput>(async (request) => {
   const ctx = exigirPerfil(request, ['gestor']);
   const { empresaId } = ctx;
 
-  const { orcamentoId } = request.data;
+  const { orcamentoId } = request.data ?? {};
+  const ajustes = request.data?.ajustes;
+  const observacao = (request.data?.observacao ?? '').trim().slice(0, 500);
+  if (!orcamentoId) {
+    throw new HttpsError('invalid-argument', 'Informe o orçamento.');
+  }
+  if (ajustes !== undefined) {
+    if (!Array.isArray(ajustes)) {
+      throw new HttpsError('invalid-argument', 'Lista de ajustes inválida.');
+    }
+    for (const a of ajustes) {
+      if (typeof a?.itemContratoId !== 'string' || typeof a.quantidade !== 'number' || !Number.isFinite(a.quantidade) || a.quantidade < 0) {
+        throw new HttpsError('invalid-argument', 'Ajuste precisa de item e quantidade maior ou igual a zero.');
+      }
+    }
+  }
   const orcamentoRef = colecao(empresaId, 'orcamentos').doc(orcamentoId);
   const autor = await resolverAutor(request, empresaId);
 
@@ -161,7 +195,39 @@ export const aprovarOrcamento = onCall<{ orcamentoId: string }>(async (request) 
     exigirMesmaContratada(ctx, os as { empresaContratadaId?: string });
     const chamadoRef = colecao(empresaId, 'chamados').doc(os.chamadoId);
 
-    const porItem = agregarPorItem(orcamento.itens);
+    // Aplica os ajustes do gestor sobre as linhas do orçamento antes de
+    // reservar. Guarda o original pra auditoria.
+    const orcadoPorItem = agregarPorItem(orcamento.itens);
+    let itensFinais = orcamento.itens;
+    const ajustesAplicados: { itemContratoId: string; nome: string; de: number; para: number }[] = [];
+    if (ajustes?.length) {
+      const desejado = new Map(ajustes.map((a) => [a.itemContratoId, a.quantidade]));
+      for (const [id, qtd] of desejado) {
+        if (!orcadoPorItem.has(id)) {
+          throw new HttpsError('invalid-argument', `Item ${id} não está neste orçamento.`);
+        }
+        if (qtd > orcadoPorItem.get(id)!) {
+          throw new HttpsError('failed-precondition', `Ajuste acima do orçado para o item ${id}: peça um novo orçamento à contratada.`);
+        }
+      }
+      // Uma linha por item: as linhas repetidas do mesmo item são fundidas.
+      const porId = new Map<string, OrcamentoItem>();
+      for (const linha of orcamento.itens) {
+        const atual = porId.get(linha.itemContratoId);
+        porId.set(linha.itemContratoId, atual ? { ...atual, quantidade: atual.quantidade + linha.quantidade } : { ...linha });
+      }
+      itensFinais = [];
+      for (const [id, linha] of porId) {
+        const nova = desejado.has(id) ? desejado.get(id)! : linha.quantidade;
+        if (nova !== linha.quantidade) ajustesAplicados.push({ itemContratoId: id, nome: linha.nome, de: linha.quantidade, para: nova });
+        if (nova > 0) itensFinais.push({ ...linha, quantidade: nova });
+      }
+      if (!itensFinais.length) {
+        throw new HttpsError('failed-precondition', 'O ajuste zerou todos os itens; rejeite o orçamento em vez de aprovar.');
+      }
+    }
+
+    const porItem = agregarPorItem(itensFinais);
     const itemRefs = [...porItem.keys()].map((itemId) =>
       colecao(empresaId, 'contratos').doc(os.contratoId).collection('itens').doc(itemId)
     );
@@ -194,23 +260,48 @@ export const aprovarOrcamento = onCall<{ orcamentoId: string }>(async (request) 
       });
     });
 
-    tx.update(orcamentoRef, { situacao: 'Aprovado' });
+    tx.update(orcamentoRef, {
+      situacao: 'Aprovado',
+      ...(ajustesAplicados.length ? { itens: itensFinais, itensOriginais: orcamento.itens, ajustadoPeloGestor: true } : {}),
+      ...(observacao ? { observacaoAprovacao: observacao } : {})
+    });
     tx.update(osRef, { situacao: 'Aprovada' });
     tx.update(chamadoRef, { status: 'A ser finalizado' });
 
     registrarLog(tx, empresaId, autor, {
       alvo: 'orcamento',
       operacao: 'transicao',
-      descricao: `Aprovou o orçamento da OS ${osSnap.data()!.numero}`,
+      descricao: `Aprovou o orçamento da OS ${os.numero}${ajustesAplicados.length ? ` com ${ajustesAplicados.length} ajuste(s) de quantidade` : ''}${observacao ? ` — ${observacao}` : ''}`,
       alvoId: orcamentoId,
-      alvoRotulo: osSnap.data()!.numero as string,
+      alvoRotulo: os.numero as string,
       alvoPaiId: orcamento.osId,
       detalhes: {
         situacao: { de: 'Pendente', para: 'Aprovado' },
         // A aprovação é o momento em que o saldo do contrato é reservado —
         // registrar quantos itens foram afetados ajuda a auditar o saldo.
-        itensReservados: porItem.size
+        itensReservados: porItem.size,
+        ajustes: ajustesAplicados
       }
+    });
+
+    notificar(tx, empresaId, {
+      paraPerfil: 'tecnico',
+      empresaContratadaId: os.empresaContratadaId,
+      paraUsuarioId: os.tecnicoId ?? undefined,
+      titulo: `Orçamento da OS ${os.numero} aprovado`,
+      texto: ajustesAplicados.length
+        ? `Aprovado com ajuste de quantidade em ${ajustesAplicados.length} item(ns). A OS pode ser executada.`
+        : 'A OS pode ser executada.',
+      link: '/ordens-servico',
+      alvo: { tipo: 'ordemServico', id: orcamento.osId, numero: os.numero as string }
+    });
+    notificar(tx, empresaId, {
+      paraPerfil: 'gestor_contratado',
+      empresaContratadaId: os.empresaContratadaId,
+      titulo: `Orçamento da OS ${os.numero} aprovado`,
+      texto: 'A OS está liberada para execução.',
+      link: '/ordens-servico',
+      alvo: { tipo: 'ordemServico', id: orcamento.osId, numero: os.numero as string }
     });
   });
 
@@ -256,6 +347,25 @@ export const rejeitarOrcamento = onCall<{ orcamentoId: string }>(async (request)
       alvoPaiId: orcamento.osId,
       detalhes: { situacao: { de: 'Pendente', para: 'Rejeitado' } }
     });
+
+    const osDados = osSnap.data()!;
+    notificar(tx, empresaId, {
+      paraPerfil: 'gestor_contratado',
+      empresaContratadaId: osDados.empresaContratadaId,
+      titulo: `Orçamento da OS ${osDados.numero} rejeitado`,
+      texto: 'Revise os itens e envie um novo orçamento.',
+      link: '/ordens-servico',
+      alvo: { tipo: 'ordemServico', id: orcamento.osId, numero: osDados.numero as string }
+    });
+    if (osDados.tecnicoId) {
+      notificar(tx, empresaId, {
+        paraUsuarioId: osDados.tecnicoId,
+        titulo: `Orçamento da OS ${osDados.numero} rejeitado`,
+        texto: 'Revise os itens e envie um novo orçamento.',
+        link: '/ordens-servico',
+        alvo: { tipo: 'ordemServico', id: orcamento.osId, numero: osDados.numero as string }
+      });
+    }
   });
 
   return { ok: true };

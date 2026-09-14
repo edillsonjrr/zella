@@ -4,8 +4,25 @@ import { getStorage } from 'firebase-admin/storage';
 import { db, colecao, exigirPerfil, PERFIS } from './admin';
 import { proximoNumero } from './contadores';
 import { registrarLog, resolverAutor } from './logs';
+import { notificar } from './notificacoes';
 import { resolverQrToken } from './qrLinks';
+import { empresaRef } from './admin';
 import type { Chamado } from './types';
+
+export const SLA_PADRAO_DIAS = 5;
+
+// Prazo padrão dos chamados da empresa, em dias (empresasClientes/{id}.slaDias).
+export async function slaDiasDaEmpresa(empresaId: string): Promise<number> {
+  const snap = await empresaRef(empresaId).get();
+  const v = Number(snap.data()?.['slaDias']);
+  return Number.isFinite(v) && v > 0 ? Math.round(v) : SLA_PADRAO_DIAS;
+}
+
+export function somarDias(dataISO: string, dias: number): string {
+  const d = new Date(`${dataISO}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + dias);
+  return d.toISOString().split('T')[0];
+}
 
 export interface CriarChamadoInput {
   titulo: string;
@@ -105,8 +122,13 @@ export const criarChamado = onCall<CriarChamadoInput>(async (request) => {
   // depois, sobra um arquivo órfão — barato, e não corrompe nada.
   const fotoPath = dados.foto ? await salvarFoto(empresaId, chamadoRef.id, dados.foto) : undefined;
 
+  // SLA: prazo do chamado em dias, configurável por empresa
+  // (empresasClientes/{id}.slaDias). Sem configuração vale o padrão.
+  const slaDias = await slaDiasDaEmpresa(empresaId);
+
   const numero = await db.runTransaction(async (tx) => {
     const numero = await proximoNumero(tx, empresaId, 'CH');
+    const hoje = new Date().toISOString().split('T')[0];
 
     const chamado: Chamado = {
       id: chamadoRef.id,
@@ -119,9 +141,11 @@ export const criarChamado = onCall<CriarChamadoInput>(async (request) => {
       solicitanteId,
       solicitanteNome,
       status: 'Aberto',
-      dataCriacao: new Date().toISOString().split('T')[0],
+      dataCriacao: hoje,
+      dataVencimento: somarDias(hoje, slaDias),
       possuiFoto: !!fotoPath,
-      fotoPath
+      fotoPath,
+      origem: 'manual'
     };
 
     tx.set(chamadoRef, chamado);
@@ -132,7 +156,15 @@ export const criarChamado = onCall<CriarChamadoInput>(async (request) => {
       descricao: `Abriu o chamado ${numero} — ${dados.equipamento}`,
       alvoId: chamadoRef.id,
       alvoRotulo: numero,
-      detalhes: { equipamento: dados.equipamento, unidadeId, solicitante: solicitanteNome }
+      detalhes: { equipamento: dados.equipamento, unidadeId, solicitante: solicitanteNome, slaDias }
+    });
+
+    notificar(tx, empresaId, {
+      paraPerfil: 'gestor',
+      titulo: `Novo chamado ${numero}`,
+      texto: `${solicitanteNome} abriu "${dados.equipamento}". Prazo: ${slaDias} dia(s).`,
+      link: '/dashboard',
+      alvo: { tipo: 'chamado', id: chamadoRef.id, numero }
     });
 
     return numero;

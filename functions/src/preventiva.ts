@@ -3,6 +3,7 @@ import { onCall } from 'firebase-functions/v2/https';
 import { db, colecao, exigirPerfil, EMPRESAS } from './admin';
 import { proximoNumero } from './contadores';
 import { registrarLog, type AutorLog } from './logs';
+import { notificarAgora } from './notificacoes';
 import type { Chamado, PlanoManutencao } from './types';
 
 // A geração roda sem ninguém logado, então a autoria do log é o próprio
@@ -126,8 +127,10 @@ export const gerarChamadosPreventivos = onSchedule(
       try {
         const resultado = await processarPlanosVencidos(empresa.id);
         console.log(`Preventiva [${empresa.id}]:`, resultado);
+        await registrarExecucao(empresa.id, 'agendada', resultado);
       } catch (erro) {
         console.error(`Preventiva [${empresa.id}] falhou:`, erro);
+        await registrarExecucao(empresa.id, 'agendada', null, erro instanceof Error ? erro.message : String(erro));
       }
     }
   }
@@ -137,5 +140,48 @@ export const gerarChamadosPreventivos = onSchedule(
 // pra destravar o dia caso a execução automática falhe.
 export const rodarPreventivaAgora = onCall(async (request) => {
   const { empresaId } = exigirPerfil(request, ['gestor']);
-  return processarPlanosVencidos(empresaId);
+  try {
+    const resultado = await processarPlanosVencidos(empresaId);
+    await registrarExecucao(empresaId, 'manual', resultado);
+    return resultado;
+  } catch (erro) {
+    await registrarExecucao(empresaId, 'manual', null, erro instanceof Error ? erro.message : String(erro));
+    throw erro;
+  }
 });
+
+/**
+ * Monitor da preventiva: cada execução (agendada ou manual) deixa o
+ * resultado em operacao/preventiva da empresa. A tela de Preventiva lê esse
+ * documento e avisa quando a última execução agendada passou de 26 horas ou
+ * terminou com erro — é como o gestor descobre que o job parou sem precisar
+ * abrir o console do Firebase. Erro também vira notificação.
+ */
+async function registrarExecucao(
+  empresaId: string,
+  origem: 'agendada' | 'manual',
+  resultado: { gerados: number; duplicados: number; ignorados: number } | null,
+  erro?: string
+): Promise<void> {
+  const agora = new Date().toISOString();
+  const ref = colecao(empresaId, 'operacao').doc('preventiva');
+  const atual = (await ref.get()).data() ?? {};
+  await ref.set({
+    ultimaExecucao: agora,
+    ultimaOrigem: origem,
+    ultimoResultado: resultado,
+    ultimoErro: erro ?? null,
+    ...(origem === 'agendada' ? { ultimaAgendada: agora, ultimaAgendadaOk: !erro } : {}),
+    ...(resultado && resultado.gerados ? { ultimaGeracao: agora } : {}),
+    totalExecucoes: (Number(atual['totalExecucoes']) || 0) + 1
+  }, { merge: true });
+
+  if (erro) {
+    await notificarAgora(empresaId, {
+      paraPerfil: 'gestor',
+      titulo: 'Preventiva automática falhou',
+      texto: `A geração ${origem} de chamados preventivos terminou com erro: ${erro.slice(0, 200)}`,
+      link: '/preventiva'
+    });
+  }
+}

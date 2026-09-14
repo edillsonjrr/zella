@@ -18,9 +18,9 @@ Levantado em 14/09/2026. Ordem = ordem de execução. Marque `[x]` ao concluir.
 ## Ações
 
 ### Agora (produção)
-- [ ] **A1 P0** Publicar functions, rules e hosting: `npx firebase deploy --only functions,firestore:rules,hosting` (raiz). Executado pelo Edilson.
-- [ ] **A2 P0** Rodar `node scripts/verificar-saldos.js` (pasta functions) e colar a saída. Só leitura.
-- [ ] **A3 P0** Corrigir cada apontamento de A2, um a um, com autorização.
+- [x] **A1 P0** Deploy feito em 14/09: functions (2 novas: `aditivarContrato`, `reconstruirUsuariosPublicos`; `migrarDadosRaiz` apagada), rules e hosting. Runtime Node 20 é descontinuado em 30/10/2026: subir para Node 22 antes disso (ver A28).
+- [x] **A2 P0** Verificação rodada em 14/09 (script agora usa a API REST com o token do CLI). Resultado: nenhuma reserva presa, nenhuma OS com orçamento duplicado, nenhum saldo negativo. 6 itens da empresa `demo` com soma ≠ contratada (dados do seed, não de uso real).
+- [x] **A3 P0** Corrigido em 14/09 com `scripts/corrigir-disponivel.js demo --aplicar`: 6 itens da `demo` com disponível recalculado, um log por item. Reverificação: 0 apontamentos.
 
 ### Esta semana (código)
 - [x] **A4 P1** Importação de contratos ligada ao backend (14/09): prévia por linha, erros do servidor por linha, contrato duplicado, fornecedor casado com empresa contratada, colunas opcionais `unidade;preco_unitario`, log por contrato.
@@ -33,22 +33,23 @@ Levantado em 14/09/2026. Ordem = ordem de execução. Marque `[x]` ao concluir.
 - [x] **A11 P2** Painel do contrato lista todas as OS (14/09).
 - [x] **A12 P2** `alert`/`prompt`/`confirm` substituídos por `DialogoService` (14/09); exclusões com try/catch e feedback.
 - [x] **A13 P2** Bundle inicial 1,14 MB (14/09): dashboard lazy, `qrcode` por import dinâmico.
-- [ ] **A14 P2** Testar arrastar no Kanban com cada perfil após as novas regras.
+- [ ] **A14 P2** Testar arrastar no Kanban com cada perfil após as novas regras. As regras de arrastar estão cobertas por código e testes das functions; o gesto em si ainda não foi validado no navegador (a automação travou duas vezes).
 
 ### Próximas semanas (produto)
-- [ ] **A15 P1** Execução parcial: executar quantidade menor que a orçada. Precisa de decisão.
-- [ ] **A16 P1** Encerramento formal de contrato com devolução de reservas pendentes.
-- [ ] **A17 P1** Alterar quantidades na aprovação do orçamento (prometido no MVP).
-- [ ] **A18 P2** SLA em chamado manual (`dataVencimento` só existe na preventiva).
-- [ ] **A19 P2** Técnico designado com efeito real (hoje qualquer técnico da contratada executa qualquer OS).
-- [ ] **A20 P2** Notificações por e-mail: chamado aberto, orçamento pendente, aprovado.
-- [ ] **A21 P2** Monitoramento da preventiva agendada e backup do Firestore.
-- [ ] **A22 P2** Admins da plataforma fora do código (`perfis.ts` tem dois e-mails fixos).
-- [ ] **A23 P3** Alçada de aprovação por valor.
-- [ ] **A24 P3** Multiempresa comercial: plano, limite, cobrança.
-- [ ] **A25 P3** Responder discovery: onde o saldo é controlado hoje, OS só nasce de chamado, Protheus.
-- [ ] **A26 P3** Nome do produto (Zella × Gestão de manutenção × Senai DF).
-- [ ] **A27 P3** README real.
+- [x] **A15 P1** Execução parcial (14/09): `executarOS` aceita quantidade executada por item (≤ orçado); consome o executado e devolve a sobra ao disponível. Diálogo "Executar OS" na tela; `itensExecutados` fica na OS. Testado.
+- [x] **A16 P1** Encerramento formal de contrato (14/09): `encerrarContrato` (gestor, com motivo). Bloqueia se houver OS aprovada com reserva (lista quais); cancela OS ainda em orçamento devolvendo o chamado a Aberto; zera o disponível restante (registrado como aditivo de encerramento) e notifica a contratada. Botão no painel do contrato. Testado.
+- [x] **A17 P1** Ajuste de quantidades na aprovação (14/09): o gestor reduz itens (ou zera para remover) antes de aprovar, com motivo obrigatório; o orçamento guarda o original. Acima do orçado exige novo orçamento. Testado.
+- [x] **A18 P2** SLA em chamado manual (14/09): `dataVencimento` = criação + `slaDias` da empresa (padrão 5). Configurável em `empresasClientes/{id}.slaDias`. Testado.
+- [x] **A19 P2** Técnico designado com efeito (14/09): técnico só orça/executa a OS designada a ele (ou sem técnico). Nova function `atribuirTecnicoOS` (gestor e gestor contratado, técnico da mesma contratada); seletor no painel da OS; Kanban respeita. Testado.
+- [~] **A20 P2** Notificações (14/09): sino no topo com notificações internas por evento (chamado aberto, orçamento pendente/aprovado/rejeitado, OS designada/executada, contrato encerrado, falha da preventiva), endereçadas por perfil/pessoa/contratada, com "marcar como lida". **E-mail ainda não sai**: falta um provedor (SMTP ou extensão *Trigger Email*). Quando houver, basta um trigger em `notificacoes` que monte a mensagem. Decisão sua: qual provedor/conta remetente.
+- [~] **A21 P2** Monitor da preventiva (14/09): cada execução grava `operacao/preventiva`; a tela de Preventiva mostra faixa verde/vermelha e a falha vira notificação ao gestor. **Backup do Firestore** ainda não configurado: precisa de `gcloud firestore backups schedules create --database='(default)' --recurrence=daily --retention=7d` (ou pelo console, Firestore → Backups). Não dá para fazer daqui sem o gcloud.
+- [x] **A22 P2** Admins fora do código (14/09): lista lida de `configuracaoPlataforma/admins` ({ emails: [] }) no Firestore, sem acesso pelo app; os dois e-mails do código ficam como fallback se o documento não existir ou estiver vazio. Para alterar: criar/editar o documento pelo console.
+- [ ] **A23 P3** Alçada de aprovação por valor. Não implementado: só existe um nível acima da contratada (gestor). Precisa de decisão: quem aprova acima do teto (outro gestor? dupla aprovação?) e qual o teto.
+- [ ] **A24 P3** Multiempresa comercial (plano, limite, cobrança). Não implementado; decisão de produto.
+- [ ] **A25 P3** Discovery pendente: onde o saldo é controlado hoje, OS só nasce de chamado, integração Protheus. Respostas do cliente.
+- [ ] **A26 P3** Nome do produto. O README e o título já usam "Zella"; a empresa demo continua "Senai DF (demonstração)". Decisão sua.
+- [x] **A27 P3** README real (14/09): fluxo, perfis, estrutura, como rodar, testes, deploy, scripts e configurações.
+- [x] **A28 P1** Node 22 (14/09): `functions/package.json` engines = 22; testes passando. Entra em produção no próximo deploy.
 
 ## Como testar antes do deploy
 1. `cd functions && npm run build`

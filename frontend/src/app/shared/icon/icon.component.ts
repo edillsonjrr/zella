@@ -70,7 +70,9 @@ import {
   phosphorLink,
   phosphorCopy,
   phosphorEyeSlash,
-  phosphorBuildings
+  phosphorBuildings,
+  phosphorBell,
+  phosphorUserGear
 } from '@ng-icons/phosphor-icons/regular';
 
 const ICON_MAP: Record<string, string> = {
@@ -156,7 +158,9 @@ const ICON_MAP: Record<string, string> = {
   copy: 'phosphorCopy',
   remove_circle_outline: 'phosphorMinusCircle',
   pending_actions: 'phosphorWarningCircle',
-  admin_panel_settings: 'phosphorGear'
+  admin_panel_settings: 'phosphorGear',
+  notifications: 'phosphorBell',
+  assign_technician: 'phosphorUserGear'
 };
 
 const ICONS = {
@@ -229,7 +233,9 @@ const ICONS = {
   phosphorLink,
   phosphorCopy,
   phosphorEyeSlash,
-  phosphorBuildings
+  phosphorBuildings,
+  phosphorBell,
+  phosphorUserGear
 };
 
 @Component({

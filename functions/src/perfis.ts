@@ -7,12 +7,31 @@ import { db, EMPRESAS, PERFIS, PERFIL_ADMIN, colecao, empresaRef, exigirAdminPla
 
 export { PERFIS, type Perfil };
 
+// Administradores iniciais (fallback). A lista viva está no Firestore, em
+// `configuracaoPlataforma/admins` — ver adminsPlataforma() abaixo.
+const ADMINS_PLATAFORMA_INICIAIS = ['edilsonjuniormvf@gmail.com', 'edilsonjr.its@gmail.com'];
+
 /**
- * Quem administra a plataforma. É uma lista no código, e não uma coleção,
- * de propósito: assim não existe tela nem documento que, editado, promova
- * alguém a administrador. Mudar isso é um deploy.
+ * Lista de administradores da plataforma: documento
+ * `configuracaoPlataforma/admins` ({ emails: string[] }), fora do código,
+ * editado só pelo console do Firebase (nenhuma rule libera leitura ou
+ * escrita dele ao app). A lista do código é o fallback enquanto o documento
+ * não existe — e é o que impede uma edição errada de deixar a plataforma
+ * sem administrador: documento vazio ou ilegível, valem os iniciais.
  */
-const ADMINS_PLATAFORMA = ['edilsonjuniormvf@gmail.com', 'edilsonjr.its@gmail.com'];
+export async function adminsPlataforma(): Promise<string[]> {
+  try {
+    const snap = await db.collection('configuracaoPlataforma').doc('admins').get();
+    const emails = snap.data()?.['emails'];
+    if (Array.isArray(emails)) {
+      const lista = emails.filter((e): e is string => typeof e === 'string' && e.includes('@')).map((e) => e.toLowerCase());
+      if (lista.length) return lista;
+    }
+  } catch (e) {
+    console.error('Falha ao ler configuracaoPlataforma/admins; usando lista inicial.', e);
+  }
+  return ADMINS_PLATAFORMA_INICIAIS;
+}
 
 /**
  * O que vai dentro do token do Firebase Auth como custom claim.
@@ -36,11 +55,11 @@ export interface ClaimsPerfil {
   adminPlataforma?: true;
 }
 
-function ehAdminPlataforma(email: string): boolean {
-  return ADMINS_PLATAFORMA.includes(email.toLowerCase());
+function ehAdminPlataforma(email: string, admins: string[]): boolean {
+  return admins.includes(email.toLowerCase());
 }
 
-function claimsDe(empresaId: string, id: string, usuario: FirebaseFirestore.DocumentData): ClaimsPerfil | null {
+function claimsDe(empresaId: string, id: string, usuario: FirebaseFirestore.DocumentData, admins: string[]): ClaimsPerfil | null {
   const perfil = usuario['perfil'];
   if (!PERFIS.includes(perfil)) return null;
 
@@ -50,7 +69,7 @@ function claimsDe(empresaId: string, id: string, usuario: FirebaseFirestore.Docu
   // O trigger e a callable gravam o mesmo claim; a marca de admin precisa
   // sobreviver aos dois, senão um refresh de token no meio da sessão a
   // apagaria.
-  if (typeof usuario['email'] === 'string' && ehAdminPlataforma(usuario['email'])) claims.adminPlataforma = true;
+  if (typeof usuario['email'] === 'string' && ehAdminPlataforma(usuario['email'], admins)) claims.adminPlataforma = true;
   return claims;
 }
 
@@ -117,7 +136,7 @@ export const sincronizarClaimsUsuario = onDocumentWritten(`${EMPRESAS}/{empresaI
   }
 
   if (depois?.['email']) {
-    await aplicarClaims(depois['email'], claimsDe(empresaId, id, depois), depois['nome']);
+    await aplicarClaims(depois['email'], claimsDe(empresaId, id, depois, await adminsPlataforma()), depois['nome']);
   }
 
   await espelharUsuarioPublico(empresaId, id, depois);
@@ -221,9 +240,10 @@ export const carregarPerfil = onCall<void, Promise<{ usuario: UsuarioAutenticado
     throw new HttpsError('failed-precondition', 'A conta não tem e-mail.');
   }
 
-  const admin = ehAdminPlataforma(email);
+  const admins = await adminsPlataforma();
+  const admin = ehAdminPlataforma(email, admins);
   const cadastro = await buscarCadastroPorEmail(email);
-  const claims = cadastro ? claimsDe(cadastro.empresaId, cadastro.id, cadastro.dados) : null;
+  const claims = cadastro ? claimsDe(cadastro.empresaId, cadastro.id, cadastro.dados, admins) : null;
   const empresa = cadastro ? (await empresaRef(cadastro.empresaId).get()).data() : undefined;
   const cadastroValido = !!cadastro && !!claims && !!empresa && empresa['ativa'] !== false;
 
@@ -281,7 +301,7 @@ export const prepararAcessoPorSenha = onCall<{ email: string }, Promise<{ ok: tr
 
   const cadastro = await buscarCadastroPorEmail(email);
   if (cadastro) {
-    const claims = claimsDe(cadastro.empresaId, cadastro.id, cadastro.dados);
+    const claims = claimsDe(cadastro.empresaId, cadastro.id, cadastro.dados, await adminsPlataforma());
     if (claims) {
       await aplicarClaims(email, claims, cadastro.dados['nome']);
     }
