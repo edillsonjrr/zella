@@ -53,7 +53,6 @@ async function gerarChamadoDoPlano(empresaId: string, plano: PlanoManutencao): P
       unidadeId: equipamento.unidadeId as string,
       solicitanteId: 'sistema',
       solicitanteNome: 'Manutenção preventiva',
-      situacao: 'Aberto',
       status: 'Aberto',
       dataCriacao: hojeISO(),
       // O prazo do chamado é a data em que o serviço deveria acontecer —

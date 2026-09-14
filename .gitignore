@@ -5,7 +5,6 @@ node_modules/
 frontend/dist/
 frontend/.angular/
 functions/lib/
-backend/dist/
 
 # Firebase local
 .firebase/

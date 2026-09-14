@@ -9,12 +9,15 @@ import { MatTableModule } from '@angular/material/table';
 import { DatePipe } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { DataService } from '../shared/data.service';
+import { DialogoService } from '../shared/dialogo/dialogo.service';
+import { UiFeedbackService } from '../shared/ui-feedback.service';
 import { AuthService } from '../shared/auth.service';
+import { situacaoContrato } from '../shared/contrato-status';
 import { OsDetalheComponent } from '../os-detalhe/os-detalhe.component';
 import { ItemContratoFormComponent } from '../item-contrato-form/item-contrato-form.component';
 import { AditivoContratoFormComponent } from '../aditivo-contrato-form/aditivo-contrato-form.component';
 import { HistoricoRegistroComponent } from '../shared/historico-registro/historico-registro.component';
-import type { Contrato, ItemContrato } from '../shared/models';
+import type { Contrato, ItemContrato, OrdemServico } from '../shared/models';
 
 @Component({
   selector: 'app-contrato-detalhe',
@@ -34,6 +37,8 @@ import type { Contrato, ItemContrato } from '../shared/models';
 })
 export class ContratoDetalheComponent {
   private dataService = inject(DataService);
+  private dialogo = inject(DialogoService);
+  private feedback = inject(UiFeedbackService);
   private auth = inject(AuthService);
   private dialog = inject(MatDialog);
 
@@ -53,6 +58,8 @@ export class ContratoDetalheComponent {
   contratoAtual = computed(() =>
     this.dataService.contratos().find(c => c.id === this.contrato.id) ?? this.contrato
   );
+
+  situacao = computed(() => situacaoContrato(this.contratoAtual()));
 
   totalContratado = computed(() => this.contratoAtual().itens.reduce((sum, i) => sum + i.quantidadeContratada, 0));
   totalDisponivel = computed(() => this.contratoAtual().itens.reduce((sum, i) => sum + i.quantidadeDisponivel, 0));
@@ -105,19 +112,16 @@ export class ContratoDetalheComponent {
   }
 
   async excluirItem(item: ItemContrato): Promise<void> {
-    if (!confirm(`Remover o item "${item.nome}" do contrato?`)) return;
+    if (!(await this.dialogo.excluir(`Remover o item "${item.nome}"?`, `Ele sai do contrato ${this.contratoAtual().numero}.`))) return;
 
     try {
       await this.dataService.excluirItemContrato(this.contratoAtual(), item);
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Não foi possível remover o item.');
+      this.feedback.announce(e instanceof Error ? e.message : 'Não foi possível remover o item.', 'assertive');
     }
   }
 
-  abrirOS(): void {
-    const os = this.ordensDoContrato()[0];
-    if (!os) return;
-
+  abrirOS(os: OrdemServico): void {
     this.dialog.open(OsDetalheComponent, {
       panelClass: 'os-detalhe-dialog',
       data: os,

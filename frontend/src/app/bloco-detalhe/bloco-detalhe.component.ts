@@ -9,6 +9,8 @@ import { MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dial
 import { IconComponent } from '../shared/icon/icon.component';
 import { FlowButtonComponent } from '../shared/flow-button/flow-button.component';
 import { DataService } from '../shared/data.service';
+import { DialogoService } from '../shared/dialogo/dialogo.service';
+import { UiFeedbackService } from '../shared/ui-feedback.service';
 import { QrcodeDetalheComponent } from '../qrcode-detalhe/qrcode-detalhe.component';
 import { SalaDetalheComponent } from '../sala-detalhe/sala-detalhe.component';
 import type { Bloco, Sala } from '../shared/models';
@@ -30,6 +32,8 @@ import type { Bloco, Sala } from '../shared/models';
 })
 export class BlocoDetalheComponent {
   private dataService = inject(DataService);
+  private dialogo = inject(DialogoService);
+  private feedback = inject(UiFeedbackService);
   private dialog = inject(MatDialog);
   private dialogRef = inject(MatDialogRef<BlocoDetalheComponent>);
 
@@ -69,9 +73,12 @@ export class BlocoDetalheComponent {
     this.cancelarSala();
   }
 
-  excluirSala(sala: Sala): void {
-    if (confirm(`Excluir a sala ${sala.nome}? Os equipamentos dela também serão removidos.`)) {
-      this.dataService.excluirSala(sala.id);
+  async excluirSala(sala: Sala): Promise<void> {
+    if (!(await this.dialogo.excluir(`Excluir a sala ${sala.nome}?`, 'Os equipamentos dela também serão removidos.'))) return;
+    try {
+      await this.dataService.excluirSala(sala.id);
+    } catch (e) {
+      this.feedback.announce(e instanceof Error ? e.message : 'Não foi possível excluir a sala.', 'assertive');
     }
   }
 

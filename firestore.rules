@@ -93,8 +93,11 @@ service cloud.firestore {
         allow write: if gestor();
       }
 
+      // Cadastro completo, com e-mail: só o gestor lista. Cada pessoa lê o
+      // próprio registro ("Minha conta"). Os demais perfis usam a cópia
+      // pública abaixo, sem e-mail.
       match /usuarios/{id} {
-        allow read: if usuario();
+        allow read: if gestor() || (usuario() && request.auth.token.usuarioId == id);
         allow write: if gestor();
         // "Minha conta": a pessoa só troca o próprio nome. Perfil, e-mail e
         // vínculos continuam sendo do gestor.
@@ -103,6 +106,14 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome'])
           && request.resource.data.nome is string
           && request.resource.data.nome.size() <= 200;
+      }
+
+      // Espelho de `usuarios` sem e-mail (id, nome, perfil, vínculos),
+      // mantido pela Cloud Function sincronizarClaimsUsuario. É daqui que
+      // cliente, técnico e contratada tiram o nome de responsável e técnico.
+      match /usuariosPublicos/{id} {
+        allow read: if usuario();
+        allow write: if false;
       }
 
       // Empresas prestadoras de serviço do cliente. Cadastro simples do

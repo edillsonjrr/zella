@@ -13,6 +13,7 @@ import { ChamadoDetalheComponent } from '../chamado-detalhe/chamado-detalhe.comp
 import { OrcamentoComponent } from '../orcamento/orcamento.component';
 import { ChamadosQuadroComponent, type TransicaoChamado } from '../chamados-quadro/chamados-quadro.component';
 import { DataService } from '../shared/data.service';
+import { faseDoChamado } from '../shared/chamado-fase';
 import { UiFeedbackService } from '../shared/ui-feedback.service';
 import type { Chamado, OrdemServico, Contrato } from '../shared/models';
 
@@ -79,9 +80,9 @@ export class DashboardComponent {
     const ordens = this.ordensReais();
     return {
       chamadosTotal: chamados.length,
-      chamadosAbertos: chamados.filter(c => c.situacao === 'Aberto').length,
-      chamadosEmAtendimento: chamados.filter(c => c.situacao === 'Em atendimento').length,
-      chamadosFinalizados: chamados.filter(c => c.situacao === 'Convertido').length,
+      chamadosAbertos: chamados.filter(c => faseDoChamado(c.status) === 'Aberto').length,
+      chamadosEmAtendimento: chamados.filter(c => faseDoChamado(c.status) === 'Em atendimento').length,
+      chamadosFinalizados: chamados.filter(c => faseDoChamado(c.status) === 'Finalizado').length,
       osTotal: ordens.length,
       osAbertas: ordens.filter(o => o.situacao === 'Aberta' || o.situacao === 'Em vistoria').length,
       osAprovadas: ordens.filter(o => o.situacao === 'Aprovada').length,

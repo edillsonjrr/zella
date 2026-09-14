@@ -18,10 +18,13 @@
 <div class="painel-conteudo">
   <div class="campo">
     <span class="campo-label">Status</span>
-    <span class="badge" [class.badge--ativo]="contrato.status === 'Ativo'" [class.badge--critico]="contrato.status === 'Crítico'">
-      <app-icon [name]="contrato.status === 'Crítico' ? 'error' : 'check_circle'"></app-icon>
-      {{ contrato.status }}
+    <span class="badge" [class.badge--ativo]="situacao().status === 'Ativo'" [class.badge--critico]="situacao().status === 'Crítico' || situacao().status === 'Vencido'">
+      <app-icon [name]="situacao().status === 'Ativo' ? 'check_circle' : situacao().status === 'Encerrado' ? 'lock' : 'error'"></app-icon>
+      {{ situacao().status }}
     </span>
+    @if (situacao().aviso) {
+      <span class="campo-valor campo-aviso">{{ situacao().aviso }}</span>
+    }
   </div>
 
   <div class="campo">
@@ -128,6 +131,26 @@
 
   <mat-divider class="painel-divider"></mat-divider>
 
+  @if (temOS()) {
+    <div class="campo campo--bloco">
+      <span class="campo-label">Ordens de serviço deste contrato ({{ ordensDoContrato().length }})</span>
+      <ul class="lista-os">
+        @for (os of ordensDoContrato(); track os.id) {
+          <li>
+            <button type="button" class="lista-os-item" (click)="abrirOS(os)">
+              <app-icon name="assignment"></app-icon>
+              <span class="lista-os-numero">{{ os.numero }}</span>
+              <span class="lista-os-situacao">{{ os.situacao }}</span>
+              <span class="lista-os-data">{{ os.dataCriacao | date:'dd/MM/yyyy' }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <mat-divider class="painel-divider"></mat-divider>
+  }
+
   <div class="campo campo--bloco">
     <app-historico-registro [alvoPaiId]="contrato.id" titulo="Histórico deste contrato"></app-historico-registro>
   </div>
@@ -137,11 +160,6 @@
   @if (podeEditar && contratoAtual().status !== 'Encerrado') {
     <app-flow-button class="full-width" (click)="abrirAditivo()">
       <app-icon class="btn-icon" name="create"></app-icon> Registrar aditivo
-    </app-flow-button>
-  }
-  @if (temOS()) {
-    <app-flow-button class="full-width" (click)="abrirOS()">
-      <app-icon class="btn-icon" name="assignment"></app-icon> Ver OS
     </app-flow-button>
   }
   <app-flow-button variant="secondary" class="full-width" type="button" (click)="fechar()">Fechar</app-flow-button>

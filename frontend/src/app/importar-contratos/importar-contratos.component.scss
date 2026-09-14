@@ -139,3 +139,29 @@
     color: var(--text-secondary);
   }
 }
+
+.erro-geral,
+.aviso-geral {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--button-radius);
+  font-size: 0.8rem;
+}
+
+.erro-geral {
+  background: var(--danger-50, var(--bg-elevated));
+  color: var(--danger-500);
+}
+
+.aviso-geral {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+}
+
+.instrucoes code {
+  font-size: 0.75rem;
+  word-break: break-all;
+}

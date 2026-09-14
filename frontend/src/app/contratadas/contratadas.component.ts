@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { IconComponent } from '../shared/icon/icon.component';
 import { FlowButtonComponent } from '../shared/flow-button/flow-button.component';
 import { DataService } from '../shared/data.service';
+import { DialogoService } from '../shared/dialogo/dialogo.service';
 import type { EmpresaContratada } from '../shared/models';
 
 /**
@@ -33,6 +34,7 @@ import type { EmpresaContratada } from '../shared/models';
 })
 export class ContratadasComponent {
   dataService = inject(DataService);
+  private dialogo = inject(DialogoService);
 
   empresas = this.dataService.empresasContratadas;
   displayedColumns = ['nome', 'cnpj', 'contato', 'usuarios', 'contratos', 'acoes'];
@@ -86,10 +88,10 @@ export class ContratadasComponent {
     this.limpar(form);
   }
 
-  excluir(empresa: EmpresaContratada): void {
-    if (!confirm(`Excluir a empresa contratada ${empresa.nome}?`)) return;
+  async excluir(empresa: EmpresaContratada): Promise<void> {
+    if (!(await this.dialogo.excluir(`Excluir a empresa contratada ${empresa.nome}?`, 'Contratos e usuários ligados a ela ficam sem vínculo.'))) return;
     try {
-      this.dataService.excluirEmpresaContratada(empresa.id);
+      await this.dataService.excluirEmpresaContratada(empresa.id);
     } catch (e) {
       this.erro.set((e as Error).message);
     }

@@ -6,6 +6,8 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { IconComponent } from '../shared/icon/icon.component';
 import { FlowButtonComponent } from '../shared/flow-button/flow-button.component';
 import { DataService } from '../shared/data.service';
+import { DialogoService } from '../shared/dialogo/dialogo.service';
+import { UiFeedbackService } from '../shared/ui-feedback.service';
 import { PlanoFormComponent, PERIODICIDADES } from '../plano-form/plano-form.component';
 import type { PlanoManutencao } from '../shared/models';
 
@@ -28,6 +30,8 @@ interface PlanoView extends PlanoManutencao {
 })
 export class PreventivaComponent {
   private dataService = inject(DataService);
+  private dialogo = inject(DialogoService);
+  private feedback = inject(UiFeedbackService);
   private dialog = inject(MatDialog);
 
   displayedColumns = ['nome', 'equipamento', 'periodicidade', 'proxima', 'situacao', 'acoes'];
@@ -157,9 +161,12 @@ export class PreventivaComponent {
     });
   }
 
-  excluir(plano: PlanoManutencao): void {
-    if (confirm(`Excluir o plano "${plano.nome}"?`)) {
-      this.dataService.excluirPlanoManutencao(plano.id);
+  async excluir(plano: PlanoManutencao): Promise<void> {
+    if (!(await this.dialogo.excluir(`Excluir o plano "${plano.nome}"?`, 'Os chamados já gerados por ele continuam existindo.'))) return;
+    try {
+      await this.dataService.excluirPlanoManutencao(plano.id);
+    } catch (e) {
+      this.feedback.announce(e instanceof Error ? e.message : 'Não foi possível excluir o plano.', 'assertive');
     }
   }
 }

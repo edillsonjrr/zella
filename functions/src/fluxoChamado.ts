@@ -78,7 +78,6 @@ export const cancelarChamado = onCall<{ chamadoId: string; motivo?: string }>(as
     }
 
     tx.update(chamadoRef, {
-      situacao: 'Cancelado',
       status: 'Cancelado',
       dataFechamento: hojeISO()
     });
@@ -130,7 +129,6 @@ export const reabrirChamado = onCall<{ chamadoId: string; motivo?: string }>(asy
     }
 
     tx.update(chamadoRef, {
-      situacao: 'Aberto',
       status: 'Aberto',
       dataFechamento: FieldValue.delete(),
       ordemServicoId: FieldValue.delete()

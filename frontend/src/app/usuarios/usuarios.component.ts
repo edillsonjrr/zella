@@ -6,6 +6,8 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { IconComponent } from '../shared/icon/icon.component';
 import { FlowButtonComponent } from '../shared/flow-button/flow-button.component';
 import { DataService } from '../shared/data.service';
+import { DialogoService } from '../shared/dialogo/dialogo.service';
+import { UiFeedbackService } from '../shared/ui-feedback.service';
 import { UsuarioFormComponent } from '../usuario-form/usuario-form.component';
 import type { PerfilUsuario, Usuario } from '../shared/models';
 
@@ -24,6 +26,8 @@ import type { PerfilUsuario, Usuario } from '../shared/models';
 })
 export class UsuariosComponent {
   dataService = inject(DataService);
+  private dialogo = inject(DialogoService);
+  private feedback = inject(UiFeedbackService);
   private dialog = inject(MatDialog);
 
   displayedColumns: string[] = ['nome', 'email', 'perfil', 'unidade', 'contratada', 'acoes'];
@@ -58,13 +62,12 @@ export class UsuariosComponent {
     });
   }
 
-  excluir(usuario: Usuario): void {
-    if (confirm(`Deseja excluir o usuário ${usuario.nome}?`)) {
-      try {
-        this.dataService.excluirUsuario(usuario.id);
-      } catch (e) {
-        alert((e as Error).message);
-      }
+  async excluir(usuario: Usuario): Promise<void> {
+    if (!(await this.dialogo.excluir(`Excluir o usuário ${usuario.nome}?`, 'A pessoa perde o acesso ao sistema.'))) return;
+    try {
+      await this.dataService.excluirUsuario(usuario.id);
+    } catch (e) {
+      this.feedback.announce(e instanceof Error ? e.message : 'Não foi possível excluir o usuário.', 'assertive');
     }
   }
 

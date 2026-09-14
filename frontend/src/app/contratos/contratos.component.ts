@@ -9,6 +9,7 @@ import { NovoContratoComponent } from '../novo-contrato/novo-contrato.component'
 import { ContratoDetalheComponent } from '../contrato-detalhe/contrato-detalhe.component';
 import { DataService } from '../shared/data.service';
 import { AuthService } from '../shared/auth.service';
+import { situacaoContrato } from '../shared/contrato-status';
 import type { Contrato } from '../shared/models';
 
 @Component({
@@ -38,20 +39,11 @@ export class ContratosComponent {
       totalUnidades: c.itens.reduce((sum, i) => sum + i.quantidadeContratada, 0),
       unidadesDisponiveis: c.itens.reduce((sum, i) => sum + i.quantidadeDisponivel, 0),
       itensCount: c.itens.length,
-      vencimento: this.avisoVencimento(c.vigenciaFim, c.status)
+      // Status calculado (saldo baixo, vigência a vencer, vencido): o campo
+      // gravado só diz se o gestor encerrou.
+      situacao: situacaoContrato(c)
     }));
   });
-
-  // Vence em até 30 dias, ou já venceu: o gestor precisa renovar ou
-  // encerrar antes que uma OS seja recusada por contrato vencido.
-  private avisoVencimento(vigenciaFim: string, status: string): string {
-    if (!vigenciaFim || status === 'Encerrado') return '';
-    const fim = new Date(`${vigenciaFim}T00:00:00`);
-    const dias = Math.ceil((fim.getTime() - Date.now()) / 86400000);
-    if (dias < 0) return 'Vencido';
-    if (dias <= 30) return dias === 0 ? 'Vence hoje' : `Vence em ${dias} dia${dias === 1 ? '' : 's'}`;
-    return '';
-  }
 
   constructor() {}
 

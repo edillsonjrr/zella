@@ -9,7 +9,6 @@ export { executarOS, encerrarChamado } from './execucao';
 export { validarImportacaoContratos, importarContratos } from './contratos';
 export { abrirChamadoQr, validarQrToken } from './qrLinks';
 export { gerarChamadosPreventivos, rodarPreventivaAgora } from './preventiva';
-export { carregarPerfil, sincronizarClaimsUsuario, prepararAcessoPorSenha, criarEmpresa } from './perfis';
-export { migrarDadosRaiz } from './migracao';
+export { carregarPerfil, sincronizarClaimsUsuario, prepararAcessoPorSenha, criarEmpresa, reconstruirUsuariosPublicos } from './perfis';
 export { cancelarChamado, reabrirChamado } from './fluxoChamado';
 export { aditivarContrato } from './aditivos';

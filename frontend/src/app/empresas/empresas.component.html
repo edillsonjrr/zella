@@ -149,30 +149,4 @@
       }
     </mat-card-content>
   </mat-card>
-
-  <mat-card class="app-card animate-fade-in-up empresas-migracao">
-    <mat-card-content>
-      <h2>Migração dos dados antigos</h2>
-      <p>
-        Copia os dados que estão na raiz do banco (de antes das empresas) para dentro de uma
-        empresa. Não apaga nada da raiz. Temporário: some depois do teste guiado.
-      </p>
-      <div class="empresas-migracao-campos">
-        <mat-form-field appearance="outline">
-          <mat-label>Id da empresa de destino</mat-label>
-          <input matInput [(ngModel)]="migracaoEmpresaId" name="migracaoEmpresaId" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Nome (se a empresa ainda não existir)</mat-label>
-          <input matInput [(ngModel)]="migracaoNome" name="migracaoNome" />
-        </mat-form-field>
-        <app-flow-button variant="secondary" type="button" [disabled]="migrando() || !migracaoEmpresaId" (click)="migrarRaiz()">
-          {{ migrando() ? 'Migrando...' : 'Migrar dados da raiz' }}
-        </app-flow-button>
-      </div>
-      @if (migracaoResultado()) {
-        <p class="empresa-msg empresa-msg--ok" role="status">{{ migracaoResultado() }}</p>
-      }
-    </mat-card-content>
-  </mat-card>
 </div>

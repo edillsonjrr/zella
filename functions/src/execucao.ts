@@ -116,7 +116,6 @@ export const encerrarChamado = onCall<{ chamadoId: string }>(async (request) => 
     }
 
     tx.update(chamadoRef, {
-      situacao: 'Convertido',
       status: 'Encerrado',
       dataFechamento: new Date().toISOString().split('T')[0]
     });

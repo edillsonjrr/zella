@@ -13,8 +13,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { DataService } from '../shared/data.service';
+import { DialogoService } from '../shared/dialogo/dialogo.service';
 import { HistoricoRegistroComponent } from '../shared/historico-registro/historico-registro.component';
 import { AuthService } from '../shared/auth.service';
+import { faseDoChamado } from '../shared/chamado-fase';
 import type { Chamado } from '../shared/models';
 
 @Component({
@@ -39,6 +41,7 @@ export class ChamadoDetalheComponent {
   private router = inject(Router);
   private dialogRef = inject(MatDialogRef<ChamadoDetalheComponent>);
   dataService = inject(DataService);
+  private dialogo = inject(DialogoService);
   private auth = inject(AuthService);
 
   chamado: Chamado = inject(MAT_DIALOG_DATA);
@@ -67,7 +70,12 @@ export class ChamadoDetalheComponent {
   }
 
   async cancelarChamado(): Promise<void> {
-    const motivo = prompt(`Cancelar o chamado ${this.chamado.numero}? Informe o motivo (opcional):`);
+    const motivo = await this.dialogo.perguntar(`Cancelar o chamado ${this.chamado.numero}?`, 'Motivo', {
+      mensagem: 'Se houver orçamento aprovado, o saldo reservado volta para o contrato.',
+      confirmar: 'Cancelar chamado',
+      perigo: true,
+      opcional: true
+    });
     if (motivo === null) return;
     try {
       await this.dataService.cancelarChamado(this.chamado.id, motivo);
@@ -78,7 +86,11 @@ export class ChamadoDetalheComponent {
   }
 
   async reabrirChamado(): Promise<void> {
-    const motivo = prompt(`Reabrir o chamado ${this.chamado.numero}? Informe o motivo (opcional):`);
+    const motivo = await this.dialogo.perguntar(`Reabrir o chamado ${this.chamado.numero}?`, 'Motivo', {
+      mensagem: 'O chamado volta a "Aberto" e uma nova OS poderá ser criada.',
+      confirmar: 'Reabrir',
+      opcional: true
+    });
     if (motivo === null) return;
     try {
       await this.dataService.reabrirChamado(this.chamado.id, motivo);
@@ -90,7 +102,7 @@ export class ChamadoDetalheComponent {
 
   podeConverterEmOs(): boolean {
     return (this.auth.isGestor() || this.auth.isGestorContratado()) &&
-      this.chamado.situacao !== 'Convertido' && this.chamado.situacao !== 'Cancelado' && !this.chamado.ordemServicoId;
+      !['Executado', 'Encerrado', 'Cancelado'].includes(this.chamado.status) && !this.chamado.ordemServicoId;
   }
 
   podeAtribuirResponsavel(): boolean {
@@ -133,23 +145,22 @@ export class ChamadoDetalheComponent {
     this.dialogRef.close();
   }
 
-  badgeClass(situacao: string): string {
-    switch (situacao) {
+  // Cor e ícone pela fase do chamado; o texto do badge é o status completo.
+  badgeClass(status: Chamado['status']): string {
+    switch (faseDoChamado(status)) {
       case 'Aberto': return 'badge--aberta';
       case 'Em atendimento': return 'badge--vistoria';
-      case 'Convertido': return 'badge--aprovada';
+      case 'Finalizado': return 'badge--aprovada';
       case 'Cancelado': return 'badge--rejeitada';
-      default: return '';
     }
   }
 
-  statusIcon(situacao: string): string {
-    switch (situacao) {
+  statusIcon(status: Chamado['status']): string {
+    switch (faseDoChamado(status)) {
       case 'Aberto': return 'radio_button_unchecked';
       case 'Em atendimento': return 'engineering';
-      case 'Convertido': return 'check_circle';
+      case 'Finalizado': return 'check_circle';
       case 'Cancelado': return 'cancel';
-      default: return 'help';
     }
   }
 }

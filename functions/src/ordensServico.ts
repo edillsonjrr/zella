@@ -65,7 +65,6 @@ export const criarOS = onCall<CriarOSInput>(async (request) => {
 
     tx.set(osRef, os);
     tx.update(chamadoRef, {
-      situacao: 'Em atendimento',
       status: 'Em atendimento',
       ordemServicoId: osRef.id
     });

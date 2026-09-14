@@ -180,3 +180,48 @@
     height: var(--icon-sm);
   }
 }
+
+/* OS do contrato ------------------------------------------------------- */
+
+.lista-os {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lista-os-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: 'icone numero situacao' 'icone data situacao';
+  column-gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  background: none;
+  border: 1px solid var(--border-default);
+  border-radius: var(--button-radius);
+  color: var(--text-primary);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+
+  &:hover {
+    border-color: var(--primary-500);
+    background-color: var(--primary-50);
+  }
+
+  app-icon { grid-area: icone; color: var(--text-tertiary); }
+  .lista-os-numero { grid-area: numero; font-weight: 600; font-size: 0.8rem; }
+  .lista-os-data { grid-area: data; font-size: 0.7rem; color: var(--text-tertiary); }
+  .lista-os-situacao { grid-area: situacao; font-size: 0.7rem; color: var(--text-secondary); }
+}
+
+.campo-aviso {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--danger-500);
+}

@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { DashboardComponent } from './dashboard/dashboard.component';
 import { acessoGuard } from './shared/auth.guard';
 
 // Toda rota interna passa pelo mesmo guard: ele exige sessão e confere o
@@ -14,7 +13,7 @@ export const routes: Routes = [
     loadComponent: () => import('./layout/layout.component').then(m => m.LayoutComponent),
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'dashboard', canActivate: [acessoGuard], component: DashboardComponent },
+      { path: 'dashboard', canActivate: [acessoGuard], loadComponent: () => import('./dashboard/dashboard.component').then(m => m.DashboardComponent) },
       { path: 'contratos', canActivate: [acessoGuard], loadComponent: () => import('./contratos/contratos.component').then(m => m.ContratosComponent) },
       { path: 'contratos/importar', canActivate: [acessoGuard], loadComponent: () => import('./importar-contratos/importar-contratos.component').then(m => m.ImportarContratosComponent) },
       { path: 'chamados/novo', canActivate: [acessoGuard], loadComponent: () => import('./novo-chamado/novo-chamado.component').then(m => m.NovoChamadoComponent) },

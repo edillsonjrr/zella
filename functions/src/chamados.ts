@@ -118,7 +118,6 @@ export const criarChamado = onCall<CriarChamadoInput>(async (request) => {
       unidadeId,
       solicitanteId,
       solicitanteNome,
-      situacao: 'Aberto',
       status: 'Aberto',
       dataCriacao: new Date().toISOString().split('T')[0],
       possuiFoto: !!fotoPath,

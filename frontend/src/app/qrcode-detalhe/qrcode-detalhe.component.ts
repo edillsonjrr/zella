@@ -1,5 +1,4 @@
 import { Component, Inject, OnInit, inject, signal } from '@angular/core';
-import * as QRCode from 'qrcode';
 import { IconComponent } from '../shared/icon/icon.component';
 import { FlowButtonComponent } from '../shared/flow-button/flow-button.component';
 import { MatButtonModule } from '@angular/material/button';
@@ -40,7 +39,7 @@ export class QrcodeDetalheComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    const dataUrl = await QRCode.toDataURL(this.url, {
+    const dataUrl = await (await import('qrcode')).toDataURL(this.url, {
       width: 320,
       margin: 2,
       color: { dark: '#111111', light: '#ffffff' }

@@ -106,14 +106,19 @@ export class OrcamentoComponent {
   }
 
   salvar(): void {
+    this.erro.set('');
     const selecionados = this.itensSelecionados().filter(i => i.selecionado);
+    if (!selecionados.length) {
+      this.erro.set('Selecione ao menos um item.');
+      return;
+    }
     for (const item of selecionados) {
-      if (item.quantidade <= 0) {
-        alert(`Informe uma quantidade maior que zero para ${item.nome}.`);
+      if (!(Number(item.quantidade) > 0)) {
+        this.erro.set(`Informe uma quantidade maior que zero para ${item.nome}.`);
         return;
       }
-      if (item.quantidade > item.saldo) {
-        alert(`Saldo insuficiente para ${item.nome}. Disponível: ${item.saldo}.`);
+      if (Number(item.quantidade) > item.saldo) {
+        this.erro.set(`Saldo insuficiente para ${item.nome}. Disponível: ${item.saldo}.`);
         return;
       }
     }

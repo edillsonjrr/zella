@@ -4,6 +4,7 @@ import { NgApexchartsModule } from 'ng-apexcharts';
 import type { ApexOptions, ChartType } from 'ng-apexcharts';
 import { IconComponent } from '../shared/icon/icon.component';
 import { DataService } from '../shared/data.service';
+import { situacaoContrato } from '../shared/contrato-status';
 import type { Chamado, OrdemServico } from '../shared/models';
 
 type Periodo = 30 | 90 | 180;
@@ -81,7 +82,7 @@ export class PainelGerencialComponent implements OnInit, OnDestroy {
     const taxaConclusao = lista.length ? Math.round((encerrados / lista.length) * 100) : 0;
     const contratosEmAtencao = this.dataService
       .contratos()
-      .filter(c => c.status === 'Crítico' || -this.diasDesde(c.vigenciaFim) <= 30).length;
+      .filter(c => ['Crítico', 'Vencido'].includes(situacaoContrato(c).status)).length;
 
     return { total: lista.length, abertos, atrasados, taxaConclusao, contratosEmAtencao };
   });

@@ -9,6 +9,8 @@ import { MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dial
 import { IconComponent } from '../shared/icon/icon.component';
 import { FlowButtonComponent } from '../shared/flow-button/flow-button.component';
 import { DataService } from '../shared/data.service';
+import { DialogoService } from '../shared/dialogo/dialogo.service';
+import { UiFeedbackService } from '../shared/ui-feedback.service';
 import { QrcodeDetalheComponent } from '../qrcode-detalhe/qrcode-detalhe.component';
 import type { Sala, Equipamento } from '../shared/models';
 
@@ -29,6 +31,8 @@ import type { Sala, Equipamento } from '../shared/models';
 })
 export class SalaDetalheComponent {
   private dataService = inject(DataService);
+  private dialogo = inject(DialogoService);
+  private feedback = inject(UiFeedbackService);
   private dialog = inject(MatDialog);
   private dialogRef = inject(MatDialogRef<SalaDetalheComponent>);
 
@@ -74,9 +78,12 @@ export class SalaDetalheComponent {
     this.cancelarEquipamento();
   }
 
-  excluirEquipamento(equipamento: Equipamento): void {
-    if (confirm(`Excluir o equipamento ${equipamento.nome}?`)) {
-      this.dataService.excluirEquipamento(equipamento.id);
+  async excluirEquipamento(equipamento: Equipamento): Promise<void> {
+    if (!(await this.dialogo.excluir(`Excluir o equipamento ${equipamento.nome}?`, 'Os QR Codes impressos deste equipamento deixam de funcionar.'))) return;
+    try {
+      await this.dataService.excluirEquipamento(equipamento.id);
+    } catch (e) {
+      this.feedback.announce(e instanceof Error ? e.message : 'Não foi possível excluir o equipamento.', 'assertive');
     }
   }
 

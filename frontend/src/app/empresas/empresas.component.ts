@@ -73,14 +73,6 @@ export class EmpresasComponent {
   erro = signal('');
   sucesso = signal('');
 
-  // Migração temporária (ver functions/src/migracao.ts): copia os dados que
-  // ficaram na raiz do Firestore pra dentro de uma empresa. Sai depois do
-  // teste guiado.
-  migracaoEmpresaId = 'demo';
-  migracaoNome = 'Senai DF (demonstração)';
-  migrando = signal(false);
-  migracaoResultado = signal('');
-
   constructor() {
     const parar = onSnapshot(
       query(collection(db, 'empresasClientes'), orderBy('nome')),
@@ -119,21 +111,6 @@ export class EmpresasComponent {
       this.erro.set((e as { message?: string }).message ?? 'Não foi possível criar a empresa.');
     } finally {
       this.salvando.set(false);
-    }
-  }
-
-  async migrarRaiz(): Promise<void> {
-    this.migracaoResultado.set('');
-    this.migrando.set(true);
-    try {
-      const migrar = httpsCallable<{ empresaId: string; nome: string }, Record<string, number>>(functions, 'migrarDadosRaiz');
-      const { data } = await migrar({ empresaId: this.migracaoEmpresaId, nome: this.migracaoNome });
-      const resumo = Object.entries(data).map(([k, v]) => `${k}: ${v}`).join(', ');
-      this.migracaoResultado.set(`Migração concluída. ${resumo}.`);
-    } catch (e) {
-      this.migracaoResultado.set((e as { message?: string }).message ?? 'Falha na migração.');
-    } finally {
-      this.migrando.set(false);
     }
   }
 

@@ -3,7 +3,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getAuth } from 'firebase-admin/auth';
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomBytes } from 'node:crypto';
-import { db, EMPRESAS, PERFIS, PERFIL_ADMIN, colecao, empresaRef, exigirAdminPlataforma, type Perfil } from './admin';
+import { db, EMPRESAS, PERFIS, PERFIL_ADMIN, colecao, empresaRef, exigirAdminPlataforma, exigirPerfil, type Perfil } from './admin';
 
 export { PERFIS, type Perfil };
 
@@ -119,6 +119,54 @@ export const sincronizarClaimsUsuario = onDocumentWritten(`${EMPRESAS}/{empresaI
   if (depois?.['email']) {
     await aplicarClaims(depois['email'], claimsDe(empresaId, id, depois), depois['nome']);
   }
+
+  await espelharUsuarioPublico(empresaId, id, depois);
+});
+
+/**
+ * `usuariosPublicos/{id}`: cópia do cadastro SEM e-mail, que qualquer
+ * usuário da empresa pode ler. É o que a tela usa pra mostrar nome de
+ * responsável, técnico e solicitante. O cadastro completo (`usuarios`), com
+ * e-mail, fica só pro gestor — ver firestore.rules.
+ */
+function publicoDe(id: string, usuario: FirebaseFirestore.DocumentData): Record<string, unknown> {
+  const publico: Record<string, unknown> = {
+    id,
+    nome: usuario['nome'] ?? '',
+    perfil: usuario['perfil'] ?? null
+  };
+  if (typeof usuario['unidadeId'] === 'string') publico['unidadeId'] = usuario['unidadeId'];
+  if (typeof usuario['empresaContratadaId'] === 'string') publico['empresaContratadaId'] = usuario['empresaContratadaId'];
+  return publico;
+}
+
+async function espelharUsuarioPublico(empresaId: string, id: string, usuario: FirebaseFirestore.DocumentData | undefined): Promise<void> {
+  const ref = colecao(empresaId, 'usuariosPublicos').doc(id);
+  if (!usuario) {
+    await ref.delete();
+    return;
+  }
+  await ref.set(publicoDe(id, usuario));
+}
+
+/**
+ * Reconstrói `usuariosPublicos` a partir de `usuarios`. Serve pro cadastro
+ * que existia antes do espelho: o app do gestor chama quando percebe que
+ * há cadastros sem cópia pública. Idempotente.
+ */
+export const reconstruirUsuariosPublicos = onCall(async (request) => {
+  const { empresaId } = exigirPerfil(request, ['gestor']);
+  const usuarios = await colecao(empresaId, 'usuarios').get();
+  const publicos = await colecao(empresaId, 'usuariosPublicos').get();
+  const batch = db.batch();
+  const idsAtuais = new Set(usuarios.docs.map((d) => d.id));
+  for (const d of usuarios.docs) {
+    batch.set(colecao(empresaId, 'usuariosPublicos').doc(d.id), publicoDe(d.id, d.data()));
+  }
+  const orfaos = publicos.docs.filter((p) => !idsAtuais.has(p.id));
+  for (const p of orfaos) batch.delete(p.ref);
+  await batch.commit();
+  return { espelhados: usuarios.size, removidos: orfaos.length };
 });
 
 export interface UsuarioAutenticado {

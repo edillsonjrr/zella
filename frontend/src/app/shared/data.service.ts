@@ -122,7 +122,30 @@ export class DataService {
     ouvir('blocos', this.blocosSig);
     ouvir('salas', this.salasSig);
     ouvir('equipamentos', this.equipamentosSig);
-    ouvir('usuarios', this.usuariosSig);
+    // Cadastro completo (com e-mail) só pro gestor; os demais leem o espelho
+    // público, sem e-mail. Se o gestor perceber cadastro sem cópia pública
+    // (dados anteriores ao espelho), pede ao backend pra reconstruir.
+    if (gestor) {
+      let totalCadastros = -1;
+      let totalPublicos = -1;
+      let reconstruiu = false;
+      const conferirEspelho = () => {
+        if (reconstruiu || totalCadastros < 0 || totalPublicos < 0 || totalCadastros <= totalPublicos) return;
+        reconstruiu = true;
+        httpsCallable(functions, 'reconstruirUsuariosPublicos')().catch(erroDeLeitura('usuariosPublicos'));
+      };
+      ligar(onSnapshot(this.col('usuarios'), snap => {
+        this.usuariosSig.set(snap.docs.map(d => d.data() as Usuario));
+        totalCadastros = snap.size;
+        conferirEspelho();
+      }, erroDeLeitura('usuarios')));
+      ligar(onSnapshot(this.col('usuariosPublicos'), snap => {
+        totalPublicos = snap.size;
+        conferirEspelho();
+      }, erroDeLeitura('usuariosPublicos')));
+    } else {
+      ouvir('usuariosPublicos', this.usuariosSig);
+    }
     ouvir('empresasContratadas', this.empresasContratadasSig);
 
     ouvir('chamados', this.chamadosSig,
@@ -690,7 +713,7 @@ export class DataService {
 
   // ---------- Ações de workflow: Cloud Functions (máquina de estado) ----------
 
-  async adicionarChamado(dados: Omit<Chamado, 'id' | 'numero' | 'dataCriacao' | 'situacao' | 'status'> & { foto?: string }): Promise<void> {
+  async adicionarChamado(dados: Omit<Chamado, 'id' | 'numero' | 'dataCriacao' | 'status'> & { foto?: string }): Promise<void> {
     const criarChamado = httpsCallable<typeof dados, { id: string; numero: string }>(functions, 'criarChamado');
     const res = await criarChamado(dados);
     this.feedback.announce(`Chamado ${res.data.numero} criado com sucesso.`);
@@ -718,6 +741,27 @@ export class DataService {
     const criarOrcamento = httpsCallable<{ osId: string; itens: OrcamentoPedidoItem[] }, { id: string }>(functions, 'criarOrcamento');
     await criarOrcamento({ osId, itens });
     this.feedback.announce('Orçamento criado com sucesso.');
+  }
+
+  // Importação de contratos por CSV: valida no backend (formato, contrato
+  // duplicado, fornecedor sem cadastro) e só depois grava.
+  async validarImportacaoContratos(csv: string): Promise<{
+    totalLinhas: number;
+    contratos: number;
+    erros: { linha: number; mensagem: string }[];
+    contratosExistentes: string[];
+    fornecedoresSemCadastro: string[];
+    valido: boolean;
+  }> {
+    const validar = httpsCallable<{ csv: string }, Awaited<ReturnType<DataService['validarImportacaoContratos']>>>(functions, 'validarImportacaoContratos');
+    return (await validar({ csv })).data;
+  }
+
+  async importarContratos(csv: string): Promise<{ contratosCriados: number; itensCriados: number }> {
+    const importar = httpsCallable<{ csv: string }, { contratosCriados: number; itensCriados: number }>(functions, 'importarContratos');
+    const res = await importar({ csv });
+    this.feedback.announce(`${res.data.contratosCriados} contrato(s) importado(s).`);
+    return res.data;
   }
 
   /**

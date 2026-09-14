@@ -90,12 +90,6 @@ function addDias(data: string, dias: number): string {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
-function situacaoDoStatus(status: string): string {
-  if (status === 'Aberto') return 'Aberto';
-  if (status === 'Executado' || status === 'Encerrado') return 'Convertido';
-  return 'Em atendimento';
-}
-
 function situacaoOSDoStatus(status: string): string {
   switch (status) {
     case 'Em atendimento':
@@ -137,7 +131,6 @@ function gerarDadosHistoricos() {
         unidadeId,
         solicitanteId: solicitante.id,
         solicitanteNome: solicitante.nome,
-        situacao: situacaoDoStatus(status),
         status,
         dataCriacao,
         possuiFoto: contador % 3 === 0
@@ -215,7 +208,7 @@ const contratos = [
     fornecedor: 'Hidráulica Norte',
     vigenciaInicio: '2026-02-15',
     vigenciaFim: '2027-02-14',
-    status: 'Crítico',
+    status: 'Ativo',
     itens: [
       { id: 'i6', nome: 'Serviço hidráulico predial', unidadeMedida: 'h', quantidadeContratada: 100, quantidadeDisponivel: 7, quantidadeReservada: 5, quantidadeConsumida: 0, precoUnitario: 150.0 }
     ]
@@ -226,18 +219,18 @@ const chamados = [
   {
     id: 'ch1', numero: 'CH-2026-0102', titulo: 'Ar-condicionado não liga', equipamento: 'Ar Split - Sala 12 Bloco B',
     descricao: 'A sala 12 do bloco B está sem ar-condicionado há 2 dias.', unidadeId: 'u1', solicitanteId: 'usr1',
-    solicitanteNome: 'Ana Souza', situacao: 'Aberto', status: 'Aberto', dataCriacao: '2026-08-18', possuiFoto: true
+    solicitanteNome: 'Ana Souza', status: 'Aberto', dataCriacao: '2026-08-18', possuiFoto: true
   },
   {
     id: 'ch2', numero: 'CH-2026-0101', titulo: 'Troca de lâmpadas do auditório', equipamento: 'Luminárias - Auditório Principal',
     descricao: 'Auditório principal com 4 lâmpadas queimadas.', unidadeId: 'u2', solicitanteId: 'usr2',
-    solicitanteNome: 'Bruno Lima', situacao: 'Em atendimento', status: 'Em orçamento', dataCriacao: '2026-08-15',
+    solicitanteNome: 'Bruno Lima', status: 'Em orçamento', dataCriacao: '2026-08-15',
     responsavelId: 'usr5', ordemServicoId: 'os1', possuiFoto: true
   },
   {
     id: 'ch3', numero: 'CH-2026-0100', titulo: 'Vazamento na banheira hidráulica', equipamento: 'Bomba Hidráulica - Térreo',
     descricao: 'Vazamento constante na tubulação do banheiro do térreo.', unidadeId: 'u3', solicitanteId: 'usr1',
-    solicitanteNome: 'Ana Souza', situacao: 'Convertido', status: 'Executado', dataCriacao: '2026-08-10', possuiFoto: false
+    solicitanteNome: 'Ana Souza', status: 'Executado', dataCriacao: '2026-08-10', possuiFoto: false
   }
 ];
 

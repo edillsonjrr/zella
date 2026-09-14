@@ -23,16 +23,16 @@ Levantado em 14/09/2026. Ordem = ordem de execução. Marque `[x]` ao concluir.
 - [ ] **A3 P0** Corrigir cada apontamento de A2, um a um, com autorização.
 
 ### Esta semana (código)
-- [ ] **A4 P1** Ligar a tela de importação de contratos às functions `validarImportacaoContratos` e `importarContratos` (hoje é um `TODO` que só mostra sucesso).
-- [ ] **A5 P1** Restringir leitura de `usuarios`: cliente e técnico não devem ver e-mail de todo mundo.
-- [ ] **A6 P1** Testes automatizados das functions de saldo (aprovar, executar, cancelar, aditivo) e das rules, com o emulator.
-- [ ] **A7 P2** Limpar publicado: tirar material interno de `frontend/public/` (screenshots, JSONs, este arquivo), remover `backend/`, `migrarDadosRaiz`, `seed` de produção e `scripts/gestor-demo.js`.
-- [ ] **A8 P2** Chamado com um só campo de estado (`situacao` e `status` hoje divergem).
-- [ ] **A9 P2** Status "Crítico" de contrato calculado (saldo baixo ou vigência a vencer) ou removido.
-- [ ] **A10 P2** Tipos compartilhados entre `functions/src/types.ts` e `frontend/.../models.ts`.
-- [ ] **A11 P2** "Ver OS" no painel do contrato listar todas as OS.
-- [ ] **A12 P2** Trocar `alert`/`prompt`/`confirm` por diálogos da UI e adicionar `catch` no data service.
-- [ ] **A13 P2** Bundle inicial abaixo de 1,5 MB (`qrcode` como ESM, lazy load de gráficos).
+- [x] **A4 P1** Importação de contratos ligada ao backend (14/09): prévia por linha, erros do servidor por linha, contrato duplicado, fornecedor casado com empresa contratada, colunas opcionais `unidade;preco_unitario`, log por contrato.
+- [x] **A5 P1** `usuarios` (com e-mail) só para o gestor (14/09). Espelho `usuariosPublicos` sem e-mail para os demais, mantido por trigger e reconstruído automaticamente quando falta (`reconstruirUsuariosPublicos`).
+- [x] **A6 P1** Testes (14/09): `cd functions && npm test` sobe os emuladores e roda 23 testes — fluxo de saldo (orçamento, aprovação, execução, cancelamento, aditivo, importação) e Security Rules por perfil.
+- [x] **A7 P2** Limpeza (14/09): material interno movido para `docs/`, `backend/` removido, migração e sua tela removidas, `seed:prod` e `gestor-demo.js` removidos. `public/` só tem favicon e logo. Este arquivo foi para a raiz.
+- [x] **A8 P2** Chamado só com `status` (14/09); a fase vem de `shared/chamado-fase.ts`. Documentos antigos com `situacao` seguem lendo normalmente.
+- [x] **A9 P2** Status do contrato calculado em `shared/contrato-status.ts` (14/09): Vencido, Crítico (vence em 30 dias ou item com ≤10% de saldo), Ativo, Encerrado. O campo gravado só distingue Encerrado.
+- [x] **A10 P2** Tipos compartilhados em `shared/dominio.ts` (14/09); `functions/src/types.ts` e `frontend/.../models.ts` reexportam. Atenção: `functions/package.json` main agora é `lib/functions/src/index.js`.
+- [x] **A11 P2** Painel do contrato lista todas as OS (14/09).
+- [x] **A12 P2** `alert`/`prompt`/`confirm` substituídos por `DialogoService` (14/09); exclusões com try/catch e feedback.
+- [x] **A13 P2** Bundle inicial 1,14 MB (14/09): dashboard lazy, `qrcode` por import dinâmico.
 - [ ] **A14 P2** Testar arrastar no Kanban com cada perfil após as novas regras.
 
 ### Próximas semanas (produto)

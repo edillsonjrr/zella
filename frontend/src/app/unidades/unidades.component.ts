@@ -8,6 +8,8 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { IconComponent } from '../shared/icon/icon.component';
 import { FlowButtonComponent } from '../shared/flow-button/flow-button.component';
 import { DataService } from '../shared/data.service';
+import { DialogoService } from '../shared/dialogo/dialogo.service';
+import { UiFeedbackService } from '../shared/ui-feedback.service';
 import { UnidadeDetalheComponent } from '../unidade-detalhe/unidade-detalhe.component';
 import type { Unidade } from '../shared/models';
 
@@ -28,6 +30,8 @@ import type { Unidade } from '../shared/models';
 })
 export class UnidadesComponent {
   dataService = inject(DataService);
+  private dialogo = inject(DialogoService);
+  private feedback = inject(UiFeedbackService);
   private dialog = inject(MatDialog);
 
   unidades = this.dataService.unidades;
@@ -92,9 +96,12 @@ export class UnidadesComponent {
     this.cancelar();
   }
 
-  excluir(unidade: Unidade): void {
-    if (confirm(`Deseja excluir a unidade ${unidade.nome}? Blocos, salas e equipamentos dela também serão removidos.`)) {
-      this.dataService.excluirUnidade(unidade.id);
+  async excluir(unidade: Unidade): Promise<void> {
+    if (!(await this.dialogo.excluir(`Excluir a unidade ${unidade.nome}?`, 'Blocos, salas e equipamentos dela também serão removidos.'))) return;
+    try {
+      await this.dataService.excluirUnidade(unidade.id);
+    } catch (e) {
+      this.feedback.announce(e instanceof Error ? e.message : 'Não foi possível excluir a unidade.', 'assertive');
     }
   }
 
