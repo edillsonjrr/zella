@@ -58,8 +58,12 @@ export class OsDetalheComponent {
   private readonly ordemAtual = computed(() => this.dataService.getOSById(this.ordemInicial.id) ?? this.ordemInicial);
   private readonly orcamentoAtual = computed(() => this.dataService.getOrcamentoByOS(this.ordemInicial.id));
 
+  // Memoizado: um getter que devolvesse array novo a cada detecção faria a
+  // mat-table re-renderizar sem parar.
+  private readonly colunasComExecucao = ['item', 'quantidade', 'precoUnitario', 'executado'];
+  private readonly colunasSemExecucao = ['item', 'quantidade', 'precoUnitario'];
   get displayedColumns(): string[] {
-    return this.ordem.itensExecutados?.length ? ['item', 'quantidade', 'precoUnitario', 'executado'] : ['item', 'quantidade', 'precoUnitario'];
+    return this.ordem.itensExecutados?.length ? this.colunasComExecucao : this.colunasSemExecucao;
   }
 
   executadoDe(itemContratoId: string): number | undefined {

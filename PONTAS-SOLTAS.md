@@ -1,4 +1,4 @@
-# Checklist de ações — plataforma de gestão de manutenção
+# Checklist de ações — Zella
 
 Levantado em 14/09/2026. Ordem = ordem de execução. Marque `[x]` ao concluir.
 **P0** saldo/segurança · **P1** trava o usuário · **P2** qualidade/operação · **P3** decisão de produto.
@@ -44,12 +44,35 @@ Levantado em 14/09/2026. Ordem = ordem de execução. Marque `[x]` ao concluir.
 - [~] **A20 P2** Notificações (14/09): sino no topo com notificações internas por evento (chamado aberto, orçamento pendente/aprovado/rejeitado, OS designada/executada, contrato encerrado, falha da preventiva), endereçadas por perfil/pessoa/contratada, com "marcar como lida". **E-mail ainda não sai**: falta um provedor (SMTP ou extensão *Trigger Email*). Quando houver, basta um trigger em `notificacoes` que monte a mensagem. Decisão sua: qual provedor/conta remetente.
 - [~] **A21 P2** Monitor da preventiva (14/09): cada execução grava `operacao/preventiva`; a tela de Preventiva mostra faixa verde/vermelha e a falha vira notificação ao gestor. **Backup do Firestore** ainda não configurado: precisa de `gcloud firestore backups schedules create --database='(default)' --recurrence=daily --retention=7d` (ou pelo console, Firestore → Backups). Não dá para fazer daqui sem o gcloud.
 - [x] **A22 P2** Admins fora do código (14/09): lista lida de `configuracaoPlataforma/admins` ({ emails: [] }) no Firestore, sem acesso pelo app; os dois e-mails do código ficam como fallback se o documento não existir ou estiver vazio. Para alterar: criar/editar o documento pelo console.
-- [ ] **A23 P3** Alçada de aprovação por valor. Não implementado: só existe um nível acima da contratada (gestor). Precisa de decisão: quem aprova acima do teto (outro gestor? dupla aprovação?) e qual o teto.
-- [ ] **A24 P3** Multiempresa comercial (plano, limite, cobrança). Não implementado; decisão de produto.
-- [ ] **A25 P3** Discovery pendente: onde o saldo é controlado hoje, OS só nasce de chamado, integração Protheus. Respostas do cliente.
-- [ ] **A26 P3** Nome do produto. O README e o título já usam "Zella"; a empresa demo continua "Senai DF (demonstração)". Decisão sua.
+- [x] **A23 P3** Alçada por valor: **não faz parte do escopo** (decisão de 14/09). O controle do sistema é de quantidade: a aprovação reserva itens e a trava de saldo recusa o que passa do disponível do contrato. Sem alçada por valor.
+- [ ] **A24 P3** Multiempresa comercial: **adiado** (decisão de 14/09). Não é preocupação para o teste guiado.
+- [x] **A25 P3** Discovery respondido em 14/09: o saldo hoje é controlado em planilha e no Protheus; a OS sempre nasce de um chamado (já é assim no sistema: `criarOS` exige `chamadoId`). Integração Protheus/TOTVS: viabilidade abaixo (ver "Integração com o Protheus").
+- [x] **A26 P3** Nome: **Zella** (decisão de 14/09). Título, README e nomes dos pacotes alinhados. O id do projeto Firebase (`gestao-manutencao-app`) não pode ser renomeado; a URL pode ganhar domínio próprio depois.
 - [x] **A27 P3** README real (14/09): fluxo, perfis, estrutura, como rodar, testes, deploy, scripts e configurações.
 - [x] **A28 P1** Node 22 (14/09): `functions/package.json` engines = 22; testes passando. Entra em produção no próximo deploy.
+
+### Depois do piloto
+- [ ] **A29 P2** Usuário em mais de uma empresa/perfil. Hoje é um e-mail, uma empresa, um perfil: o login usa o primeiro cadastro que achar e o token tem um único `empresaId`/`perfil`. Uma contratada que atende dois clientes não consegue usar o mesmo técnico nos dois, e um gestor não pode ser técnico em outra empresa. Caminho: cadastro global da pessoa com lista de vínculos `{empresaId, perfil}`, seletor de empresa após o login e claim gravado por vínculo escolhido (backend, rules e tela de login). Fazer quando houver contratada atendendo mais de um cliente na plataforma.
+- [ ] **A30 P2** E-mail de notificação (continuação da A20): escolher provedor e criar o trigger em `notificacoes`.
+- [ ] **A31 P3** Integração Protheus, fase 2 (exportação CSV da medição) e fase 3 (REST), conforme o quadro abaixo e o que o cliente entregar.
+
+## Integração com o Protheus (viabilidade, 14/09/2026)
+
+**O que existe do lado do Protheus.** O ERP expõe integrações por SOAP (legado) e REST/JSON (padrão a partir da versão 2410, obrigatório com o SmartClient web e telas PO-UI). Serviços REST são criados em ADVPL com `WSRESTFUL` no AppServer, ou pela camada TOTVS SmartClient WebService. Porém, segundo a própria central de atendimento da TOTVS, o módulo de Gestão de Contratos (SIGAGCT) **não tem APIs prontas** para integração nem pontos de entrada específicos; o caminho indicado é desenvolver rotinas sobre os `ExecAuto` de Contratos e de Medições.
+
+**O que isso significa para a Zella.**
+- Não há um endpoint "saldo do contrato" para consumir. Toda integração depende de desenvolvimento ADVPL do lado do cliente (ou do parceiro TOTVS dele), publicando um serviço REST customizado.
+- O ponto natural de encontro é a **medição**: na Zella a execução da OS gera o consumido por item; no Protheus isso equivale a uma medição do contrato (SIGAGCT). A Zella pode enviar a medição (itens executados, quantidades, OS, data) e o Protheus continua sendo a fonte financeira.
+- Sentido inverso (Protheus → Zella): carga inicial e aditivos de contratos podem vir por planilha exportada do Protheus (a importação CSV já existe) ou por um serviço REST que a Zella consulte periodicamente.
+
+**Fases sugeridas.**
+1. **Sem integração (agora):** Protheus e planilha continuam como fonte; a Zella importa contratos por CSV e o cliente confere o consumido pelo painel de saldo e pelos logs.
+2. **Exportação (baixo esforço, só do lado da Zella):** botão/endpoint que exporta as execuções do período em CSV no layout da medição do Protheus, para digitação ou importação pelo time financeiro.
+3. **Integração de fato (depende do cliente):** o cliente publica um serviço REST no AppServer (WSRESTFUL sobre ExecAuto de medição) com autenticação; uma Cloud Function da Zella envia cada execução de OS e guarda o retorno (número da medição) na OS, com fila de reenvio em caso de falha.
+
+**O que perguntar ao cliente antes de orçar a fase 3:** versão do Protheus (≥ 2410?), se o AppServer tem REST habilitado e exposto para fora da rede, se já existe parceiro/ADVPL interno, qual o layout da medição no SIGAGCT deles, e se o contrato da Zella corresponde 1:1 ao contrato do Protheus (número, itens e unidades).
+
+Fontes: [Arquitetura REST no Protheus](https://rfbsistemas.com.br/protheus/arquitetura-rest-totvs-protheus-desenvolvimento-erp/), [Central de Atendimento TOTVS — APIs no SIGAGCT](https://centraldeatendimento.totvs.com/hc/pt-br/articles/21181870074647), [Guia para criar serviço REST no Protheus](https://blog.globalgcs.com.br/guia-completo-para-criar-um-servico-rest-no-totvs-protheus-e-integrar-com-apis-externas/), [Integração Protheus com app e site](https://x-apps.com.br/integracao-totvs-protheus-app-site/).
 
 ## Como testar antes do deploy
 1. `cd functions && npm run build`
