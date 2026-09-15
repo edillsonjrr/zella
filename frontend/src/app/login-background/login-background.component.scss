@@ -259,38 +259,16 @@ $ciclo: 14s;
 // animar de propósito, mas sem deslocar os cartões: só aparecem e somem, e o
 // status, a cor e a barra de saldo avançam. Troca de cor e de texto não é o
 // tipo de movimento que o ajuste do sistema quer evitar.
-@media (prefers-reduced-motion: reduce) {
-  .login-background .cartao {
-    animation: cartao-fade $ciclo ease-in-out infinite !important;
-    animation-delay: var(--atraso, 0s) !important;
-  }
+// Movimento reduzido: a classe vem do componente (matchMedia). Não usa
+// @media aqui porque o build de produção do Angular não prefixa nomes de
+// animação dentro de @media, e a animação não encontraria o keyframe.
+.login-background--reduzido .cartao {
+  animation: cartao-fade $ciclo ease-in-out infinite;
+  animation-delay: var(--atraso, 0s);
+}
 
-  .login-background .etapa {
-    animation: etapa-cor $ciclo steps(1, end) infinite !important;
-    animation-delay: var(--atraso, 0s) !important;
-  }
-
-  .login-background .etapa-textos {
-    animation: etapa-texto $ciclo cubic-bezier(0.65, 0, 0.35, 1) infinite !important;
-    animation-delay: var(--atraso, 0s) !important;
-  }
-
-  .login-background .saldo-barra {
-    animation: saldo-andar $ciclo ease-in-out infinite !important;
-    animation-delay: var(--atraso, 0s) !important;
-  }
-
-  .login-background .etapa-ponto {
-    animation: none !important;
-  }
-
-  .login-background .trilha path {
-    animation: trilha-andar 18s linear infinite !important;
-  }
-
-  .login-background .trilha path + path {
-    animation-direction: reverse !important;
-  }
+.login-background--reduzido .etapa-ponto {
+  animation: none;
 }
 
 @keyframes cartao-fade {

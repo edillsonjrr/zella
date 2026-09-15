@@ -872,11 +872,14 @@
 
 /* Movimento reduzido: a regra global zera animações. Aqui as decorativas
    seguem rodando, sem inclinação do cartão; a faixa fica parada. */
-@media (prefers-reduced-motion: reduce) {
-  .lp .lp-titulo-destaque { animation: lp-varrer 5s cubic-bezier(0.65, 0, 0.35, 1) 0.3s infinite !important; }
-  .lp .lp-cartao-vivo { animation: lp-andar var(--lp-ciclo) cubic-bezier(0.65, 0, 0.35, 1) infinite !important; }
-  .lp .lp-cartao-foto { animation: lp-foto var(--lp-ciclo) ease infinite !important; }
-  .lp .lp-saldo-consumido { animation: lp-consumir var(--lp-ciclo) cubic-bezier(0.65, 0, 0.35, 1) infinite !important; }
-  .lp .lp-saldo-reservado { animation: lp-reservar var(--lp-ciclo) cubic-bezier(0.65, 0, 0.35, 1) infinite !important; }
-  .lp .lp-faixa-trilho { animation: none !important; }
+.lp--reduzido .lp-cartao-vivo { animation-name: lp-andar-reto; }
+.lp--reduzido .lp-faixa-trilho { animation: none; }
+
+/* Cartão do hero sem inclinação, para o modo de movimento reduzido. */
+@keyframes lp-andar-reto {
+  0%, 18% { transform: translateX(0); }
+  25%, 43% { transform: translateX(calc(100% + 26px)); }
+  50%, 68% { transform: translateX(calc(200% + 52px)); }
+  75%, 94% { transform: translateX(calc(300% + 78px)); }
+  100% { transform: translateX(0); }
 }

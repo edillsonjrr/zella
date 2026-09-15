@@ -33,4 +33,8 @@ export class LoginBackgroundComponent {
   ];
 
   readonly etapas = ['Aberto', 'Orçamento', 'Aprovado', 'Executado'];
+
+  // Com "reduzir movimento" no sistema, os cartões não deslizam (só aparecem
+  // e somem); status, cor e saldo seguem animando.
+  readonly movimentoReduzido = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }

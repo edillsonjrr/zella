@@ -484,9 +484,11 @@ p {
    page-enter/exit, pulse), mas preserva as transições de cor/opacidade que
    dão feedback de estado (hover, foco, seleção). */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  /* Fundos decorativos marcados com .anima-sempre (login e site) cuidam do
+     próprio modo reduzido e ficam fora deste corte. */
+  :not(.anima-sempre, .anima-sempre *),
+  :not(.anima-sempre, .anima-sempre *)::before,
+  :not(.anima-sempre, .anima-sempre *)::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }

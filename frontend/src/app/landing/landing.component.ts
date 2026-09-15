@@ -48,6 +48,7 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
   private observer?: IntersectionObserver;
 
   menuAberto = signal(false);
+  readonly movimentoReduzido = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   perguntaAberta = signal<number | null>(0);
 
   // Colunas do quadro do hero: o cartão em destaque percorre as quatro.
