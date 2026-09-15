@@ -233,8 +233,25 @@ $ciclo: 14s;
   .cartao { width: 168px; }
 }
 
+// Celular: o painel ocupa o meio. Os cartões grandes continuam, menores e
+// mais transparentes, espiando por trás do painel nas faixas de cima e de
+// baixo, pra animação seguir visível sobre o mesmo fundo.
 @media (max-width: 600px) {
-  .cartao, .trilha { display: none; }
+  .cartao {
+    width: 138px;
+    padding: 8px 10px;
+    border-radius: 12px;
+  }
+
+  .cartao-icone { width: 22px; height: 22px; }
+  .linha--sub { margin-bottom: 8px; }
+
+  .login-background .cartao:nth-child(4)  { top: 2% !important;  left: 4% !important;  right: auto !important; }
+  .login-background .cartao:nth-child(5)  { top: 6% !important;  right: 4% !important; left: auto !important; }
+  .login-background .cartao:nth-child(8)  { top: 84% !important; left: 4% !important;  right: auto !important; }
+  .login-background .cartao:nth-child(9)  { top: 88% !important; right: 4% !important; left: auto !important; }
+
+  .trilha path { opacity: 0.35; }
 }
 
 // Movimento reduzido (ex.: Windows com "efeitos de animação" desligados).
@@ -263,9 +280,16 @@ $ciclo: 14s;
     animation-delay: var(--atraso, 0s) !important;
   }
 
-  .login-background .etapa-ponto,
-  .login-background .trilha path {
+  .login-background .etapa-ponto {
     animation: none !important;
+  }
+
+  .login-background .trilha path {
+    animation: trilha-andar 18s linear infinite !important;
+  }
+
+  .login-background .trilha path + path {
+    animation-direction: reverse !important;
   }
 }
 
