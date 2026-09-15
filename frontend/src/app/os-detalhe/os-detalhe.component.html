@@ -55,6 +55,22 @@
       <span class="campo-valor">{{ ordem.dataExecucao | date:'dd/MM/yyyy' }}</span>
     </div>
   }
+  @if (ordem.observacaoExecucao) {
+    <div class="campo">
+      <span class="campo-label">Observação da execução</span>
+      <span class="campo-valor">{{ ordem.observacaoExecucao }}</span>
+    </div>
+  }
+  @if (fotosExecucaoUrls().length) {
+    <div class="campo campo--bloco">
+      <span class="campo-label">Fotos da execução</span>
+      <div class="fotos-execucao">
+        @for (url of fotosExecucaoUrls(); track url) {
+          <a [href]="url" target="_blank" rel="noopener"><img [src]="url" alt="Foto da execução" /></a>
+        }
+      </div>
+    </div>
+  }
   @if (erroAcao) {
     <p class="acao-erro" role="alert">{{ erroAcao }}</p>
   }

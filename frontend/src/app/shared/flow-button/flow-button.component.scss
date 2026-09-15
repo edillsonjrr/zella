@@ -45,6 +45,28 @@
   .flow-button:hover {
     background-color: transparent;
   }
+
+  .flow-button--primary:hover:not(:disabled) {
+    color: var(--primary-400);
+    border-color: transparent;
+  }
+}
+
+/* Clique/toque: mostra o mesmo contorno animado enquanto o botão está
+   pressionado (em tela de toque não há hover). */
+.flow-button-wrap:active .flow-button-outline {
+  inset: 0;
+  opacity: 1;
+}
+
+.flow-button-wrap:active .flow-button-dash {
+  animation: flow-button-dash 1s linear infinite;
+}
+
+.flow-button--primary:active:not(:disabled) {
+  background-color: transparent;
+  color: var(--primary-400);
+  border-color: transparent;
 }
 
 .flow-button-svg {
@@ -66,6 +88,14 @@
   border-radius: 9999px;
   background-color: var(--bg-elevated);
   color: var(--text-primary);
+
+  /* Primário = CTA: preenchido de roxo. No hover/clique esvazia e o
+     contorno tracejado roxo anima (regras acima). */
+  &--primary {
+    background-color: var(--primary-500);
+    border-color: var(--primary-500);
+    color: #ffffff;
+  }
   font-weight: 550;
   cursor: pointer;
   white-space: nowrap;

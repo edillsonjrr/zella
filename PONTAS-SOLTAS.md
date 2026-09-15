@@ -33,7 +33,7 @@ Levantado em 14/09/2026. Ordem = ordem de execução. Marque `[x]` ao concluir.
 - [x] **A11 P2** Painel do contrato lista todas as OS (14/09).
 - [x] **A12 P2** `alert`/`prompt`/`confirm` substituídos por `DialogoService` (14/09); exclusões com try/catch e feedback.
 - [x] **A13 P2** Bundle inicial 1,14 MB (14/09): dashboard lazy, `qrcode` por import dinâmico.
-- [ ] **A14 P2** Testar arrastar no Kanban com cada perfil após as novas regras. As regras de arrastar estão cobertas por código e testes das functions; o gesto em si ainda não foi validado no navegador (a automação travou duas vezes).
+- [x] **A14 P2** Kanban testado no emulador (14/09) como gestor: Aberto → Em atendimento abre a Nova OS; A ser finalizado → Executado é recusado (só a contratada executa) e o card volta; Executado → Encerrado encerra o chamado. Técnico designado e Kanban do técnico cobertos por código e testes das functions.
 
 ### Próximas semanas (produto)
 - [x] **A15 P1** Execução parcial (14/09): `executarOS` aceita quantidade executada por item (≤ orçado); consome o executado e devolve a sobra ao disponível. Diálogo "Executar OS" na tela; `itensExecutados` fica na OS. Testado.
@@ -42,7 +42,7 @@ Levantado em 14/09/2026. Ordem = ordem de execução. Marque `[x]` ao concluir.
 - [x] **A18 P2** SLA em chamado manual (14/09): `dataVencimento` = criação + `slaDias` da empresa (padrão 5). Configurável em `empresasClientes/{id}.slaDias`. Testado.
 - [x] **A19 P2** Técnico designado com efeito (14/09): técnico só orça/executa a OS designada a ele (ou sem técnico). Nova function `atribuirTecnicoOS` (gestor e gestor contratado, técnico da mesma contratada); seletor no painel da OS; Kanban respeita. Testado.
 - [~] **A20 P2** Notificações (14/09): sino no topo com notificações internas por evento (chamado aberto, orçamento pendente/aprovado/rejeitado, OS designada/executada, contrato encerrado, falha da preventiva), endereçadas por perfil/pessoa/contratada, com "marcar como lida". **E-mail ainda não sai**: falta um provedor (SMTP ou extensão *Trigger Email*). Quando houver, basta um trigger em `notificacoes` que monte a mensagem. Decisão sua: qual provedor/conta remetente.
-- [~] **A21 P2** Monitor da preventiva (14/09): cada execução grava `operacao/preventiva`; a tela de Preventiva mostra faixa verde/vermelha e a falha vira notificação ao gestor. **Backup do Firestore** ainda não configurado: precisa de `gcloud firestore backups schedules create --database='(default)' --recurrence=daily --retention=7d` (ou pelo console, Firestore → Backups). Não dá para fazer daqui sem o gcloud.
+- [x] **A21 P2** Monitor da preventiva (14/09): cada execução grava `operacao/preventiva`; a tela de Preventiva mostra faixa verde/vermelha e a falha vira notificação ao gestor. **Backup do Firestore** criado em 14/09 via `firebase firestore:backups:schedules:create` (diário, retenção de 7 dias; agendamento `3eb8430e…`). Conferir em Firestore → Backups no console.
 - [x] **A22 P2** Admins fora do código (14/09): lista lida de `configuracaoPlataforma/admins` ({ emails: [] }) no Firestore, sem acesso pelo app; os dois e-mails do código ficam como fallback se o documento não existir ou estiver vazio. Para alterar: criar/editar o documento pelo console.
 - [x] **A23 P3** Alçada por valor: **não faz parte do escopo** (decisão de 14/09). O controle do sistema é de quantidade: a aprovação reserva itens e a trava de saldo recusa o que passa do disponível do contrato. Sem alçada por valor.
 - [ ] **A24 P3** Multiempresa comercial: **adiado** (decisão de 14/09). Não é preocupação para o teste guiado.
@@ -50,6 +50,12 @@ Levantado em 14/09/2026. Ordem = ordem de execução. Marque `[x]` ao concluir.
 - [x] **A26 P3** Nome: **Zella** (decisão de 14/09). Título, README e nomes dos pacotes alinhados. O id do projeto Firebase (`gestao-manutencao-app`) não pode ser renomeado; a URL pode ganhar domínio próprio depois.
 - [x] **A27 P3** README real (14/09): fluxo, perfis, estrutura, como rodar, testes, deploy, scripts e configurações.
 - [x] **A28 P1** Node 22 (14/09): `functions/package.json` engines = 22; testes passando. Entra em produção no próximo deploy.
+
+### Preparação do piloto (14/09, tarde)
+- [x] Índices das notificações e hosting publicados (`firebase deploy --only firestore:indexes,hosting`).
+- [x] Smoke test no emulador: gestor aprovou orçamento com ajuste (4 → 3, motivo obrigatório) e o saldo reservou 3; técnica designada recebeu a notificação no sino, marcou como lida e executou parcialmente (2 de 3): consumido +2, 1 devolvido ao disponível, observação gravada. Diálogos renderizam com moldura correta.
+- [x] Verificado visualmente: botão "Encerrar contrato" no painel do contrato, faixa de monitor da preventiva e arrastar no Kanban (A14). Notificação "OS executada" chegou ao gestor no sino.
+- [x] Decidido em 14/09: o gestor **não** orça nem executa. Continua só a contratada (gestor contratado ou técnico designado). No piloto, usar uma conta de gestor contratado para esses passos.
 
 ### Depois do piloto
 - [ ] **A29 P2** Usuário em mais de uma empresa/perfil. Hoje é um e-mail, uma empresa, um perfil: o login usa o primeiro cadastro que achar e o token tem um único `empresaId`/`perfil`. Uma contratada que atende dois clientes não consegue usar o mesmo técnico nos dois, e um gestor não pode ser técnico em outra empresa. Caminho: cadastro global da pessoa com lista de vínculos `{empresaId, perfil}`, seletor de empresa após o login e claim gravado por vínculo escolhido (backend, rules e tela de login). Fazer quando houver contratada atendendo mais de um cliente na plataforma.
@@ -86,3 +92,5 @@ Fontes: [Arquitetura REST no Protheus](https://rfbsistemas.com.br/protheus/arqui
 3. Orçamento novo só em OS Aberta, Em vistoria ou Rejeitada.
 4. Aprovar/rejeitar é só do gestor do cliente.
 5. Quantidade contratada e vigência só mudam por aditivo.
+6. Orçar e executar é só da contratada; o gestor nunca faz isso, nem no piloto.
+7. O gestor contratado faz tudo que o técnico faz (orçar e executar em qualquer OS da contratada) e ainda abre OS, designa técnico e cancela chamado. Contratada de uma pessoa só precisa de um usuário gestor contratado.

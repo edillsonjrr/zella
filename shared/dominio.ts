@@ -210,6 +210,8 @@ export interface OrdemServico {
   executadoPor?: string;
   itensExecutados?: { itemContratoId: string; nome: string; orcado: number; executado: number }[];
   observacaoExecucao?: string;
+  // Caminhos no Storage das fotos da execução (até 3).
+  fotosExecucao?: string[];
 }
 
 /* Notificações ------------------------------------------------------------ */

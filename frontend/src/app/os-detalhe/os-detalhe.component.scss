@@ -132,3 +132,13 @@
   color: var(--danger-500);
   font-size: 0.8rem;
 }
+
+.fotos-execucao {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+
+  a { display: block; width: 84px; height: 84px; border-radius: var(--button-radius); overflow: hidden; border: 1px solid var(--border-default); }
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
