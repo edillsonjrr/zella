@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { acessoGuard } from './shared/auth.guard';
+import { landingGuard } from './shared/landing.guard';
 
 // Toda rota interna passa pelo mesmo guard: ele exige sessão e confere o
 // perfil contra o mapa em shared/permissoes.ts. O guard fica nos filhos, não
@@ -7,12 +8,13 @@ import { acessoGuard } from './shared/auth.guard';
 // montar qualquer componente, então o layout não chega a aparecer pra quem
 // foi barrado, e a casca (path vazio) não tem perfil próprio pra conferir.
 export const routes: Routes = [
+  // Site institucional (primeiro acesso). Logado cai direto na tela inicial.
+  { path: '', pathMatch: 'full', canActivate: [landingGuard], loadComponent: () => import('./landing/landing.component').then(m => m.LandingComponent) },
   { path: 'login', loadComponent: () => import('./login/login.component').then(m => m.LoginComponent) },
   {
     path: '',
     loadComponent: () => import('./layout/layout.component').then(m => m.LayoutComponent),
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', canActivate: [acessoGuard], loadComponent: () => import('./dashboard/dashboard.component').then(m => m.DashboardComponent) },
       { path: 'contratos', canActivate: [acessoGuard], loadComponent: () => import('./contratos/contratos.component').then(m => m.ContratosComponent) },
       { path: 'contratos/importar', canActivate: [acessoGuard], loadComponent: () => import('./importar-contratos/importar-contratos.component').then(m => m.ImportarContratosComponent) },
