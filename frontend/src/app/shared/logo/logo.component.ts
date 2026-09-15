@@ -24,7 +24,7 @@ import { Component, Input } from '@angular/core';
         <rect width="32" height="32" rx="8" class="logo-bg" />
         <!-- Z construído com blocos de quadro -->
         <path
-          d="M9 10.5h14M9 21.5h14M22.5 10.5 9.5 21.5"
+          d="M9 10.5h14L9 21.5h14"
           fill="none"
           stroke="currentColor"
           stroke-width="3.6"
