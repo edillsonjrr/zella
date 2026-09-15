@@ -1,0 +1,223 @@
+<div class="lp">
+  <!-- Navegação ------------------------------------------------------------ -->
+  <header class="lp-nav">
+    <div class="lp-container lp-nav-inner">
+      <a routerLink="/" class="lp-brand" aria-label="Zella, início">
+        <app-logo [size]="30" [wordmark]="true"></app-logo>
+      </a>
+
+      <nav class="lp-links" [class.lp-links--aberto]="menuAberto()" aria-label="Seções">
+        <a href="#como-funciona" (click)="menuAberto.set(false)">Como funciona</a>
+        <a href="#recursos" (click)="menuAberto.set(false)">Recursos</a>
+        <a href="#perfis" (click)="menuAberto.set(false)">Para quem</a>
+        <a href="#perguntas" (click)="menuAberto.set(false)">Perguntas</a>
+      </nav>
+
+      <div class="lp-nav-acoes">
+        <app-theme-toggle></app-theme-toggle>
+        <app-flow-button routerLink="/login" size="default">Entrar</app-flow-button>
+        <button type="button" class="lp-menu" (click)="menuAberto.set(!menuAberto())" [attr.aria-expanded]="menuAberto()" aria-label="Abrir menu">
+          <span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    <!-- Hero --------------------------------------------------------------- -->
+    <section class="lp-hero">
+      <div class="lp-container lp-hero-grid">
+        <div class="lp-hero-texto">
+          <span class="lp-selo">Gestão de manutenção com contrato na mão</span>
+          <h1 class="lp-titulo">
+            Do chamado à execução,<br />
+            <span class="lp-titulo-destaque">sem estourar o contrato.</span>
+          </h1>
+          <p class="lp-sub">
+            A Zella conecta quem pede o serviço, quem aprova e quem executa. Cada orçamento
+            reserva o saldo do contrato, cada execução consome, e nada passa do que foi contratado.
+          </p>
+          <div class="lp-hero-acoes">
+            <app-flow-button routerLink="/login" size="lg">
+              Entrar na plataforma <app-icon class="lp-seta" name="arrow_upward"></app-icon>
+            </app-flow-button>
+            <a href="#como-funciona" class="lp-link-sec">Ver como funciona</a>
+          </div>
+          <ul class="lp-garantias">
+            <li><app-icon name="check_circle"></app-icon> Saldo travado por item</li>
+            <li><app-icon name="check_circle"></app-icon> Chamado por QR Code</li>
+            <li><app-icon name="check_circle"></app-icon> Histórico auditável</li>
+          </ul>
+        </div>
+
+        <!-- Quadro vivo: um cartão percorre as colunas e o saldo reage. -->
+        <div class="lp-quadro" aria-hidden="true">
+          <div class="lp-quadro-topo">
+            <span class="lp-ponto"></span><span class="lp-ponto"></span><span class="lp-ponto"></span>
+            <span class="lp-quadro-titulo">Chamados</span>
+          </div>
+          <div class="lp-colunas">
+            @for (col of colunas; track col) {
+              <div class="lp-coluna">
+                <span class="lp-coluna-nome">{{ col }}</span>
+                <span class="lp-fantasma"></span>
+                <span class="lp-fantasma lp-fantasma--curto"></span>
+              </div>
+            }
+            <div class="lp-cartao-vivo">
+              <div class="lp-cartao-vivo-topo">
+                <span class="lp-cartao-icone"><app-icon name="build"></app-icon></span>
+                <div>
+                  <strong>CH-0142</strong>
+                  <small>Ar-condicionado · Sala 12</small>
+                </div>
+              </div>
+              <span class="lp-cartao-foto"><app-icon name="photo_camera"></app-icon> 2</span>
+            </div>
+          </div>
+          <div class="lp-saldo">
+            <div class="lp-saldo-rotulo">
+              <span>Saldo do contrato · Filtro de ar</span>
+              <span class="lp-saldo-num"></span>
+            </div>
+            <div class="lp-saldo-trilho">
+              <span class="lp-saldo-consumido"></span>
+              <span class="lp-saldo-reservado"></span>
+            </div>
+            <div class="lp-saldo-legenda">
+              <span><i class="lp-leg lp-leg--cons"></i>Consumido</span>
+              <span><i class="lp-leg lp-leg--res"></i>Reservado</span>
+              <span><i class="lp-leg lp-leg--disp"></i>Disponível</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Faixa infinita ------------------------------------------------------ -->
+    <section class="lp-faixa" aria-label="Capacidades">
+      <div class="lp-faixa-trilho">
+        @for (rodada of [0, 1]; track rodada) {
+          <ul class="lp-faixa-lista" [attr.aria-hidden]="rodada === 1">
+            @for (c of capacidades; track c) {
+              <li><span class="lp-faixa-ponto"></span>{{ c }}</li>
+            }
+          </ul>
+        }
+      </div>
+    </section>
+
+    <!-- Como funciona ------------------------------------------------------- -->
+    <section id="como-funciona" class="lp-secao">
+      <div class="lp-container">
+        <div class="lp-cabecalho" data-revelar>
+          <span class="lp-eyebrow">Como funciona</span>
+          <h2>Seis passos, cada um com dono.</h2>
+          <p>O fluxo é o mesmo para toda manutenção corretiva ou preventiva. O sistema não deixa pular etapa.</p>
+        </div>
+
+        <ol class="lp-etapas">
+          @for (e of etapas; track e.numero; let i = $index) {
+            <li class="lp-etapa" data-revelar [style.--i]="i">
+              <span class="lp-etapa-num">{{ e.numero }}</span>
+              <span class="lp-etapa-icone"><app-icon [name]="e.icone"></app-icon></span>
+              <h3>{{ e.titulo }}</h3>
+              <p>{{ e.texto }}</p>
+              <span class="lp-etapa-quem">{{ e.quem }}</span>
+            </li>
+          }
+        </ol>
+      </div>
+    </section>
+
+    <!-- Recursos (bento) ---------------------------------------------------- -->
+    <section id="recursos" class="lp-secao lp-secao--alt">
+      <div class="lp-container">
+        <div class="lp-cabecalho" data-revelar>
+          <span class="lp-eyebrow">Recursos</span>
+          <h2>O controle que a planilha não dá.</h2>
+          <p>Feito para contratos de manutenção com itens, quantidades e vigência.</p>
+        </div>
+
+        <div class="lp-bento">
+          @for (r of recursos; track r.titulo; let i = $index) {
+            <article class="lp-recurso" [class.lp-recurso--destaque]="r.destaque" data-revelar [style.--i]="i">
+              <span class="lp-recurso-icone"><app-icon [name]="r.icone"></app-icon></span>
+              <h3>{{ r.titulo }}</h3>
+              <p>{{ r.texto }}</p>
+            </article>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Perfis -------------------------------------------------------------- -->
+    <section id="perfis" class="lp-secao">
+      <div class="lp-container">
+        <div class="lp-cabecalho" data-revelar>
+          <span class="lp-eyebrow">Para quem</span>
+          <h2>Cada perfil vê só o que precisa.</h2>
+          <p>Uma plataforma, quatro jeitos de usar. A contratada só enxerga os próprios contratos; o cliente, a própria unidade.</p>
+        </div>
+
+        <div class="lp-perfis">
+          @for (p of perfis; track p.nome; let i = $index) {
+            <article class="lp-perfil" data-revelar [style.--i]="i">
+              <span class="lp-perfil-icone"><app-icon [name]="p.icone"></app-icon></span>
+              <h3>{{ p.nome }}</h3>
+              <span class="lp-perfil-papel">{{ p.papel }}</span>
+              <ul>
+                @for (item of p.itens; track item) {
+                  <li>{{ item }}</li>
+                }
+              </ul>
+            </article>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Perguntas ----------------------------------------------------------- -->
+    <section id="perguntas" class="lp-secao lp-secao--alt">
+      <div class="lp-container lp-faq-grid">
+        <div class="lp-cabecalho lp-cabecalho--esq" data-revelar>
+          <span class="lp-eyebrow">Perguntas</span>
+          <h2>O que costumam perguntar.</h2>
+        </div>
+
+        <div class="lp-faq">
+          @for (q of perguntas; track q.p; let i = $index) {
+            <div class="lp-faq-item" [class.lp-faq-item--aberto]="perguntaAberta() === i">
+              <button type="button" class="lp-faq-pergunta" (click)="alternarPergunta(i)" [attr.aria-expanded]="perguntaAberta() === i" [attr.aria-controls]="'resp-' + i">
+                <span>{{ q.p }}</span>
+                <span class="lp-faq-mais" aria-hidden="true"></span>
+              </button>
+              <div class="lp-faq-resposta" [id]="'resp-' + i" role="region">
+                <div><p>{{ q.r }}</p></div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA final ----------------------------------------------------------- -->
+    <section class="lp-cta">
+      <div class="lp-container">
+        <div class="lp-cta-caixa" data-revelar>
+          <h2>Seu contrato de manutenção, sob controle.</h2>
+          <p>Já tem acesso? Entre com o e-mail cadastrado pelo gestor. Primeiro acesso: use "Primeiro acesso ou esqueceu a senha?" na tela de entrada.</p>
+          <app-flow-button routerLink="/login" size="lg">Entrar na plataforma</app-flow-button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="lp-rodape">
+    <div class="lp-container lp-rodape-inner">
+      <app-logo [size]="24" [wordmark]="true"></app-logo>
+      <span>Gestão de chamados, ordens de serviço e contratos de manutenção.</span>
+      <a routerLink="/login">Entrar</a>
+    </div>
+  </footer>
+</div>
