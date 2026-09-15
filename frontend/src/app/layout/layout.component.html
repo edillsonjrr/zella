@@ -1,7 +1,17 @@
-<div class="app-shell">
-  <app-rail></app-rail>
+<div class="app-shell" [class.app-shell--convidado]="convidado()">
+  <!-- Quem abriu pelo QR Code (sessão anônima) não navega pelo sistema:
+       sem menu lateral nem menu de usuário, só a marca e o formulário. -->
+  @if (!convidado()) {
+    <app-rail></app-rail>
+  }
 
   <div class="main-area">
+    @if (convidado()) {
+      <header class="toolbar toolbar--convidado">
+        <app-logo [size]="26" [wordmark]="true"></app-logo>
+        <app-theme-toggle></app-theme-toggle>
+      </header>
+    } @else {
     <mat-toolbar class="toolbar">
       <div class="toolbar-left">
         <a class="toolbar-brand" routerLink="/" aria-label="Zella — início">
@@ -40,6 +50,7 @@
         </mat-menu>
       </div>
     </mat-toolbar>
+    }
 
     <main id="main-content" class="content" tabindex="-1">
       <router-outlet />

@@ -48,14 +48,7 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
   private zone = inject(NgZone);
   private observer?: IntersectionObserver;
   private contadorObserver?: IntersectionObserver;
-  private rafScroll = 0;
-  private aoRolar = () => {
-    if (this.rafScroll) return;
-    this.rafScroll = requestAnimationFrame(() => {
-      this.rafScroll = 0;
-      this.atualizarManifesto();
-    });
-  };
+  private manifestoObserver?: IntersectionObserver;
 
   @ViewChild('quadro') private quadroRef?: ElementRef<HTMLElement>;
   @ViewChild('manifesto') private manifestoRef?: ElementRef<HTMLElement>;
@@ -75,10 +68,12 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
   readonly palavrasManifesto = this.quebrarManifesto(
     'O saldo do contrato é *calculado*, nunca *digitado*. O orçamento *reserva*, a execução *consome* e a sobra *volta*. Cada passo tem *dono* e fica *registrado*.'
   );
-  palavrasAcesas = signal(0);
 
   menuAberto = signal(false);
   readonly movimentoReduzido = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Pausa manual das animações contínuas (marquee, quadro, órbita, grade).
+  // Lembrada no navegador, como o tema.
+  pausado = signal(this.lerPausa());
   perguntaAberta = signal<number | null>(0);
 
   // Colunas do quadro do hero: o cartão em destaque percorre as quatro.
@@ -166,19 +161,6 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
     card.style.setProperty('--my', `${ev.clientY - r.top}px`);
   }
 
-  private atualizarManifesto(): void {
-    const el = this.manifestoRef?.nativeElement;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    const vh = window.innerHeight;
-    // 0 quando o topo da seção entra por baixo, 1 quando o fim passa do meio.
-    const progresso = Math.min(1, Math.max(0, (vh * 0.85 - r.top) / (r.height + vh * 0.35)));
-    const acesas = Math.round(progresso * this.palavrasManifesto.length);
-    if (acesas !== this.palavrasAcesas()) {
-      this.zone.run(() => this.palavrasAcesas.set(acesas));
-    }
-  }
-
   private contar(el: HTMLElement): void {
     const alvo = Number(el.dataset['contar'] ?? 0);
     const duracao = 1200;
@@ -192,6 +174,15 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
       if (p < 1) requestAnimationFrame(passo);
     };
     requestAnimationFrame(passo);
+  }
+
+  alternarPausa(): void {
+    this.pausado.update(v => !v);
+    try { localStorage.setItem('zella-lp-pausa', this.pausado() ? '1' : '0'); } catch { /* sem armazenamento */ }
+  }
+
+  private lerPausa(): boolean {
+    try { return localStorage.getItem('zella-lp-pausa') === '1'; } catch { return false; }
   }
 
   alternarPergunta(i: number): void {
@@ -227,18 +218,25 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
     }, { threshold: 0.6 });
     this.host.nativeElement.querySelectorAll('[data-contar]').forEach((el: Element) => this.contadorObserver!.observe(el));
 
+    // Manifesto: cada palavra acende ao entrar nos 65% de cima da tela e
+    // apaga ao sair por baixo. Sem ouvir scroll; a classe é mexida fora do
+    // Angular porque não há estado a sincronizar.
+    const palavras = this.manifestoRef?.nativeElement.querySelectorAll('.lp-palavra') ?? [];
     this.zone.runOutsideAngular(() => {
-      window.addEventListener('scroll', this.aoRolar, { passive: true });
-      window.addEventListener('resize', this.aoRolar, { passive: true });
+      this.manifestoObserver = new IntersectionObserver(entradas => {
+        for (const e of entradas) {
+          const abaixo = e.boundingClientRect.top > (e.rootBounds?.bottom ?? window.innerHeight * 0.65);
+          if (e.isIntersecting) e.target.classList.add('lp-palavra--acesa');
+          else if (abaixo) e.target.classList.remove('lp-palavra--acesa');
+        }
+      }, { rootMargin: '0px 0px -35% 0px', threshold: 0 });
+      palavras.forEach((el: Element) => this.manifestoObserver!.observe(el));
     });
-    this.atualizarManifesto();
   }
 
   ngOnDestroy(): void {
     this.observer?.disconnect();
     this.contadorObserver?.disconnect();
-    window.removeEventListener('scroll', this.aoRolar);
-    window.removeEventListener('resize', this.aoRolar);
-    if (this.rafScroll) cancelAnimationFrame(this.rafScroll);
+    this.manifestoObserver?.disconnect();
   }
 }

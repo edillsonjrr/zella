@@ -43,7 +43,7 @@ interface LinhaExecucao {
       <div class="exec-cabecalho">
         <div class="exec-icone"><app-icon name="build" aria-hidden="true"></app-icon></div>
         <div>
-          <h2 class="exec-titulo">Executar OS {{ data.numeroOS }}</h2>
+          <h2 class="exec-titulo">Executar {{ data.numeroOS }}</h2>
           <p class="exec-sub">Informe o que foi realmente executado. A diferença volta para o saldo do contrato.</p>
         </div>
       </div>
@@ -99,8 +99,8 @@ interface LinhaExecucao {
       }
 
       <div class="exec-acoes">
-        <app-flow-button variant="secondary" type="button" (click)="ref.close()">Voltar</app-flow-button>
-        <app-flow-button type="button" [disabled]="!valido" (click)="confirmar()">
+        <app-flow-button variant="secondary" type="button" [class.full-width]="celular" (click)="ref.close()">Voltar</app-flow-button>
+        <app-flow-button type="button" [class.full-width]="celular" [disabled]="!valido" (click)="confirmar()">
           <app-icon class="btn-icon" name="build" aria-hidden="true"></app-icon> {{ parcial ? 'Executar parcialmente' : 'Executar tudo' }}
         </app-flow-button>
       </div>
@@ -132,10 +132,12 @@ interface LinhaExecucao {
     .exec-foto-adicionar { width: 84px; height: 84px; border: 1px dashed var(--border-default); border-radius: var(--button-radius); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; color: var(--text-tertiary); font-size: 0.7rem; }
     .exec-foto-adicionar:hover { border-color: var(--primary-500); color: var(--primary-400); }
     .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-    @media (max-width: 480px) { .exec-linha { flex-direction: column; align-items: stretch; } .exec-qtd { max-width: none; } }
+    @media (max-width: 480px) { .exec-linha { flex-direction: column; align-items: stretch; } .exec-info { padding-top: 0; } .exec-qtd { flex: 0 0 auto; max-width: none; } .exec-acoes { flex-direction: column-reverse; } }
   `
 })
 export class ExecutarOsDialogComponent {
+  // No celular, os botões de ação ocupam a largura toda.
+  readonly celular = typeof matchMedia === 'function' && matchMedia('(max-width: 480px)').matches;
   readonly ref = inject(MatDialogRef<ExecutarOsDialogComponent>);
   readonly data: ExecutarOsDialogData = inject(MAT_DIALOG_DATA);
 

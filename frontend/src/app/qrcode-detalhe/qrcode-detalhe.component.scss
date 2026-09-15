@@ -151,3 +151,11 @@
     width: 100%;
   }
 }
+
+.qrcode-erro {
+  margin: 0;
+  padding: 16px;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--danger-500);
+}

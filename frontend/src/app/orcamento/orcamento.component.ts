@@ -66,10 +66,20 @@ export class OrcamentoComponent {
     return !['Aberta', 'Em vistoria', 'Rejeitada'].includes(this.os.situacao);
   });
 
+  // Marcar um item já sugere 1 unidade; o total acompanha cada mudança.
+  aoMarcar(item: { selecionado: boolean; quantidade: number; saldo: number }): void {
+    if (item.selecionado && !(Number(item.quantidade) > 0) && item.saldo > 0) item.quantidade = 1;
+    this.recalcular();
+  }
+
+  recalcular(): void {
+    this.itensSelecionados.update(lista => [...lista]);
+  }
+
   total = computed(() => {
     return this.itensSelecionados()
       .filter(i => i.selecionado)
-      .reduce((acc, i) => acc + i.quantidade * i.precoUnitario, 0);
+      .reduce((acc, i) => acc + (Number(i.quantidade) || 0) * i.precoUnitario, 0);
   });
 
   constructor(

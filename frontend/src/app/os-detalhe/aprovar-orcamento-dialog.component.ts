@@ -39,7 +39,7 @@ interface LinhaAprovacao {
       <div class="apr-cabecalho">
         <div class="apr-icone"><app-icon name="check_circle" aria-hidden="true"></app-icon></div>
         <div>
-          <h2 class="apr-titulo">Aprovar orçamento da OS {{ data.numeroOS }}</h2>
+          <h2 class="apr-titulo">Aprovar orçamento da {{ data.numeroOS }}</h2>
           <p class="apr-sub">Aprovar reserva o saldo do contrato. Se precisar, reduza quantidades antes.</p>
         </div>
       </div>
@@ -83,8 +83,8 @@ interface LinhaAprovacao {
       }
 
       <div class="apr-acoes">
-        <app-flow-button variant="secondary" type="button" (click)="ref.close()">Voltar</app-flow-button>
-        <app-flow-button type="button" [disabled]="!valido" (click)="confirmar()">
+        <app-flow-button variant="secondary" type="button" [class.full-width]="celular" (click)="ref.close()">Voltar</app-flow-button>
+        <app-flow-button type="button" [class.full-width]="celular" [disabled]="!valido" (click)="confirmar()">
           <app-icon class="btn-icon" name="check_circle" aria-hidden="true"></app-icon> {{ ajustado ? 'Aprovar com ajustes' : 'Aprovar' }}
         </app-flow-button>
       </div>
@@ -108,10 +108,12 @@ interface LinhaAprovacao {
     .hint-erro { color: var(--danger-500); }
     .apr-erro { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 8px; padding: 10px 12px; border-radius: var(--button-radius); background: var(--danger-50, var(--bg-elevated)); color: var(--danger-500); font-size: 0.8rem; }
     .apr-acoes { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
-    @media (max-width: 480px) { .apr-linha { flex-direction: column; align-items: stretch; } .apr-qtd { max-width: none; } }
+    @media (max-width: 480px) { .apr-linha { flex-direction: column; align-items: stretch; } .apr-info { padding-top: 0; } .apr-qtd { flex: 0 0 auto; max-width: none; } .apr-acoes { flex-direction: column-reverse; } }
   `
 })
 export class AprovarOrcamentoDialogComponent {
+  // No celular, os botões de ação ocupam a largura toda.
+  readonly celular = typeof matchMedia === 'function' && matchMedia('(max-width: 480px)').matches;
   readonly ref = inject(MatDialogRef<AprovarOrcamentoDialogComponent>);
   readonly data: AprovarOrcamentoDialogData = inject(MAT_DIALOG_DATA);
 

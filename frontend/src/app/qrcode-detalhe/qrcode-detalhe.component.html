@@ -18,6 +18,8 @@
     <div class="qrcode-image-wrap">
       @if (qrDataUrl(); as src) {
         <img [src]="src" [alt]="'QR Code para ' + alvo.titulo" width="240" height="240" />
+      } @else if (erro()) {
+        <p class="qrcode-erro" role="alert">{{ erro() }}</p>
       } @else {
         <div class="qrcode-loading" aria-hidden="true"></div>
       }
@@ -42,7 +44,7 @@
       </button>
       <app-flow-button type="button" (click)="baixar()" [disabled]="!qrDataUrl()">
         <app-icon class="btn-icon" name="download" aria-hidden="true"></app-icon>
-        Baixar QR Code
+        {{ podeCompartilhar ? 'Salvar ou compartilhar' : 'Baixar QR Code' }}
       </app-flow-button>
     </div>
   </div>

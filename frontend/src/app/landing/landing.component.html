@@ -1,4 +1,4 @@
-<div class="lp anima-sempre" [class.lp--reduzido]="movimentoReduzido">
+<div class="lp anima-sempre" [class.lp--reduzido]="movimentoReduzido" [class.lp--pausado]="pausado()">
   <!-- Navegação ------------------------------------------------------------ -->
   <header class="lp-nav">
     <div class="lp-container lp-nav-inner">
@@ -6,7 +6,7 @@
         <app-logo [size]="30" [wordmark]="true"></app-logo>
       </a>
 
-      <nav class="lp-links" [class.lp-links--aberto]="menuAberto()" aria-label="Seções">
+      <nav id="lp-links" class="lp-links" [class.lp-links--aberto]="menuAberto()" aria-label="Seções">
         <a href="#como-funciona" (click)="menuAberto.set(false)">Como funciona</a>
         <a href="#recursos" (click)="menuAberto.set(false)">Recursos</a>
         <a href="#perfis" (click)="menuAberto.set(false)">Para quem</a>
@@ -14,9 +14,12 @@
       </nav>
 
       <div class="lp-nav-acoes">
+        <button type="button" class="lp-pausa" (click)="alternarPausa()" [attr.aria-pressed]="pausado()" [attr.aria-label]="pausado() ? 'Retomar animações' : 'Pausar animações'" [title]="pausado() ? 'Retomar animações' : 'Pausar animações'">
+          <app-icon [name]="pausado() ? 'play_arrow' : 'pause'" aria-hidden="true"></app-icon>
+        </button>
         <app-theme-toggle></app-theme-toggle>
         <app-flow-button routerLink="/login" size="default">Entrar</app-flow-button>
-        <button type="button" class="lp-menu" (click)="menuAberto.set(!menuAberto())" [attr.aria-expanded]="menuAberto()" aria-label="Abrir menu">
+        <button type="button" class="lp-menu" (click)="menuAberto.set(!menuAberto())" [attr.aria-expanded]="menuAberto()" aria-controls="lp-links" aria-label="Abrir menu">
           <span></span><span></span>
         </button>
       </div>
@@ -41,27 +44,21 @@
             </span>
           </h1>
           <p class="lp-sub">
-            A Zella conecta quem pede o serviço, quem aprova e quem executa. Cada orçamento
-            reserva o saldo do contrato, cada execução consome, e nada passa do que foi contratado.
+            Quem pede, quem aprova e quem executa, no mesmo fluxo. O orçamento reserva saldo
+            do contrato, a execução consome, e nada passa do contratado.
           </p>
           <div class="lp-hero-acoes">
             <app-flow-button routerLink="/login" size="lg">
-              Entrar na plataforma <app-icon class="lp-seta" name="arrow_upward"></app-icon>
+              Entrar <app-icon class="lp-seta" name="arrow_upward" aria-hidden="true"></app-icon>
             </app-flow-button>
             <a href="#como-funciona" class="lp-link-sec">Ver como funciona</a>
           </div>
-          <ul class="lp-garantias">
-            <li><app-icon name="check_circle"></app-icon> Saldo travado por item</li>
-            <li><app-icon name="check_circle"></app-icon> Chamado por QR Code</li>
-            <li><app-icon name="check_circle"></app-icon> Histórico auditável</li>
-          </ul>
         </div>
 
         <!-- Quadro vivo: um cartão percorre as colunas e o saldo reage. -->
         <div class="lp-quadro-palco" (mousemove)="inclinar($event)" (mouseleave)="endireitar()">
         <div class="lp-quadro" aria-hidden="true" #quadro>
           <div class="lp-quadro-topo">
-            <span class="lp-ponto"></span><span class="lp-ponto"></span><span class="lp-ponto"></span>
             <span class="lp-quadro-titulo">Chamados</span>
           </div>
           <div class="lp-colunas">
@@ -133,8 +130,8 @@
     <section class="lp-manifesto" #manifesto>
       <div class="lp-container">
         <p class="lp-manifesto-texto">
-          @for (p of palavrasManifesto; track $index; let i = $index) {
-            <span class="lp-palavra" [class.lp-palavra--acesa]="i < palavrasAcesas()" [class.lp-palavra--forte]="p.forte">{{ p.texto }} </span>
+          @for (p of palavrasManifesto; track $index) {
+            <span class="lp-palavra" [class.lp-palavra--forte]="p.forte">{{ p.texto }} </span>
           }
         </p>
       </div>
@@ -144,7 +141,6 @@
     <section id="como-funciona" class="lp-secao">
       <div class="lp-container">
         <div class="lp-cabecalho" data-revelar>
-          <span class="lp-eyebrow">Como funciona</span>
           <h2>Seis passos, cada um com dono.</h2>
           <p>O fluxo é o mesmo para toda manutenção corretiva ou preventiva. O sistema não deixa pular etapa.</p>
         </div>
@@ -167,7 +163,6 @@
     <section id="recursos" class="lp-secao lp-secao--alt">
       <div class="lp-container">
         <div class="lp-cabecalho" data-revelar>
-          <span class="lp-eyebrow">Recursos</span>
           <h2>O controle que a planilha não dá.</h2>
           <p>Feito para contratos de manutenção com itens, quantidades e vigência.</p>
         </div>
@@ -188,7 +183,6 @@
     <section id="perfis" class="lp-secao">
       <div class="lp-container">
         <div class="lp-cabecalho" data-revelar>
-          <span class="lp-eyebrow">Para quem</span>
           <h2>Cada perfil vê só o que precisa.</h2>
           <p>Uma plataforma, quatro jeitos de usar. A contratada só enxerga os próprios contratos; o cliente, a própria unidade.</p>
         </div>
@@ -227,18 +221,17 @@
     <section id="perguntas" class="lp-secao lp-secao--alt">
       <div class="lp-container lp-faq-grid">
         <div class="lp-cabecalho lp-cabecalho--esq" data-revelar>
-          <span class="lp-eyebrow">Perguntas</span>
           <h2>O que costumam perguntar.</h2>
         </div>
 
         <div class="lp-faq">
           @for (q of perguntas; track q.p; let i = $index) {
             <div class="lp-faq-item" [class.lp-faq-item--aberto]="perguntaAberta() === i">
-              <button type="button" class="lp-faq-pergunta" (click)="alternarPergunta(i)" [attr.aria-expanded]="perguntaAberta() === i" [attr.aria-controls]="'resp-' + i">
+              <button type="button" class="lp-faq-pergunta" [id]="'perg-' + i" (click)="alternarPergunta(i)" [attr.aria-expanded]="perguntaAberta() === i" [attr.aria-controls]="'resp-' + i">
                 <span>{{ q.p }}</span>
                 <span class="lp-faq-mais" aria-hidden="true"></span>
               </button>
-              <div class="lp-faq-resposta" [id]="'resp-' + i" role="region">
+              <div class="lp-faq-resposta" [id]="'resp-' + i" role="region" [attr.aria-labelledby]="'perg-' + i">
                 <div><p>{{ q.r }}</p></div>
               </div>
             </div>
@@ -252,8 +245,8 @@
       <div class="lp-container">
         <div class="lp-cta-caixa" data-revelar><span class="lp-cta-borda" aria-hidden="true"></span>
           <h2>Seu contrato de manutenção, sob controle.</h2>
-          <p>Já tem acesso? Entre com o e-mail cadastrado pelo gestor. Primeiro acesso: use "Primeiro acesso ou esqueceu a senha?" na tela de entrada.</p>
-          <app-flow-button routerLink="/login" size="lg">Entrar na plataforma</app-flow-button>
+          <p>Já tem acesso? Entre com o e-mail cadastrado pelo gestor. Primeiro acesso: use “Primeiro acesso ou esqueceu a senha?” na tela de entrada.</p>
+          <app-flow-button routerLink="/login" size="lg">Entrar</app-flow-button>
         </div>
       </div>
     </section>

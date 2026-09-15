@@ -41,6 +41,7 @@
           <div class="item-row">
             <mat-checkbox
               [(ngModel)]="item.selecionado"
+              (ngModelChange)="aoMarcar(item)"
               [name]="'chk-' + item.itemContratoId"
               [disabled]="modoLeitura() || item.saldo === 0"
               color="primary"
@@ -65,6 +66,7 @@
                 min="1"
                 [max]="item.saldo"
                 [(ngModel)]="item.quantidade"
+                (ngModelChange)="recalcular()"
                 [name]="'qtd-' + item.itemContratoId"
                 [disabled]="modoLeitura()"
               />

@@ -180,3 +180,76 @@
     padding: 0;
   }
 }
+
+/* Celular: o rail vira barra de navegação inferior, com rolagem horizontal
+   se os itens não couberem. Logo e divisórias somem; "Admin" fica no fim. */
+@media (max-width: 760px) {
+  :host {
+    flex-direction: row;
+    height: auto;
+    width: 100%;
+    order: 2;
+  }
+
+  .rail {
+    flex-direction: row;
+    align-items: stretch;
+    width: 100%;
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding: 4px 4px env(safe-area-inset-bottom, 0px);
+    border-right: none;
+    border-top: 1px solid var(--border-default);
+    gap: 2px;
+  }
+
+  .rail-top,
+  .rail-bottom {
+    flex-direction: row;
+    gap: 2px;
+    padding-top: 0;
+  }
+
+  .rail-top { flex: 1 1 auto; min-width: 0; }
+
+  .rail-logo,
+  .rail-divider { display: none; }
+
+  .rail-scroll {
+    flex-direction: row;
+    justify-content: space-around;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .rail-item {
+    width: auto;
+    min-width: 56px;
+    flex: 1 0 56px;
+    min-height: 56px;
+  }
+
+  .rail-label { max-width: 64px; -webkit-line-clamp: 1; }
+}
+
+@media (max-width: 760px) {
+  /* Sete destinos precisam caber em ~380px sem cortar nenhum rótulo. */
+  .rail-top,
+  .rail-scroll,
+  .rail-bottom { display: contents; }
+
+  .rail .rail-item.mat-mdc-icon-button {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+    padding: 4px 1px !important;
+  }
+
+  .rail-label {
+    max-width: 100%;
+    font-size: 0.5625rem;
+    letter-spacing: -0.1px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: block;
+  }
+}

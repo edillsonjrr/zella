@@ -244,3 +244,20 @@
     font-size: 0.9375rem;
   }
 }
+
+@media (max-width: 760px) {
+  .page-title-row {
+    flex-wrap: wrap;
+    gap: 12px;
+
+    .title-right { flex: 1 1 100%; }
+  }
+
+  .segmented-control { width: 100%; }
+
+  .segmented-control .segmented-btn {
+    flex: 1 1 0;
+    justify-content: center;
+    height: 40px;
+  }
+}

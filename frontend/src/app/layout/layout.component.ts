@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -33,6 +33,8 @@ export class LayoutComponent {
   private auth = inject(AuthService);
 
   usuarioLogado = this.auth.usuarioLogado;
+  // Sessão anônima de quem escaneou um QR Code.
+  convidado = computed(() => this.auth.usuarioFirebase()?.isAnonymous === true && !this.auth.estaAutenticado());
 
   sair(): void {
     this.auth.logout();

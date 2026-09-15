@@ -216,6 +216,9 @@ textarea,
   box-sizing: border-box;
 }
 
+/* Região aria-live do LiveAnnouncer (CDK). Sem o tema do Material carregado
+   na rota pública, o texto anunciado aparecia no rodapé da landing. */
+.cdk-visually-hidden,
 .sr-only {
   position: absolute;
   width: 1px;
@@ -1465,4 +1468,97 @@ app-icon svg {
       }
     }
   }
+}
+
+
+/* ======================================================================== */
+/* Celular (≤ 760px): refinos gerais de layout. Sem nomes de animação aqui. */
+/* ======================================================================== */
+@media (max-width: 760px) {
+  :root {
+    --content-padding: 16px;
+  }
+
+  /* Cabeçalho de página: título e ações quebram em vez de vazar. */
+  .page-header {
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+
+    h1 {
+      font-size: 1.5rem;
+      line-height: 1.2;
+      flex: 1 1 60%;
+      min-width: 0;
+    }
+
+    > :not(h1) {
+      flex-shrink: 0;
+    }
+  }
+
+  /* Tabelas: rolam na horizontal dentro do cartão, sem espremer colunas. */
+  .mat-mdc-card-content:has(> .mat-mdc-table),
+  .mat-mdc-card-content:has(> table.app-table),
+  .tabela-rolavel {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mat-mdc-table.app-table,
+  table.app-table {
+    min-width: 640px;
+
+    .mat-mdc-cell,
+    .mat-mdc-header-cell {
+      white-space: nowrap;
+    }
+  }
+
+  /* Tabelas dentro de painéis laterais estreitos também rolam. */
+  .campo--bloco:has(> .mat-mdc-table) {
+    overflow-x: auto;
+  }
+
+  .campo--bloco > .mat-mdc-table.app-table {
+    min-width: 420px;
+  }
+
+  /* Painéis laterais e diálogos ocupam a tela inteira. */
+  .cdk-overlay-pane.os-detalhe-dialog,
+  .cdk-overlay-pane.chamado-detalhe-dialog,
+  .cdk-overlay-pane.contrato-detalhe-dialog,
+  .cdk-overlay-pane.orcamento-dialog,
+  .cdk-overlay-pane.qrcode-dialog,
+  .cdk-overlay-pane.saldo-detalhe-dialog,
+  .cdk-overlay-pane.unidade-detalhe-dialog,
+  .cdk-overlay-pane.bloco-detalhe-dialog,
+  .cdk-overlay-pane.sala-detalhe-dialog {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+
+  .cdk-overlay-pane.nova-os-dialog,
+  .cdk-overlay-pane.novo-chamado-dialog,
+  .cdk-overlay-pane.novo-contrato-dialog,
+  .cdk-overlay-pane.usuario-form-dialog {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+  }
+
+  /* Alvos de toque de pelo menos 40px. */
+  .item-acoes button,
+  .mat-mdc-icon-button.mat-mdc-button-base {
+    width: 40px !important;
+    height: 40px !important;
+    padding: 8px !important;
+  }
+}
+
+/* Celular: alvos de toque confortáveis em controles compactos. */
+@media (max-width: 760px) {
+  .segmented-control .segmented-btn { min-height: 40px !important; }
+  app-historico-registro .historico-toggle { min-height: 44px; }
+  .toolbar-brand { padding: 10px 4px; margin: -10px -4px; }
 }

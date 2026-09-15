@@ -10,12 +10,27 @@
 }
 
 .lp {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--lp-fundo);
   color: var(--text-primary);
   font-family: var(--font-sans);
   overflow-x: clip;
+
+  h2, h3 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+
+  a, button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+  ::selection { background: color-mix(in srgb, var(--lp-roxo) 40%, transparent); color: var(--text-primary); }
 }
+
+/* Âncoras do menu param abaixo da navegação fixa. */
+.lp-secao[id] { scroll-margin-top: 80px; }
+
+/* Botão "Pausar animações": congela tudo no quadro atual (WCAG 2.2.2). */
+.lp--pausado *,
+.lp--pausado *::before,
+.lp--pausado *::after { animation-play-state: paused !important; }
 
 .lp-container {
   width: 100%;
@@ -75,6 +90,22 @@
   margin-left: auto;
 }
 
+.lp-pausa {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--lp-borda);
+  border-radius: 999px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover { color: var(--text-primary); border-color: var(--lp-roxo); }
+  &[aria-pressed="true"] { color: var(--lp-roxo-claro); border-color: color-mix(in srgb, var(--lp-roxo) 50%, var(--lp-borda)); }
+}
+
 .lp-menu {
   display: none;
   width: 40px;
@@ -109,8 +140,8 @@
 
 .lp-hero-grid {
   display: grid;
-  grid-template-columns: 1.05fr 1fr;
-  gap: 56px;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 40px;
   align-items: center;
 }
 
@@ -137,7 +168,7 @@
 .lp-titulo {
   margin: 20px 0 16px;
   font-family: var(--font-brand);
-  font-size: clamp(2.2rem, 4.6vw, 3.6rem);
+  font-size: clamp(2.2rem, 4.2vw, 3.1rem);
   line-height: 1.04;
   letter-spacing: -0.03em;
   font-weight: 700;
@@ -146,6 +177,11 @@
 /* Revelação em gradiente: a cor atravessa o texto uma vez ao carregar e
    depois segue um brilho lento. */
 .lp-titulo-destaque {
+  /* Levemente menor que o título para a frase mais longa caber na coluna
+     sem cortar (o rotador não quebra linha). */
+  font-size: 0.86em;
+  line-height: calc(1.12em / 0.86);
+  white-space: nowrap;
   background: linear-gradient(90deg, var(--text-primary) 0%, var(--text-primary) 35%, var(--lp-roxo-claro) 50%, var(--lp-roxo) 60%, var(--text-primary) 75%, var(--text-primary) 100%);
   background-size: 300% 100%;
   background-position: 100% 0;
@@ -183,6 +219,7 @@
 }
 
 .lp-link-sec {
+  padding: 8px 0;
   color: var(--text-secondary);
   font-size: 0.9375rem;
   font-weight: 600;
@@ -193,30 +230,6 @@
   &:hover { color: var(--text-primary); }
 }
 
-.lp-garantias {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-  margin: 28px 0 0;
-  padding: 0;
-  list-style: none;
-  color: var(--text-tertiary);
-  font-size: 0.8125rem;
-
-  li {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  app-icon {
-    color: var(--success-500);
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-  }
-}
-
 /* Quadro vivo ------------------------------------------------------------ */
 
 .lp-quadro {
@@ -224,7 +237,6 @@
   padding: 14px;
   border-radius: 20px;
   background: var(--lp-superficie);
-  border: 1px solid var(--lp-borda);
   box-shadow: 0 30px 80px color-mix(in srgb, var(--lp-roxo) 18%, transparent), 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
@@ -234,13 +246,6 @@
   gap: 6px;
   margin-bottom: 12px;
   padding: 0 4px;
-}
-
-.lp-ponto {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--text-tertiary) 35%, transparent);
 }
 
 .lp-quadro-titulo {
@@ -480,10 +485,9 @@
 }
 
 .lp-faixa-ponto {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--lp-roxo);
+  width: 1px;
+  height: 12px;
+  background: color-mix(in srgb, var(--lp-roxo) 45%, var(--lp-borda));
 }
 
 @keyframes lp-rolar {
@@ -509,7 +513,7 @@
   }
 
   h2 {
-    margin: 10px 0 12px;
+    margin: 0 0 12px;
     font-family: var(--font-brand);
     font-size: clamp(1.75rem, 3.2vw, 2.5rem);
     line-height: 1.1;
@@ -522,14 +526,6 @@
     font-size: 1rem;
     line-height: 1.6;
   }
-}
-
-.lp-eyebrow {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--lp-roxo-claro);
 }
 
 /* Revelação no scroll: transição (não animação), então vale mesmo com o
@@ -829,6 +825,7 @@
 
   a {
     margin-left: auto;
+    padding: 10px 0;
     color: var(--text-secondary);
     font-weight: 600;
   }
@@ -940,8 +937,9 @@
 
   > span {
     display: block;
-    height: 1.12em;
-    line-height: 1.12em;
+    /* a frase tem 0.86em; compensa para o passo bater com a janela de 1.12em do rotador */
+    height: calc(1.12em / 0.86);
+    line-height: calc(1.12em / 0.86);
     white-space: nowrap;
   }
 }
@@ -1008,10 +1006,7 @@
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.03em;
-  background: linear-gradient(180deg, var(--text-primary), color-mix(in srgb, var(--lp-roxo) 70%, var(--text-primary)));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1097,7 +1092,7 @@
 }
 
 .lp-recurso-icone {
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .lp-recurso:hover .lp-recurso-icone {
@@ -1229,5 +1224,5 @@
   .lp-numeros-grid { grid-template-columns: repeat(2, 1fr); }
   .lp-etapas--pilha .lp-etapa { top: calc(76px + var(--i, 0) * 12px); padding: 22px; column-gap: 14px; }
   .lp-etapas--pilha .lp-etapa .lp-etapa-num { font-size: 2rem; }
-  .lp-orbita { width: min(300px, 80vw); }
+  .lp-orbita { width: min(300px, 72vw); }
 }

@@ -72,7 +72,9 @@ import {
   phosphorEyeSlash,
   phosphorBuildings,
   phosphorBell,
-  phosphorUserGear
+  phosphorUserGear,
+  phosphorPause,
+  phosphorPlay
 } from '@ng-icons/phosphor-icons/regular';
 
 const ICON_MAP: Record<string, string> = {
@@ -153,6 +155,8 @@ const ICON_MAP: Record<string, string> = {
   folder: 'phosphorFolder',
   radio_button_checked: 'phosphorRadioButton',
   qr_code: 'phosphorQrCode',
+  pause: 'phosphorPause',
+  play_arrow: 'phosphorPlay',
   print: 'phosphorPrinter',
   link: 'phosphorLink',
   copy: 'phosphorCopy',
@@ -235,7 +239,9 @@ const ICONS = {
   phosphorEyeSlash,
   phosphorBuildings,
   phosphorBell,
-  phosphorUserGear
+  phosphorUserGear,
+  phosphorPause,
+  phosphorPlay
 };
 
 @Component({

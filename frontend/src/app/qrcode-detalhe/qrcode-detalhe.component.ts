@@ -20,6 +20,9 @@ export class QrcodeDetalheComponent implements OnInit {
 
   linkCopiado = signal(false);
   qrDataUrl = signal<string | null>(null);
+  erro = signal('');
+  // Web Share com arquivo (celular): compartilhar/salvar a imagem direto.
+  readonly podeCompartilhar = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
   url: string;
 
@@ -39,28 +42,77 @@ export class QrcodeDetalheComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    const dataUrl = await (await import('qrcode')).toDataURL(this.url, {
-      width: 320,
-      margin: 2,
-      color: { dark: '#111111', light: '#ffffff' }
-    });
-    this.qrDataUrl.set(dataUrl);
+    try {
+      // A lib é CommonJS: no build de produção o import dinâmico só expõe
+      // `default` (em desenvolvimento expunha as funções soltas também).
+      // Sem esse ajuste o QR nunca era gerado em produção.
+      const mod = await import('qrcode');
+      const QRCode = ((mod as unknown as { default?: typeof mod }).default ?? mod) as typeof mod;
+      const dataUrl = await QRCode.toDataURL(this.url, {
+        width: 640,
+        margin: 2,
+        errorCorrectionLevel: 'M',
+        color: { dark: '#111111', light: '#ffffff' }
+      });
+      this.qrDataUrl.set(dataUrl);
+    } catch (e) {
+      console.error('Falha ao gerar QR Code', e);
+      this.erro.set('Não foi possível gerar o QR Code. Copie o link abaixo e tente novamente.');
+    }
   }
 
   async copiarLink(): Promise<void> {
-    await navigator.clipboard.writeText(this.url);
+    try {
+      await navigator.clipboard.writeText(this.url);
+    } catch {
+      // Fallback (navegador sem permissão de área de transferência).
+      const campo = document.createElement('textarea');
+      campo.value = this.url;
+      campo.setAttribute('readonly', '');
+      campo.style.position = 'fixed';
+      campo.style.opacity = '0';
+      document.body.appendChild(campo);
+      campo.select();
+      document.execCommand('copy');
+      campo.remove();
+    }
     this.linkCopiado.set(true);
     setTimeout(() => this.linkCopiado.set(false), 2000);
   }
 
-  baixar(): void {
+  private get nomeArquivo(): string {
+    return `qrcode-${this.alvo.tipo}-${this.slugify(this.alvo.subtitulo)}.png`;
+  }
+
+  async baixar(): Promise<void> {
     const dataUrl = this.qrDataUrl();
     if (!dataUrl) return;
 
-    const link = document.createElement('a');
-    link.href = dataUrl;
-    link.download = `qrcode-${this.alvo.tipo}-${this.slugify(this.alvo.subtitulo)}.png`;
-    link.click();
+    // Celular (iOS principalmente) ignora <a download> com data URL. Onde dá
+    // pra compartilhar arquivo, abre a folha de compartilhar (Salvar imagem,
+    // WhatsApp, impressora); senão cai no download normal.
+    try {
+      const blob = await (await fetch(dataUrl)).blob();
+      const arquivo = new File([blob], this.nomeArquivo, { type: 'image/png' });
+      const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
+      if (this.podeCompartilhar && nav.canShare?.({ files: [arquivo] })) {
+        await navigator.share({ files: [arquivo], title: `QR Code — ${this.alvo.titulo}` });
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = this.nomeArquivo;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    } catch (e) {
+      // Usuário cancelou a folha de compartilhar: não é erro.
+      if ((e as DOMException)?.name !== 'AbortError') {
+        window.open(dataUrl, '_blank');
+      }
+    }
   }
 
   private slugify(texto: string): string {

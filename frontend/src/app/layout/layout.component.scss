@@ -92,3 +92,26 @@
   overflow-y: auto;
   min-height: 0;
 }
+
+/* Chamado aberto pelo QR Code: só a marca no topo. */
+.toolbar--convidado {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    flex-direction: column;
+    height: 100dvh;
+  }
+
+  .main-area {
+    height: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .toolbar {
+    padding: 0 16px;
+  }
+}

@@ -118,3 +118,15 @@
 .linha-clicavel {
   cursor: pointer;
 }
+
+@media (max-width: 760px) {
+  .saldo-toolbar {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 8px;
+
+    .toolbar-left { flex: 1 1 100%; }
+    .toolbar-left .contrato-select { width: 100%; }
+    .toolbar-right button { min-height: 40px; }
+  }
+}
