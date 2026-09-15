@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, NgZone, OnDestroy, ViewChild, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LogoComponent } from '../shared/logo/logo.component';
 import { IconComponent } from '../shared/icon/icon.component';
@@ -45,7 +45,37 @@ interface Perfil {
 })
 export class LandingComponent implements AfterViewInit, OnDestroy {
   private host = inject(ElementRef<HTMLElement>);
+  private zone = inject(NgZone);
   private observer?: IntersectionObserver;
+  private contadorObserver?: IntersectionObserver;
+  private rafScroll = 0;
+  private aoRolar = () => {
+    if (this.rafScroll) return;
+    this.rafScroll = requestAnimationFrame(() => {
+      this.rafScroll = 0;
+      this.atualizarManifesto();
+    });
+  };
+
+  @ViewChild('quadro') private quadroRef?: ElementRef<HTMLElement>;
+  @ViewChild('manifesto') private manifestoRef?: ElementRef<HTMLElement>;
+
+  // Frases que giram no título do hero (a primeira se repete no fim pra o
+  // loop voltar sem salto).
+  readonly frasesTitulo = ['sem estourar o contrato.', 'com saldo sob controle.', 'com tudo registrado.', 'sem estourar o contrato.'];
+
+  // Só fatos do produto, nada de métrica inventada.
+  readonly numeros = [
+    { valor: 6, sufixo: '', rotulo: 'etapas com dono, do chamado ao encerramento' },
+    { valor: 4, sufixo: '', rotulo: 'perfis, cada um vendo só o que lhe cabe' },
+    { valor: 3, sufixo: '', rotulo: 'fotos de evidência por execução' },
+    { valor: 0, sufixo: '', rotulo: 'números de saldo digitados à mão' }
+  ];
+
+  readonly palavrasManifesto = this.quebrarManifesto(
+    'O saldo do contrato é *calculado*, nunca *digitado*. O orçamento *reserva*, a execução *consome* e a sobra *volta*. Cada passo tem *dono* e fica *registrado*.'
+  );
+  palavrasAcesas = signal(0);
 
   menuAberto = signal(false);
   readonly movimentoReduzido = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -102,6 +132,68 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
     { p: 'Os dados de uma empresa ficam separados das outras?', r: 'Sim. Cada empresa cliente tem seu espaço isolado, e cada perfil só enxerga o que lhe cabe: o cliente vê a própria unidade, a contratada vê os próprios contratos.' }
   ];
 
+  private quebrarManifesto(texto: string): { texto: string; forte: boolean }[] {
+    return texto.split(' ').map(p => ({ texto: p.replace(/\*/g, ''), forte: p.includes('*') }));
+  }
+
+  // Inclinação 3D do quadro do hero seguindo o mouse (fora da zona do
+  // Angular: mexe só no style do elemento).
+  inclinar(ev: MouseEvent): void {
+    const el = this.quadroRef?.nativeElement;
+    if (!el) return;
+    const r = (ev.currentTarget as HTMLElement).getBoundingClientRect();
+    const x = (ev.clientX - r.left) / r.width - 0.5;
+    const y = (ev.clientY - r.top) / r.height - 0.5;
+    el.style.setProperty('--rx', `${(-y * 8).toFixed(2)}deg`);
+    el.style.setProperty('--ry', `${(x * 10).toFixed(2)}deg`);
+    el.style.setProperty('--bx', `${((x + 0.5) * 100).toFixed(1)}%`);
+    el.style.setProperty('--by', `${((y + 0.5) * 100).toFixed(1)}%`);
+  }
+
+  endireitar(): void {
+    const el = this.quadroRef?.nativeElement;
+    if (!el) return;
+    el.style.setProperty('--rx', '0deg');
+    el.style.setProperty('--ry', '0deg');
+  }
+
+  // Holofote que segue o mouse dentro de cada cartão de recurso.
+  holofote(ev: MouseEvent): void {
+    const card = (ev.target as HTMLElement).closest<HTMLElement>('.lp-recurso');
+    if (!card) return;
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', `${ev.clientX - r.left}px`);
+    card.style.setProperty('--my', `${ev.clientY - r.top}px`);
+  }
+
+  private atualizarManifesto(): void {
+    const el = this.manifestoRef?.nativeElement;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const vh = window.innerHeight;
+    // 0 quando o topo da seção entra por baixo, 1 quando o fim passa do meio.
+    const progresso = Math.min(1, Math.max(0, (vh * 0.85 - r.top) / (r.height + vh * 0.35)));
+    const acesas = Math.round(progresso * this.palavrasManifesto.length);
+    if (acesas !== this.palavrasAcesas()) {
+      this.zone.run(() => this.palavrasAcesas.set(acesas));
+    }
+  }
+
+  private contar(el: HTMLElement): void {
+    const alvo = Number(el.dataset['contar'] ?? 0);
+    const duracao = 1200;
+    const inicio = performance.now();
+    // Zero conta de trás pra frente (de 12 até 0): mostra a ideia de "nada".
+    const de = alvo === 0 ? 12 : 0;
+    const passo = (agora: number) => {
+      const p = Math.min(1, (agora - inicio) / duracao);
+      const suave = 1 - Math.pow(1 - p, 3);
+      el.textContent = String(Math.round(de + (alvo - de) * suave));
+      if (p < 1) requestAnimationFrame(passo);
+    };
+    requestAnimationFrame(passo);
+  }
+
   alternarPergunta(i: number): void {
     this.perguntaAberta.update(atual => (atual === i ? null : i));
   }
@@ -124,9 +216,29 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
       { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
     );
     alvos.forEach((el: Element) => this.observer!.observe(el));
+
+    this.contadorObserver = new IntersectionObserver(entradas => {
+      for (const e of entradas) {
+        if (e.isIntersecting) {
+          this.contar(e.target as HTMLElement);
+          this.contadorObserver?.unobserve(e.target);
+        }
+      }
+    }, { threshold: 0.6 });
+    this.host.nativeElement.querySelectorAll('[data-contar]').forEach((el: Element) => this.contadorObserver!.observe(el));
+
+    this.zone.runOutsideAngular(() => {
+      window.addEventListener('scroll', this.aoRolar, { passive: true });
+      window.addEventListener('resize', this.aoRolar, { passive: true });
+    });
+    this.atualizarManifesto();
   }
 
   ngOnDestroy(): void {
     this.observer?.disconnect();
+    this.contadorObserver?.disconnect();
+    window.removeEventListener('scroll', this.aoRolar);
+    window.removeEventListener('resize', this.aoRolar);
+    if (this.rafScroll) cancelAnimationFrame(this.rafScroll);
   }
 }

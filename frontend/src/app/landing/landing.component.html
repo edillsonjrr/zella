@@ -26,12 +26,19 @@
   <main id="main-content" tabindex="-1">
     <!-- Hero --------------------------------------------------------------- -->
     <section class="lp-hero">
+      <div class="lp-grade" aria-hidden="true"><div class="lp-grade-plano"></div></div>
       <div class="lp-container lp-hero-grid">
         <div class="lp-hero-texto">
           <span class="lp-selo">Gestão de manutenção com contrato na mão</span>
           <h1 class="lp-titulo">
             Do chamado à execução,<br />
-            <span class="lp-titulo-destaque">sem estourar o contrato.</span>
+            <span class="lp-rotador" aria-label="sem estourar o contrato.">
+              <span class="lp-rotador-trilho" aria-hidden="true">
+                @for (f of frasesTitulo; track $index) {
+                  <span class="lp-titulo-destaque">{{ f }}</span>
+                }
+              </span>
+            </span>
           </h1>
           <p class="lp-sub">
             A Zella conecta quem pede o serviço, quem aprova e quem executa. Cada orçamento
@@ -51,7 +58,8 @@
         </div>
 
         <!-- Quadro vivo: um cartão percorre as colunas e o saldo reage. -->
-        <div class="lp-quadro" aria-hidden="true">
+        <div class="lp-quadro-palco" (mousemove)="inclinar($event)" (mouseleave)="endireitar()">
+        <div class="lp-quadro" aria-hidden="true" #quadro>
           <div class="lp-quadro-topo">
             <span class="lp-ponto"></span><span class="lp-ponto"></span><span class="lp-ponto"></span>
             <span class="lp-quadro-titulo">Chamados</span>
@@ -90,6 +98,8 @@
               <span><i class="lp-leg lp-leg--disp"></i>Disponível</span>
             </div>
           </div>
+          <span class="lp-quadro-brilho"></span>
+        </div>
         </div>
       </div>
     </section>
@@ -107,6 +117,29 @@
       </div>
     </section>
 
+    <!-- Números ------------------------------------------------------------- -->
+    <section class="lp-numeros">
+      <div class="lp-container lp-numeros-grid">
+        @for (n of numeros; track n.rotulo; let i = $index) {
+          <div class="lp-numero" data-revelar [style.--i]="i">
+            <span class="lp-numero-valor"><span [attr.data-contar]="n.valor">0</span>{{ n.sufixo }}</span>
+            <span class="lp-numero-rotulo">{{ n.rotulo }}</span>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Manifesto que acende com o scroll -------------------------------------- -->
+    <section class="lp-manifesto" #manifesto>
+      <div class="lp-container">
+        <p class="lp-manifesto-texto">
+          @for (p of palavrasManifesto; track $index; let i = $index) {
+            <span class="lp-palavra" [class.lp-palavra--acesa]="i < palavrasAcesas()" [class.lp-palavra--forte]="p.forte">{{ p.texto }} </span>
+          }
+        </p>
+      </div>
+    </section>
+
     <!-- Como funciona ------------------------------------------------------- -->
     <section id="como-funciona" class="lp-secao">
       <div class="lp-container">
@@ -116,7 +149,7 @@
           <p>O fluxo é o mesmo para toda manutenção corretiva ou preventiva. O sistema não deixa pular etapa.</p>
         </div>
 
-        <ol class="lp-etapas">
+        <ol class="lp-etapas lp-etapas--pilha">
           @for (e of etapas; track e.numero; let i = $index) {
             <li class="lp-etapa" data-revelar [style.--i]="i">
               <span class="lp-etapa-num">{{ e.numero }}</span>
@@ -139,7 +172,7 @@
           <p>Feito para contratos de manutenção com itens, quantidades e vigência.</p>
         </div>
 
-        <div class="lp-bento">
+        <div class="lp-bento" (mousemove)="holofote($event)">
           @for (r of recursos; track r.titulo; let i = $index) {
             <article class="lp-recurso" [class.lp-recurso--destaque]="r.destaque" data-revelar [style.--i]="i">
               <span class="lp-recurso-icone"><app-icon [name]="r.icone"></app-icon></span>
@@ -158,6 +191,19 @@
           <span class="lp-eyebrow">Para quem</span>
           <h2>Cada perfil vê só o que precisa.</h2>
           <p>Uma plataforma, quatro jeitos de usar. A contratada só enxerga os próprios contratos; o cliente, a própria unidade.</p>
+        </div>
+
+        <div class="lp-orbita" aria-hidden="true" data-revelar>
+          <div class="lp-orbita-anel lp-orbita-anel--1"></div>
+          <div class="lp-orbita-anel lp-orbita-anel--2"></div>
+          <div class="lp-orbita-centro"><app-logo [size]="44" [wordmark]="false"></app-logo></div>
+          <div class="lp-orbita-giro">
+            @for (p of perfis; track p.nome; let i = $index) {
+              <span class="lp-orbita-no" [style.--k]="i">
+                <span class="lp-orbita-icone"><app-icon [name]="p.icone"></app-icon><small>{{ p.nome }}</small></span>
+              </span>
+            }
+          </div>
         </div>
 
         <div class="lp-perfis">
@@ -204,7 +250,7 @@
     <!-- CTA final ----------------------------------------------------------- -->
     <section class="lp-cta">
       <div class="lp-container">
-        <div class="lp-cta-caixa" data-revelar>
+        <div class="lp-cta-caixa" data-revelar><span class="lp-cta-borda" aria-hidden="true"></span>
           <h2>Seu contrato de manutenção, sob controle.</h2>
           <p>Já tem acesso? Entre com o e-mail cadastrado pelo gestor. Primeiro acesso: use "Primeiro acesso ou esqueceu a senha?" na tela de entrada.</p>
           <app-flow-button routerLink="/login" size="lg">Entrar na plataforma</app-flow-button>
