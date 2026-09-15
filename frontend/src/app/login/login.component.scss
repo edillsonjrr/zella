@@ -8,7 +8,8 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: 24px;
+  min-height: 100dvh;
+  padding: 16px;
   background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
 }
 
@@ -22,8 +23,8 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 420px;
-  padding: 40px;
+  max-width: 400px;
+  padding: 28px 32px;
   border-radius: var(--card-radius);
   background: var(--bg-tertiary);
   border: 1px solid var(--border-default);
@@ -47,13 +48,13 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 14px;
-  margin-bottom: 32px;
+  gap: 8px;
+  margin-bottom: 20px;
 }
 
 .auth-tagline {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--text-tertiary);
   line-height: 1.4;
 }
@@ -61,20 +62,20 @@
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
 }
 
 .auth-form label {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text-secondary);
 }
 
 .auth-form input {
-  height: 48px;
+  height: 42px;
   padding: 0 14px;
   border-radius: var(--button-radius);
   border: 1px solid var(--border-default);
@@ -102,7 +103,7 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 12px;
+  padding: 8px 10px;
   border-radius: var(--button-radius);
   background: var(--danger-50);
   color: var(--danger-500);
@@ -113,7 +114,7 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 12px;
+  padding: 8px 10px;
   border-radius: var(--button-radius);
   background: var(--success-50);
   color: var(--success-500);
@@ -134,7 +135,7 @@
   align-self: center;
   background: none;
   border: none;
-  padding: 4px 8px;
+  padding: 2px 8px;
   font: inherit;
   font-size: 0.8125rem;
   font-weight: 600;
@@ -165,7 +166,7 @@
 }
 
 .button {
-  height: 48px;
+  height: 42px;
   padding: 0 20px;
   border-radius: 9999px;
   border: none;
@@ -229,20 +230,38 @@
   }
 }
 
-.auth-hint {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-  text-align: center;
-  line-height: 1.5;
+@media (max-width: 480px) {
+  .auth-panel {
+    padding: 24px 20px;
+  }
 }
 
-@media (max-width: 480px) {
+// Telas baixas (notebook com barra de favoritos, celular deitado): aperta
+// mais o espaçamento pra caber sem rolagem.
+@media (max-height: 600px) {
   .auth-page {
-    padding: 16px;
+    padding: 8px 16px;
   }
 
   .auth-panel {
-    padding: 28px;
+    padding: 20px 28px;
+  }
+
+  .auth-brand {
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+
+  .auth-tagline {
+    display: none;
+  }
+
+  .auth-form {
+    gap: 10px;
+  }
+
+  .auth-form input,
+  .button {
+    height: 38px;
   }
 }

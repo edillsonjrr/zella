@@ -2,6 +2,11 @@
   display: block;
 }
 
+// Ciclo de um cartão. Todas as animações do cartão usam o mesmo tempo e o
+// mesmo atraso, então os marcos (%) abaixo andam juntos: entra, passa pelas
+// 4 etapas do fluxo e sai.
+$ciclo: 14s;
+
 .login-background {
   position: fixed;
   inset: 0;
@@ -9,185 +14,263 @@
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(circle at 20% 30%, rgba(123, 104, 238, 0.18) 0%, transparent 45%),
-    radial-gradient(circle at 80% 70%, rgba(123, 104, 238, 0.14) 0%, transparent 45%),
-    radial-gradient(circle at 50% 50%, rgba(139, 122, 246, 0.08) 0%, transparent 60%);
+    radial-gradient(circle at 18% 28%, rgba(123, 104, 238, 0.16) 0%, transparent 45%),
+    radial-gradient(circle at 82% 72%, rgba(123, 104, 238, 0.12) 0%, transparent 45%);
 }
 
 .gradient-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.7;
-  animation: orb-float 18s ease-in-out infinite;
-  will-change: transform;
+  opacity: 0.55;
 }
 
 .orb-1 {
   width: 520px;
   height: 520px;
-  top: -120px;
-  left: -120px;
-  background: rgba(123, 104, 238, 0.4);
+  top: -140px;
+  left: -140px;
+  background: radial-gradient(circle, rgba(123, 104, 238, 0.38) 0%, transparent 70%);
 }
 
 .orb-2 {
-  width: 420px;
-  height: 420px;
-  bottom: -100px;
-  right: -100px;
-  background: rgba(139, 122, 246, 0.35);
-  animation-delay: -6s;
+  width: 440px;
+  height: 440px;
+  bottom: -120px;
+  right: -120px;
+  background: radial-gradient(circle, rgba(139, 122, 246, 0.32) 0%, transparent 70%);
 }
 
-.orb-3 {
-  width: 340px;
-  height: 340px;
-  top: 40%;
-  left: 30%;
-  background: rgba(160, 140, 255, 0.25);
-  animation-delay: -12s;
-}
 
-@keyframes orb-float {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-  }
-  25% {
-    transform: translate(50px, -40px) scale(1.08);
-  }
-  50% {
-    transform: translate(-20px, 30px) scale(0.95);
-  }
-  75% {
-    transform: translate(-40px, -20px) scale(1.03);
-  }
-}
+/* Trilha ------------------------------------------------------------------ */
 
-.bubble {
+.trilha {
   position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+
+  path {
+    fill: none;
+    stroke: var(--primary-400, #8b7af6);
+    stroke-width: 1.2;
+    stroke-dasharray: 3 9;
+    opacity: 0.25;
+    animation: trilha-andar 18s linear infinite;
+    vector-effect: non-scaling-stroke;
+  }
+
+  path + path {
+    animation-direction: reverse;
+  }
+}
+
+@keyframes trilha-andar {
+  to { stroke-dashoffset: -240; }
+}
+
+/* Cartão ------------------------------------------------------------------ */
+
+.cartao {
+  position: absolute;
+  width: 196px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg-tertiary) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-default) 80%, transparent);
+  box-shadow: 0 10px 30px rgba(20, 16, 60, 0.12);
   opacity: 0;
-  animation: bubble-enter 0.6s ease-out forwards, bubble-float 10s ease-in-out infinite;
+  animation: cartao-ciclo $ciclo ease-in-out infinite;
+  animation-delay: var(--atraso, 0s);
   will-change: transform, opacity;
+
+  &--sm {
+    width: 164px;
+    padding: 10px 12px;
+  }
 }
 
-.bubble.sm .bubble-shape {
-  padding: 0.55rem 0.75rem;
+@keyframes cartao-ciclo {
+  0% { opacity: 0; transform: translateY(18px); }
+  7% { opacity: 1; transform: translateY(0); }
+  86% { opacity: 1; transform: translateY(-10px); }
+  94%, 100% { opacity: 0; transform: translateY(-22px); }
 }
 
-.bubble.sm svg {
-  width: 18px;
-  height: 18px;
-}
-
-.bubble.md .bubble-shape {
-  padding: 0.8rem 1rem;
-}
-
-.bubble.md svg {
-  width: 22px;
-  height: 22px;
-}
-
-.bubble.lg .bubble-shape {
-  padding: 1rem 1.25rem;
-}
-
-.bubble.lg svg {
-  width: 26px;
-  height: 26px;
-}
-
-.bubble-shape {
+.cartao-topo {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  border-radius: 1rem;
-  box-shadow: var(--shadow-card-hover);
-  backdrop-filter: blur(4px);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.cartao-icone {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--primary-50, rgba(123, 104, 238, 0.12));
+  color: var(--primary-500, #7b68ee);
 
   svg {
-    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 }
 
-.bubble.chamado .bubble-shape {
-  background: rgba(123, 104, 238, 0.92);
-  border: 1px solid rgba(155, 138, 245, 0.5);
-  border-bottom-left-radius: 0.25rem;
-  color: var(--text-primary);
+.linha {
+  display: block;
+  height: 7px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--text-tertiary) 28%, transparent);
+
+  &--titulo { flex: 1; }
+  &--sub { width: 64%; margin-bottom: 10px; opacity: 0.7; }
 }
 
-.bubble.os .bubble-shape {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(232, 230, 255, 0.6);
-  border-bottom-right-radius: 0.25rem;
-  color: var(--primary-500);
+.cartao-rodape {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.bubble-lines {
-  display: grid;
-  gap: 0.35rem;
-  width: 4rem;
-
-  span {
-    display: block;
-    height: 0.4rem;
-    border-radius: 0.25rem;
-    background: currentColor;
-    opacity: 0.75;
-
-    &:nth-child(1) { width: 100%; }
-    &:nth-child(2) { width: 65%; }
-  }
+/* Pílula de status: cor e texto avançam pelas 4 etapas. */
+.etapa {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  animation: etapa-cor $ciclo steps(1, end) infinite;
+  animation-delay: var(--atraso, 0s);
 }
 
-@keyframes bubble-enter {
-  0% {
-    opacity: 0;
-    transform: translateY(20px) scale(0.9);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+.etapa-ponto {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: ponto-pulsar $ciclo ease-in-out infinite;
+  animation-delay: var(--atraso, 0s);
 }
 
-@keyframes bubble-float {
-  0%, 100% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-  20% {
-    transform: translate(10px, -22px) rotate(1.5deg);
-  }
-  40% {
-    transform: translate(-8px, 10px) rotate(-1deg);
-  }
-  60% {
-    transform: translate(12px, 8px) rotate(1deg);
-  }
-  80% {
-    transform: translate(-6px, -14px) rotate(-0.5deg);
-  }
+.etapa-janela {
+  display: block;
+  height: 13px;
+  overflow: hidden;
 }
 
-@media (max-width: 768px) {
-  .bubble {
-    animation-duration: 0.6s, 12s;
-  }
-
-  .bubble.sm {
-    display: none;
-  }
-
-  .gradient-orb {
-    opacity: 0.35;
-  }
+.etapa-textos {
+  display: flex;
+  flex-direction: column;
+  line-height: 13px;
+  animation: etapa-texto $ciclo cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  animation-delay: var(--atraso, 0s);
 }
 
+/* Marcos: Aberto 0–22%, Orçamento 22–44%, Aprovado 44–66%, Executado 66–100%. */
+@keyframes etapa-texto {
+  0%, 20% { transform: translateY(0); }
+  24%, 42% { transform: translateY(-13px); }
+  46%, 64% { transform: translateY(-26px); }
+  68%, 100% { transform: translateY(-39px); }
+}
+
+@keyframes etapa-cor {
+  0% { color: #0288d1; background: rgba(79, 195, 247, 0.18); }
+  22% { color: #7b68ee; background: rgba(123, 104, 238, 0.16); }
+  44% { color: #00897b; background: rgba(0, 191, 165, 0.16); }
+  66%, 100% { color: #5e35b1; background: rgba(94, 53, 177, 0.16); }
+}
+
+@keyframes ponto-pulsar {
+  0%, 20%, 42%, 64%, 100% { transform: scale(1); }
+  22%, 44%, 66% { transform: scale(1.8); }
+}
+
+/* Barra de saldo: reserva na aprovação, consome na execução. */
+.saldo {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--text-tertiary) 18%, transparent);
+  overflow: hidden;
+}
+
+.saldo-barra {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--primary-400, #8b7af6), var(--primary-500, #7b68ee));
+  transform-origin: left;
+  animation: saldo-andar $ciclo ease-in-out infinite;
+  animation-delay: var(--atraso, 0s);
+}
+
+@keyframes saldo-andar {
+  0%, 44% { transform: scaleX(0.08); }
+  52%, 66% { transform: scaleX(0.55); }
+  78%, 100% { transform: scaleX(0.9); }
+}
+
+/* Telas ------------------------------------------------------------------- */
+
+// Tela estreita: o painel ocupa o meio, então só ficam os cartões grandes
+// encostados nas bordas.
+@media (max-width: 900px) {
+  .cartao--sm { display: none; }
+  .cartao { width: 168px; }
+}
+
+@media (max-width: 600px) {
+  .cartao, .trilha { display: none; }
+}
+
+// Movimento reduzido (ex.: Windows com "efeitos de animação" desligados).
+// A regra global do app zera toda animação nesse modo; aqui o fundo volta a
+// animar de propósito, mas sem deslocar os cartões: só aparecem e somem, e o
+// status, a cor e a barra de saldo avançam. Troca de cor e de texto não é o
+// tipo de movimento que o ajuste do sistema quer evitar.
 @media (prefers-reduced-motion: reduce) {
-  .gradient-orb,
-  .bubble {
+  .login-background .cartao {
+    animation: cartao-fade $ciclo ease-in-out infinite !important;
+    animation-delay: var(--atraso, 0s) !important;
+  }
+
+  .login-background .etapa {
+    animation: etapa-cor $ciclo steps(1, end) infinite !important;
+    animation-delay: var(--atraso, 0s) !important;
+  }
+
+  .login-background .etapa-textos {
+    animation: etapa-texto $ciclo cubic-bezier(0.65, 0, 0.35, 1) infinite !important;
+    animation-delay: var(--atraso, 0s) !important;
+  }
+
+  .login-background .saldo-barra {
+    animation: saldo-andar $ciclo ease-in-out infinite !important;
+    animation-delay: var(--atraso, 0s) !important;
+  }
+
+  .login-background .etapa-ponto,
+  .login-background .trilha path {
     animation: none !important;
   }
+}
+
+@keyframes cartao-fade {
+  0% { opacity: 0; }
+  7%, 86% { opacity: 1; }
+  94%, 100% { opacity: 0; }
 }

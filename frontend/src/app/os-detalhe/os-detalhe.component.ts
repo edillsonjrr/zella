@@ -16,6 +16,9 @@ import { ExecutarOsDialogComponent, type ExecutarOsResultado } from './executar-
 import { AprovarOrcamentoDialogComponent, type AprovarOrcamentoResultado } from './aprovar-orcamento-dialog.component';
 import { UiFeedbackService } from '../shared/ui-feedback.service';
 import { FormsModule } from '@angular/forms';
+import { getDownloadURL, ref } from 'firebase/storage';
+import { storage } from '../shared/firebase';
+import { effect, signal } from '@angular/core';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import type { OrdemServico } from '../shared/models';
@@ -49,6 +52,22 @@ export class OsDetalheComponent {
 
   erroAcao = '';
   tecnicoSelecionado = '';
+
+  // URLs das fotos da execução, resolvidas com o token do usuário assim que
+  // a OS trouxer os caminhos (a OS é lida ao vivo; a execução pode
+  // acontecer com o painel aberto).
+  fotosExecucaoUrls = signal<string[]>([]);
+  private fotosCarregadasDe = '';
+
+  private readonly carregarFotos = effect(() => {
+    const caminhos = this.ordem.fotosExecucao ?? [];
+    const chave = caminhos.join('|');
+    if (chave === this.fotosCarregadasDe) return;
+    this.fotosCarregadasDe = chave;
+    if (!caminhos.length) { this.fotosExecucaoUrls.set([]); return; }
+    Promise.all(caminhos.map(c => getDownloadURL(ref(storage, c)).catch(() => '')))
+      .then(urls => this.fotosExecucaoUrls.set(urls.filter(Boolean)));
+  });
 
   // A OS chega pelo MAT_DIALOG_DATA como retrato do momento em que o painel
   // abriu. Como as ações daqui (orçamento, aprovação, execução) mudam a
@@ -223,7 +242,7 @@ export class OsDetalheComponent {
   private async executar(r?: ExecutarOsResultado): Promise<void> {
     this.erroAcao = '';
     try {
-      await this.dataService.executarOS(this.ordem.id, r?.itens, r?.observacao);
+      await this.dataService.executarOS(this.ordem.id, r?.itens, r?.observacao, r?.fotos);
       this.fechar();
     } catch (e) {
       this.erroAcao = e instanceof Error ? e.message : 'Não foi possível executar a OS.';

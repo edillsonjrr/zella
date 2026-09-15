@@ -3,7 +3,7 @@
 
   <section class="auth-panel">
     <div class="auth-brand">
-      <app-logo [size]="44" [wordmark]="true"></app-logo>
+      <app-logo [size]="36" [wordmark]="true"></app-logo>
       <p class="auth-tagline">Gestão de ativos, chamados e contratos de manutenção</p>
     </div>
 
@@ -38,10 +38,10 @@
         </div>
       }
 
-      <button class="button primary full" type="submit" [disabled]="carregando()">
+      <app-flow-button class="full-width" size="lg" type="submit" [disabled]="carregando()">
         @if (carregando()) { <app-spinner size="sm" label="Entrando"></app-spinner> }
         {{ carregando() ? 'Entrando...' : 'Entrar' }}
-      </button>
+      </app-flow-button>
 
       <div class="auth-divider"><span>ou</span></div>
 
@@ -60,14 +60,15 @@
         Entrar com Google
       </button>
 
-      <button type="button" class="auth-link" [disabled]="carregando()" (click)="definirSenha()">
-        Definir ou recuperar senha
+      <button
+        type="button"
+        class="auth-link"
+        [disabled]="carregando()"
+        (click)="definirSenha()"
+        title="Digite o e-mail cadastrado pelo gestor e receba o link para criar ou trocar a senha"
+      >
+        Primeiro acesso ou esqueceu a senha?
       </button>
-
-      <p class="auth-hint">
-        Primeiro acesso sem conta Google? Digite o e-mail cadastrado pelo gestor e clique em
-        "Definir ou recuperar senha" para receber o link.
-      </p>
     </form>
   </section>
 </main>

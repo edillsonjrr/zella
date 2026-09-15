@@ -5,6 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { IconComponent } from '../shared/icon/icon.component';
 import { FlowButtonComponent } from '../shared/flow-button/flow-button.component';
+import { reduzirImagem } from '../shared/imagem';
 import type { Orcamento } from '../shared/models';
 
 export interface ExecutarOsDialogData {
@@ -15,7 +16,11 @@ export interface ExecutarOsDialogData {
 export interface ExecutarOsResultado {
   itens: { itemContratoId: string; quantidadeExecutada: number }[];
   observacao: string;
+  // Fotos da execução já reduzidas (data URL JPEG), até 3.
+  fotos: string[];
 }
+
+const MAX_FOTOS = 3;
 
 // Uma linha por item de contrato: o orçamento pode repetir o item, e a
 // execução é por item, não por linha.
@@ -68,6 +73,27 @@ interface LinhaExecucao {
         <input matInput [(ngModel)]="observacao" name="observacao" maxlength="500" placeholder="Ex: 2 lâmpadas não precisaram ser trocadas" />
       </mat-form-field>
 
+      <div class="exec-fotos">
+        <span class="exec-fotos-rotulo">Fotos da execução (até {{ maxFotos }}, opcional)</span>
+        <div class="exec-fotos-lista">
+          @for (f of fotos; track $index) {
+            <div class="exec-foto">
+              <img [src]="f" alt="Foto da execução {{ $index + 1 }}" />
+              <button type="button" class="exec-foto-remover" (click)="removerFoto($index)" [attr.aria-label]="'Remover foto ' + ($index + 1)">
+                <app-icon name="close" aria-hidden="true"></app-icon>
+              </button>
+            </div>
+          }
+          @if (fotos.length < maxFotos) {
+            <label class="exec-foto-adicionar">
+              <input type="file" accept="image/*" capture="environment" multiple class="sr-only" (change)="onFotos($event)" />
+              <app-icon name="photo_camera" aria-hidden="true"></app-icon>
+              <span>{{ lendoFotos ? 'Lendo…' : 'Adicionar' }}</span>
+            </label>
+          }
+        </div>
+      </div>
+
       @if (erro) {
         <p class="exec-erro" role="alert"><app-icon name="warning" aria-hidden="true"></app-icon> {{ erro }}</p>
       }
@@ -97,6 +123,15 @@ interface LinhaExecucao {
     .hint-erro { color: var(--danger-500); }
     .exec-erro { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 8px; padding: 10px 12px; border-radius: var(--button-radius); background: var(--danger-50, var(--bg-elevated)); color: var(--danger-500); font-size: 0.8rem; }
     .exec-acoes { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+    .exec-fotos { margin: 4px 0 10px; }
+    .exec-fotos-rotulo { display: block; font-size: 0.75rem; color: var(--text-tertiary); margin-bottom: 6px; }
+    .exec-fotos-lista { display: flex; flex-wrap: wrap; gap: 8px; }
+    .exec-foto { position: relative; width: 84px; height: 84px; border-radius: var(--button-radius); overflow: hidden; border: 1px solid var(--border-default); }
+    .exec-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .exec-foto-remover { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border: none; border-radius: 50%; background: rgba(0,0,0,.6); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+    .exec-foto-adicionar { width: 84px; height: 84px; border: 1px dashed var(--border-default); border-radius: var(--button-radius); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; color: var(--text-tertiary); font-size: 0.7rem; }
+    .exec-foto-adicionar:hover { border-color: var(--primary-500); color: var(--primary-400); }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
     @media (max-width: 480px) { .exec-linha { flex-direction: column; align-items: stretch; } .exec-qtd { max-width: none; } }
   `
 })
@@ -107,6 +142,34 @@ export class ExecutarOsDialogComponent {
   linhas: LinhaExecucao[];
   observacao = '';
   erro = '';
+  fotos: string[] = [];
+  lendoFotos = false;
+  readonly maxFotos = MAX_FOTOS;
+
+  async onFotos(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const arquivos = Array.from(input.files ?? []);
+    input.value = '';
+    if (!arquivos.length) return;
+    this.lendoFotos = true;
+    this.erro = '';
+    try {
+      for (const arquivo of arquivos) {
+        if (this.fotos.length >= MAX_FOTOS) break;
+        try {
+          this.fotos.push(await reduzirImagem(arquivo, 1280, 0.8));
+        } catch {
+          this.erro = `Não foi possível ler a imagem "${arquivo.name}".`;
+        }
+      }
+    } finally {
+      this.lendoFotos = false;
+    }
+  }
+
+  removerFoto(i: number): void {
+    this.fotos.splice(i, 1);
+  }
 
   constructor() {
     const porItem = new Map<string, LinhaExecucao>();
@@ -141,7 +204,8 @@ export class ExecutarOsDialogComponent {
     }
     const resultado: ExecutarOsResultado = {
       itens: this.linhas.map(l => ({ itemContratoId: l.itemContratoId, quantidadeExecutada: Number(l.executado) })),
-      observacao: this.observacao.trim()
+      observacao: this.observacao.trim(),
+      fotos: [...this.fotos]
     };
     this.ref.close(resultado);
   }

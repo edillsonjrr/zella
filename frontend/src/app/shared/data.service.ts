@@ -825,9 +825,9 @@ export class DataService {
     this.feedback.announce('Orçamento rejeitado.');
   }
 
-  async executarOS(osId: string, itens?: { itemContratoId: string; quantidadeExecutada: number }[], observacao?: string): Promise<void> {
-    const executar = httpsCallable<{ osId: string; itens?: { itemContratoId: string; quantidadeExecutada: number }[]; observacao?: string }, { ok: true }>(functions, 'executarOS');
-    await executar({ osId, ...(itens ? { itens } : {}), ...(observacao ? { observacao } : {}) });
+  async executarOS(osId: string, itens?: { itemContratoId: string; quantidadeExecutada: number }[], observacao?: string, fotos?: string[]): Promise<void> {
+    const executar = httpsCallable<{ osId: string; itens?: { itemContratoId: string; quantidadeExecutada: number }[]; observacao?: string; fotos?: string[] }, { ok: true }>(functions, 'executarOS');
+    await executar({ osId, ...(itens ? { itens } : {}), ...(observacao ? { observacao } : {}), ...(fotos?.length ? { fotos } : {}) });
     this.feedback.announce('Ordem de serviço marcada como executada.');
   }
 

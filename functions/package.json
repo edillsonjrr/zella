@@ -14,7 +14,7 @@
     "seed": "cross-env FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 GCLOUD_PROJECT=gestao-manutencao-app tsx src/seed.ts",
     "lint": "tsc --noEmit",
     "pretest": "npm run build",
-    "test": "firebase emulators:exec --only auth,firestore,functions --project gestao-manutencao-app \"node --test test/*.test.mjs\""
+    "test": "firebase emulators:exec --only auth,firestore,functions,storage --project gestao-manutencao-app \"node --test test/*.test.mjs\""
   },
   "dependencies": {
     "firebase-admin": "^14.3.0",

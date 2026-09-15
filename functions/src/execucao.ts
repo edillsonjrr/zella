@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { db, colecao, exigirPerfil, exigirMesmaContratada, exigirTecnicoDesignado } from './admin';
 import { registrarLog, resolverAutor } from './logs';
 import { notificar } from './notificacoes';
+import { salvarImagem } from './fotos';
 import type { Orcamento, OrcamentoItem } from './types';
 
 function agregarPorItem(itens: OrcamentoItem[]): Map<string, number> {
@@ -19,7 +20,12 @@ export interface ExecutarOSInput {
   // pro disponível do contrato.
   itens?: { itemContratoId: string; quantidadeExecutada: number }[];
   observacao?: string;
+  // Fotos da execução (data URL jpeg/png/webp, até 3, 4 MB cada). Sobem
+  // pro Storage antes da transação; o caminho fica em `fotosExecucao`.
+  fotos?: string[];
 }
+
+const MAX_FOTOS_EXECUCAO = 3;
 
 /**
  * Executa a OS: move o reservado do orçamento aprovado para consumido.
@@ -49,8 +55,30 @@ export const executarOS = onCall<ExecutarOSInput>(async (request) => {
     }
   }
 
+  const fotos = request.data?.fotos ?? [];
+  if (!Array.isArray(fotos) || fotos.length > MAX_FOTOS_EXECUCAO || fotos.some((f) => typeof f !== 'string')) {
+    throw new HttpsError('invalid-argument', `Envie no máximo ${MAX_FOTOS_EXECUCAO} fotos.`);
+  }
+
   const osRef = colecao(empresaId, 'ordensServico').doc(osId);
   const autor = await resolverAutor(request, empresaId);
+
+  // Fotos sobem fora da transação (upload não é transacional). Antes, uma
+  // leitura rápida confere permissão e estado pra não subir arquivo à toa;
+  // a transação repete a checagem com a versão final do documento.
+  const previa = (await osRef.get()).data();
+  if (!previa) {
+    throw new HttpsError('not-found', 'Ordem de serviço não encontrada.');
+  }
+  exigirMesmaContratada(ctx, previa as { empresaContratadaId?: string });
+  exigirTecnicoDesignado(ctx, previa as { tecnicoId?: string });
+  if (previa.situacao !== 'Aprovada') {
+    throw new HttpsError('failed-precondition', 'A OS precisa estar Aprovada para ser executada.');
+  }
+  const fotosExecucao: string[] = [];
+  for (const [i, foto] of fotos.entries()) {
+    fotosExecucao.push(await salvarImagem(`empresasClientes/${empresaId}/ordensServico/${osId}/execucao-${i + 1}`, foto));
+  }
 
   await db.runTransaction(async (tx) => {
     const osSnap = await tx.get(osRef);
@@ -115,7 +143,8 @@ export const executarOS = onCall<ExecutarOSInput>(async (request) => {
       dataExecucao: new Date().toISOString().split('T')[0],
       executadoPor: ctx.usuarioId,
       itensExecutados: resumo,
-      ...(observacao ? { observacaoExecucao: observacao } : {})
+      ...(observacao ? { observacaoExecucao: observacao } : {}),
+      ...(fotosExecucao.length ? { fotosExecucao } : {})
     });
     tx.update(chamadoRef, { status: 'Executado' });
 
