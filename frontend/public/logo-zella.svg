@@ -1,5 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 32" width="132" height="32">
-  <rect width="32" height="32" rx="8" fill="#7b68ee"/>
-  <path d="M9 10.5h14L9 21.5h14" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="42" y="24.5" font-family="'DM Sans', Inter, -apple-system, 'Segoe UI', sans-serif" font-weight="700" font-size="23" letter-spacing="-0.7" fill="#eeeeee">Zella</text>
+  <rect width="32" height="32" rx="7.68" fill="#0f6b6e"/>
+  <path d="M8.32 8.64 H23.68 L8.32 23.36 H21.12" fill="none" stroke="#f1f5f6" stroke-width="3.84" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="21.12" y="20.48" width="5.76" height="5.76" rx="1.6" fill="#e3922c"/>
+  <text x="41" y="24" font-family="Manrope, Inter, -apple-system, 'Segoe UI', sans-serif" font-weight="800" font-size="23" letter-spacing="-0.8" fill="#eef4f5">Zella</text>
 </svg>

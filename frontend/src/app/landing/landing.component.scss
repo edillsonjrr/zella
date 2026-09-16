@@ -1,7 +1,7 @@
 :host {
   display: block;
-  --lp-roxo: var(--primary-500);
-  --lp-roxo-claro: var(--primary-400);
+  --lp-marca: var(--primary-500);
+  --lp-marca-clara: var(--primary-400);
   --lp-borda: var(--border-default);
   --lp-superficie: var(--bg-tertiary);
   --lp-fundo: var(--bg-primary);
@@ -21,7 +21,7 @@
 
   a, button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 
-  ::selection { background: color-mix(in srgb, var(--lp-roxo) 40%, transparent); color: var(--text-primary); }
+  ::selection { background: color-mix(in srgb, var(--lp-marca) 40%, transparent); color: var(--text-primary); }
 }
 
 /* Âncoras do menu param abaixo da navegação fixa. */
@@ -102,8 +102,8 @@
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
 
-  &:hover { color: var(--text-primary); border-color: var(--lp-roxo); }
-  &[aria-pressed="true"] { color: var(--lp-roxo-claro); border-color: color-mix(in srgb, var(--lp-roxo) 50%, var(--lp-borda)); }
+  &:hover { color: var(--text-primary); border-color: var(--lp-marca); }
+  &[aria-pressed="true"] { color: var(--lp-marca-clara); border-color: color-mix(in srgb, var(--lp-marca) 50%, var(--lp-borda)); }
 }
 
 .lp-menu {
@@ -134,8 +134,8 @@
   overflow: hidden;
   padding: 72px 0 56px;
   background:
-    radial-gradient(60% 50% at 85% 20%, color-mix(in srgb, var(--lp-roxo) 18%, transparent) 0%, transparent 70%),
-    radial-gradient(40% 40% at 10% 90%, color-mix(in srgb, var(--lp-roxo) 10%, transparent) 0%, transparent 70%);
+    radial-gradient(60% 50% at 85% 20%, color-mix(in srgb, var(--lp-marca) 18%, transparent) 0%, transparent 70%),
+    radial-gradient(40% 40% at 10% 90%, color-mix(in srgb, var(--lp-marca) 10%, transparent) 0%, transparent 70%);
 }
 
 .lp-hero-grid {
@@ -158,9 +158,9 @@
   gap: 8px;
   padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--lp-roxo) 35%, var(--lp-borda));
+  border: 1px solid color-mix(in srgb, var(--lp-marca) 35%, var(--lp-borda));
   background: var(--primary-50);
-  color: var(--lp-roxo-claro);
+  color: var(--lp-marca-clara);
   font-size: 0.8125rem;
   font-weight: 600;
 }
@@ -182,7 +182,7 @@
   font-size: 0.86em;
   line-height: calc(1.12em / 0.86);
   white-space: nowrap;
-  background: linear-gradient(90deg, var(--text-primary) 0%, var(--text-primary) 35%, var(--lp-roxo-claro) 50%, var(--lp-roxo) 60%, var(--text-primary) 75%, var(--text-primary) 100%);
+  background: linear-gradient(90deg, var(--text-primary) 0%, var(--text-primary) 35%, var(--lp-marca-clara) 50%, var(--lp-marca) 60%, var(--text-primary) 75%, var(--text-primary) 100%);
   background-size: 300% 100%;
   background-position: 100% 0;
   -webkit-background-clip: text;
@@ -237,7 +237,7 @@
   padding: 14px;
   border-radius: 20px;
   background: var(--lp-superficie);
-  box-shadow: 0 30px 80px color-mix(in srgb, var(--lp-roxo) 18%, transparent), 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 30px 80px color-mix(in srgb, var(--lp-marca) 18%, transparent), 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .lp-quadro-topo {
@@ -299,8 +299,8 @@
   padding: 10px;
   border-radius: 10px;
   background: var(--lp-superficie);
-  border: 1px solid color-mix(in srgb, var(--lp-roxo) 55%, var(--lp-borda));
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--lp-roxo) 25%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lp-marca) 55%, var(--lp-borda));
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--lp-marca) 25%, transparent);
   animation: lp-andar var(--lp-ciclo) cubic-bezier(0.65, 0, 0.35, 1) infinite;
   will-change: transform;
 
@@ -347,7 +347,7 @@
   height: 22px;
   border-radius: 6px;
   background: var(--primary-50);
-  color: var(--lp-roxo);
+  color: var(--lp-marca);
 
   app-icon { font-size: 13px; width: 13px; height: 13px; }
 }
@@ -407,12 +407,12 @@
 }
 
 .lp-saldo-consumido {
-  background: var(--lp-roxo);
+  background: var(--lp-marca);
   animation: lp-consumir var(--lp-ciclo) cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
 
 .lp-saldo-reservado {
-  background: repeating-linear-gradient(135deg, var(--lp-roxo-claro) 0 6px, color-mix(in srgb, var(--lp-roxo-claro) 60%, transparent) 6px 12px);
+  background: repeating-linear-gradient(135deg, var(--lp-marca-clara) 0 6px, color-mix(in srgb, var(--lp-marca-clara) 60%, transparent) 6px 12px);
   animation: lp-reservar var(--lp-ciclo) cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
 
@@ -444,8 +444,8 @@
   height: 8px;
   border-radius: 2px;
 
-  &--cons { background: var(--lp-roxo); }
-  &--res { background: var(--lp-roxo-claro); }
+  &--cons { background: var(--lp-marca); }
+  &--res { background: var(--lp-marca-clara); }
   &--disp { background: color-mix(in srgb, var(--success-500) 45%, transparent); }
 }
 
@@ -487,7 +487,7 @@
 .lp-faixa-ponto {
   width: 1px;
   height: 12px;
-  background: color-mix(in srgb, var(--lp-roxo) 45%, var(--lp-borda));
+  background: color-mix(in srgb, var(--lp-marca) 45%, var(--lp-borda));
 }
 
 @keyframes lp-rolar {
@@ -592,7 +592,7 @@
   height: 40px;
   border-radius: 12px;
   background: var(--primary-50);
-  color: var(--lp-roxo);
+  color: var(--lp-marca);
 
   app-icon { font-size: 20px; width: 20px; height: 20px; }
 }
@@ -623,8 +623,8 @@
 
   &:hover {
     transform: translateY(-4px);
-    border-color: color-mix(in srgb, var(--lp-roxo) 50%, var(--lp-borda));
-    box-shadow: 0 16px 40px color-mix(in srgb, var(--lp-roxo) 14%, transparent);
+    border-color: color-mix(in srgb, var(--lp-marca) 50%, var(--lp-borda));
+    box-shadow: 0 16px 40px color-mix(in srgb, var(--lp-marca) 14%, transparent);
   }
 
   h3 {
@@ -642,7 +642,7 @@
   &--destaque {
     grid-column: span 2;
     background:
-      radial-gradient(80% 120% at 100% 0%, color-mix(in srgb, var(--lp-roxo) 16%, transparent) 0%, transparent 60%),
+      radial-gradient(80% 120% at 100% 0%, color-mix(in srgb, var(--lp-marca) 16%, transparent) 0%, transparent 60%),
       var(--lp-superficie);
 
     h3 { font-size: 1.25rem; }
@@ -689,7 +689,7 @@
       width: 8px;
       height: 8px;
       border-radius: 2px;
-      background: var(--lp-roxo);
+      background: var(--lp-marca);
       opacity: 0.7;
     }
   }
@@ -720,7 +720,7 @@
   background: var(--lp-superficie);
   transition: border-color 0.2s;
 
-  &--aberto { border-color: color-mix(in srgb, var(--lp-roxo) 45%, var(--lp-borda)); }
+  &--aberto { border-color: color-mix(in srgb, var(--lp-marca) 45%, var(--lp-borda)); }
 }
 
 .lp-faq-pergunta {
@@ -755,7 +755,7 @@
     width: 14px;
     height: 2px;
     border-radius: 2px;
-    background: var(--lp-roxo);
+    background: var(--lp-marca);
     transition: transform 0.25s ease;
   }
 
@@ -791,9 +791,9 @@
   border-radius: 24px;
   text-align: center;
   background:
-    radial-gradient(60% 120% at 50% 0%, color-mix(in srgb, var(--lp-roxo) 28%, transparent) 0%, transparent 70%),
+    radial-gradient(60% 120% at 50% 0%, color-mix(in srgb, var(--lp-marca) 28%, transparent) 0%, transparent 70%),
     var(--lp-superficie);
-  border: 1px solid color-mix(in srgb, var(--lp-roxo) 30%, var(--lp-borda));
+  border: 1px solid color-mix(in srgb, var(--lp-marca) 30%, var(--lp-borda));
 
   h2 {
     margin: 0 0 12px;
@@ -910,8 +910,8 @@
   transform: rotateX(62deg);
   transform-origin: bottom;
   background-image:
-    linear-gradient(to right, color-mix(in srgb, var(--lp-roxo) 22%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in srgb, var(--lp-roxo) 22%, transparent) 1px, transparent 1px);
+    linear-gradient(to right, color-mix(in srgb, var(--lp-marca) 22%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--lp-marca) 22%, transparent) 1px, transparent 1px);
   background-size: 56px 56px;
   animation: lp-grade-andar 3.2s linear infinite;
 }
@@ -976,7 +976,7 @@
   inset: 0;
   pointer-events: none;
   border-radius: inherit;
-  background: radial-gradient(420px circle at var(--bx, 50%) var(--by, 0%), color-mix(in srgb, var(--lp-roxo) 14%, transparent), transparent 60%);
+  background: radial-gradient(420px circle at var(--bx, 50%) var(--by, 0%), color-mix(in srgb, var(--lp-marca) 14%, transparent), transparent 60%);
   opacity: 0;
   transition: opacity 0.3s;
 }
@@ -1039,7 +1039,7 @@
   transition: color 0.35s ease;
 
   &--acesa { color: var(--text-primary); }
-  &--forte.lp-palavra--acesa { color: var(--lp-roxo-claro); }
+  &--forte.lp-palavra--acesa { color: var(--lp-marca-clara); }
 }
 
 /* Etapas empilhadas: cada cartão gruda um pouco abaixo do anterior */
@@ -1059,7 +1059,7 @@
     padding: 28px 32px;
     box-shadow: 0 -12px 40px color-mix(in srgb, #000 10%, transparent);
     background:
-      radial-gradient(60% 120% at 100% 0%, color-mix(in srgb, var(--lp-roxo) 8%, transparent), transparent 60%),
+      radial-gradient(60% 120% at 100% 0%, color-mix(in srgb, var(--lp-marca) 8%, transparent), transparent 60%),
       var(--lp-superficie);
 
     .lp-etapa-icone { grid-area: icone; width: 52px; height: 52px; border-radius: 16px; }
@@ -1080,7 +1080,7 @@
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: radial-gradient(260px circle at var(--mx, -200px) var(--my, -200px), color-mix(in srgb, var(--lp-roxo) 18%, transparent), transparent 70%);
+    background: radial-gradient(260px circle at var(--mx, -200px) var(--my, -200px), color-mix(in srgb, var(--lp-marca) 18%, transparent), transparent 70%);
     opacity: 0;
     transition: opacity 0.3s;
     pointer-events: none;
@@ -1111,12 +1111,12 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 1px dashed color-mix(in srgb, var(--lp-roxo) 35%, var(--lp-borda));
+  border: 1px dashed color-mix(in srgb, var(--lp-marca) 35%, var(--lp-borda));
 
   &--2 {
     inset: 22%;
     border-style: solid;
-    border-color: color-mix(in srgb, var(--lp-roxo) 18%, var(--lp-borda));
+    border-color: color-mix(in srgb, var(--lp-marca) 18%, var(--lp-borda));
     animation: lp-pulsar-anel 4s ease-in-out infinite;
   }
 }
@@ -1167,9 +1167,9 @@
     padding: 11px;
     border-radius: 14px;
     background: var(--lp-superficie);
-    border: 1px solid color-mix(in srgb, var(--lp-roxo) 40%, var(--lp-borda));
-    color: var(--lp-roxo);
-    box-shadow: 0 8px 24px color-mix(in srgb, var(--lp-roxo) 20%, transparent);
+    border: 1px solid color-mix(in srgb, var(--lp-marca) 40%, var(--lp-borda));
+    color: var(--lp-marca);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--lp-marca) 20%, transparent);
     box-sizing: border-box;
   }
 
@@ -1204,7 +1204,7 @@
     content: '';
     position: absolute;
     inset: -50%;
-    background: conic-gradient(from 0deg, transparent 0 70%, var(--lp-roxo-claro) 80%, var(--lp-roxo) 88%, transparent 96%);
+    background: conic-gradient(from 0deg, transparent 0 70%, var(--lp-marca-clara) 80%, var(--lp-marca) 88%, transparent 96%);
     animation: lp-girar 5s linear infinite;
   }
 
@@ -1214,7 +1214,7 @@
     inset: 1.5px;
     border-radius: inherit;
     background:
-      radial-gradient(60% 120% at 50% 0%, color-mix(in srgb, var(--lp-roxo) 28%, transparent) 0%, transparent 70%),
+      radial-gradient(60% 120% at 50% 0%, color-mix(in srgb, var(--lp-marca) 28%, transparent) 0%, transparent 70%),
       var(--lp-superficie);
   }
 }

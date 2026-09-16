@@ -52,7 +52,7 @@ export class QrcodeDetalheComponent implements OnInit {
         width: 640,
         margin: 2,
         errorCorrectionLevel: 'M',
-        color: { dark: '#111111', light: '#ffffff' }
+        color: { dark: '#10191c', light: '#ffffff' }
       });
       this.qrDataUrl.set(dataUrl);
     } catch (e) {

@@ -1,3 +1,15 @@
+/* Rail de navegação (menu lateral).
+ *
+ * Os itens são <a>/<button> próprios, não mat-icon-button: o botão de ícone
+ * do Material fixa largura (48px, cortava "Contratos" e "Preventiva"), cor
+ * (!important global em styles.scss, que apagava o estado ativo) e um ripple
+ * circular que não combina com o item retangular.
+ *
+ * Hierarquia: ícone e rótulo na mesma cor (secundária), hover sobe para a
+ * primária, ativo usa o teal da marca sobre o fundo --primary-50 — mesmo
+ * tratamento do item ativo do menu flutuante (.rail-menu-ativo).
+ */
+
 :host {
   display: flex;
   flex-direction: column;
@@ -13,7 +25,7 @@
   min-height: 0;
   background-color: var(--bg-secondary);
   border-right: 1px solid var(--border-default);
-  padding: 12px 6px;
+  padding: 12px 6px 10px;
   flex-shrink: 0;
 }
 
@@ -22,7 +34,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   flex-shrink: 0;
 }
 
@@ -37,7 +49,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   width: 100%;
   min-height: 0;
   overflow-y: auto;
@@ -49,69 +61,69 @@
 }
 
 .rail-bottom {
-  padding-top: 8px;
+  padding-top: 6px;
 
   .rail-divider { margin-bottom: 4px; }
-}
-
-/* Telas baixas (notebook com barra de tarefas): itens mais compactos. */
-@media (max-height: 760px) {
-  .rail { padding: 8px 6px; }
-  .rail-item { min-height: 52px; }
-  .rail-label { margin-top: 2px; }
 }
 
 .rail-logo {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  margin-bottom: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  color: inherit;
   text-decoration: none;
-  transition: transform 0.15s ease;
+  transition: transform 0.15s var(--ease-standard);
 
   &:hover { transform: scale(1.05); }
-  &:focus-visible { outline: 2px solid var(--primary-400); outline-offset: 3px; }
+  &:focus-visible { outline: 2px solid var(--primary-500); outline-offset: 3px; }
 }
 
 .rail-divider {
-  width: 32px;
+  width: 28px;
   height: 1px;
   background-color: var(--border-default);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .rail-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   width: 60px;
-  min-height: 62px;
-  border-radius: 6px;
+  min-height: 56px;
+  padding: 6px 0 5px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
   color: var(--text-secondary);
-  transition: background-color 0.15s ease, color 0.15s ease;
+  font: inherit;
+  cursor: pointer;
   text-decoration: none;
-  padding: 4px 2px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.15s var(--ease-standard), color 0.15s var(--ease-standard);
 
   &:hover {
     background-color: var(--rail-hover-bg);
     color: var(--text-primary);
 
-    .rail-item-inner app-icon {
-      transform: scale(1.05);
-    }
+    .rail-item-inner app-icon { transform: scale(1.06); }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: -2px;
   }
 
   &.active {
-    background-color: var(--rail-active-bg);
-    color: var(--text-primary);
-
-    app-icon {
-      color: var(--text-primary);
-    }
+    background-color: var(--primary-50);
+    color: var(--primary-500);
   }
 
   &--upgrade {
@@ -119,10 +131,6 @@
 
     &:hover {
       background-color: var(--warning-50);
-      color: var(--warning-500);
-    }
-
-    app-icon {
       color: var(--warning-500);
     }
   }
@@ -133,56 +141,70 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
 
   app-icon {
-    font-size: 20px;
-    transition: transform 0.2s ease-in-out;
+    font-size: 22px;
+    color: inherit;
+    transition: transform 0.2s var(--ease-emphasized);
   }
 }
 
 .rail-label {
-  font-size: 0.625rem;
-  font-weight: 700;
-  margin-top: 4px;
-  max-width: 56px;
+  max-width: 100%;
+  padding: 0 2px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
   text-align: center;
-  line-height: 1.2;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+  color: inherit;
 }
 
 .rail-badge {
   position: absolute;
-  top: -2px;
-  right: -2px;
-  min-width: 14px;
-  height: 14px;
-  padding: 0 3px;
+  top: -5px;
+  right: -7px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
   border-radius: 999px;
-  background-color: var(--text-primary);
-  color: var(--danger-500);
+  border: 2px solid var(--bg-secondary);
+  background-color: var(--danger-500);
+  color: #ffffff;
   font-size: 9px;
   font-weight: 800;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
-  box-shadow: var(--shadow-card);
 
   &--dot {
-    width: 9px;
-    min-width: 9px;
-    height: 9px;
+    width: 10px;
+    min-width: 10px;
+    height: 10px;
     padding: 0;
+    top: -2px;
+    right: -3px;
   }
 }
 
-/* Celular: o rail vira barra de navegação inferior, com rolagem horizontal
-   se os itens não couberem. Logo e divisórias somem; "Admin" fica no fim. */
+/* Telas baixas (notebook com barra de tarefas): itens mais compactos. */
+@media (max-height: 760px) {
+  .rail { padding: 8px 6px; }
+  .rail-logo { margin-bottom: 6px; }
+  .rail-divider { margin-bottom: 6px; }
+  .rail-item { min-height: 50px; padding: 4px 0; gap: 3px; }
+  .rail-item-inner app-icon { font-size: 20px; }
+}
+
+/* Celular: o rail vira barra de navegação inferior. Logo e divisórias
+   somem; os sete destinos dividem a largura por igual e "Admin" fica no
+   fim. */
 @media (max-width: 760px) {
   :host {
     flex-direction: row;
@@ -195,7 +217,7 @@
     flex-direction: row;
     align-items: stretch;
     width: 100%;
-    height: calc(64px + env(safe-area-inset-bottom, 0px));
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
     padding: 4px 4px env(safe-area-inset-bottom, 0px);
     border-right: none;
     border-top: 1px solid var(--border-default);
@@ -203,53 +225,26 @@
   }
 
   .rail-top,
-  .rail-bottom {
-    flex-direction: row;
-    gap: 2px;
-    padding-top: 0;
-  }
-
-  .rail-top { flex: 1 1 auto; min-width: 0; }
+  .rail-scroll,
+  .rail-bottom { display: contents; }
 
   .rail-logo,
   .rail-divider { display: none; }
 
-  .rail-scroll {
-    flex-direction: row;
-    justify-content: space-around;
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
-
   .rail-item {
-    width: auto;
-    min-width: 56px;
-    flex: 1 0 56px;
-    min-height: 56px;
-  }
-
-  .rail-label { max-width: 64px; -webkit-line-clamp: 1; }
-}
-
-@media (max-width: 760px) {
-  /* Sete destinos precisam caber em ~380px sem cortar nenhum rótulo. */
-  .rail-top,
-  .rail-scroll,
-  .rail-bottom { display: contents; }
-
-  .rail .rail-item.mat-mdc-icon-button {
     flex: 1 1 0;
-    min-width: 0;
     width: auto;
-    padding: 4px 1px !important;
+    min-width: 0;
+    min-height: 52px;
+    padding: 4px 1px;
+    gap: 3px;
+    border-radius: 8px;
   }
+
+  .rail-item-inner app-icon { font-size: 21px; }
 
   .rail-label {
-    max-width: 100%;
     font-size: 0.5625rem;
     letter-spacing: -0.1px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    display: block;
   }
 }

@@ -89,12 +89,12 @@
   background-color: var(--bg-elevated);
   color: var(--text-primary);
 
-  /* Primário = CTA: preenchido de roxo. No hover/clique esvazia e o
-     contorno tracejado roxo anima (regras acima). */
+  /* Primário = CTA: preenchido com o teal da marca. No hover/clique esvazia
+     e o contorno tracejado anima (regras acima). */
   &--primary {
     background-color: var(--primary-500);
     border-color: var(--primary-500);
-    color: #ffffff;
+    color: var(--primary-contrast);
   }
   font-weight: 550;
   cursor: pointer;

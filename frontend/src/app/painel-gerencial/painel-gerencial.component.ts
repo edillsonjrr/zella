@@ -145,7 +145,7 @@ export class PainelGerencialComponent implements OnInit, OnDestroy {
   private corVar(token: string): string {
     this.temaVersao();
     const valor = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
-    return valor || '#7b68ee';
+    return valor || '#0f6b6e';
   }
 
   private paleta = computed<string[]>(() => [

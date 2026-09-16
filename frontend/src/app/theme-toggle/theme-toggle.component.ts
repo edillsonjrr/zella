@@ -36,7 +36,7 @@ export class ThemeToggleComponent implements OnInit {
         body.classList.add('light-mode');
       }
       localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light');
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#111111' : '#ffffff');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0e1416' : '#ffffff');
     });
   }
 

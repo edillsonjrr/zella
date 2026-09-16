@@ -188,7 +188,7 @@
 
 .button.primary {
   background: var(--primary-500);
-  color: var(--text-primary);
+  color: var(--primary-contrast);
 }
 
 .button.primary:hover:not(:disabled) {

@@ -1,6 +1,5 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { IconComponent } from '../shared/icon/icon.component';
@@ -33,7 +32,6 @@ interface RailGrupo {
   imports: [
     RouterLink,
     RouterLinkActive,
-    MatButtonModule,
     MatMenuModule,
     MatDividerModule,
     IconComponent,
