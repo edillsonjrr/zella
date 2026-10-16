@@ -400,9 +400,9 @@
     padding: 4px;
     border: 1px solid color-mix(in srgb, var(--border-default) 70%, transparent);
     border-radius: 999px;
-    background-color: color-mix(in srgb, var(--bg-secondary) 72%, transparent);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
-    backdrop-filter: blur(18px) saturate(160%);
+    background-color: color-mix(in srgb, var(--bg-secondary) 58%, transparent);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
   }
 
