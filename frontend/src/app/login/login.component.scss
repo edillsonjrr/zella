@@ -166,6 +166,71 @@
   margin: 0;
 }
 
+.auth-error p + p {
+  margin-top: 6px;
+}
+
+.auth-contato a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Espera longa do login: o que está acontecendo e a saída. */
+.auth-espera {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: var(--button-radius);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  text-align: center;
+
+  p {
+    margin: 0;
+  }
+}
+
+/* Linha de ajuda embaixo do "Entrar com Google". */
+.auth-ajuda {
+  margin: -4px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--text-tertiary);
+}
+
+/* Etapa "Criar ou trocar a senha": a explicação à vista. */
+.auth-etapa {
+  h2 {
+    margin: 0 0 6px;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: var(--text-secondary);
+  }
+}
+
+.auth-confirmar p {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--button-radius);
+  background: var(--bg-tertiary);
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
 .button {
   height: 42px;
   padding: 0 20px;

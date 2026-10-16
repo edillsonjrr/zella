@@ -1,0 +1,67 @@
+<div class="pedidos animate-fade-in">
+  <header class="pedidos-topo">
+    <h1>Meus pedidos</h1>
+    <p>Olá{{ primeiroNome() ? ', ' + primeiroNome() : '' }}. Peça um conserto e acompanhe cada etapa por aqui.</p>
+  </header>
+
+  <button type="button" class="botao-pedir" (click)="pedirConserto()" aria-label="Pedir um conserto" aria-describedby="botao-pedir-ajuda">
+    <span class="botao-pedir-icone" aria-hidden="true"><app-icon name="add"></app-icon></span>
+    <span class="botao-pedir-texto">
+      <strong>Pedir um conserto</strong>
+      <span id="botao-pedir-ajuda">Conte o que quebrou e onde fica</span>
+    </span>
+  </button>
+
+  @if (!totalPedidos()) {
+    <div class="pedidos-vazio">
+      <app-icon name="checklist" aria-hidden="true"></app-icon>
+      <p><strong>Você ainda não fez nenhum pedido.</strong></p>
+      <p>Quando algo quebrar, use o botão "Pedir um conserto". Você recebe um aviso a cada etapa.</p>
+    </div>
+  } @else {
+    <section class="pedidos-secao" aria-labelledby="titulo-andamento">
+      <h2 id="titulo-andamento">Em andamento <span class="contagem">{{ emAndamento().length }}</span></h2>
+      @if (emAndamento().length) {
+        <div class="pedidos-lista">
+          @for (p of emAndamento(); track p.chamado.id) {
+            <ng-container *ngTemplateOutlet="cartao; context: { $implicit: p }"></ng-container>
+          }
+        </div>
+      } @else {
+        <p class="pedidos-nada">Nenhum pedido em andamento agora.</p>
+      }
+    </section>
+
+    @if (concluidos().length) {
+      <section class="pedidos-secao" aria-labelledby="titulo-concluidos">
+        <h2 id="titulo-concluidos">Encerrados e cancelados <span class="contagem">{{ concluidos().length }}</span></h2>
+        <div class="pedidos-lista">
+          @for (p of concluidos(); track p.chamado.id) {
+            <ng-container *ngTemplateOutlet="cartao; context: { $implicit: p }"></ng-container>
+          }
+        </div>
+      </section>
+    }
+  }
+</div>
+
+<ng-template #cartao let-p>
+  <button type="button" class="pedido" (click)="abrir(p.chamado)" [attr.aria-label]="'Abrir pedido ' + p.chamado.numero + ': ' + p.chamado.equipamento + ', ' + p.situacao.rotulo">
+    <span class="pedido-topo">
+      <span class="pedido-numero">{{ p.chamado.numero }}</span>
+      <span [class]="'badge ' + p.situacao.classe">{{ p.situacao.rotulo }}</span>
+    </span>
+    <strong class="pedido-equipamento">{{ p.chamado.equipamento }}</strong>
+    @if (p.onde) {
+      <span class="pedido-onde"><app-icon name="location_on" aria-hidden="true"></app-icon> {{ p.onde }}</span>
+    }
+    <span class="pedido-agora">{{ p.situacao.agora }}</span>
+    <span class="pedido-rodape">
+      <span>Pedido em {{ p.chamado.dataCriacao | date:'dd/MM/yyyy' }}</span>
+      @if (p.prazo; as prazo) {
+        <span [class.pedido-atrasado]="prazo.atrasado">{{ prazo.texto }}{{ prazo.atrasado ? ' · atrasado' : '' }}</span>
+      }
+      <span class="pedido-ver">Ver detalhes <app-icon name="arrow_forward" aria-hidden="true"></app-icon></span>
+    </span>
+  </button>
+</ng-template>

@@ -4,9 +4,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { IconComponent } from '../shared/icon/icon.component';
 import { DataService } from '../shared/data.service';
+import { descreverDetalhes, limparTexto } from '../../../../shared/historico';
 import type { AlvoLog, LogEntrada, OperacaoLog } from '../shared/models';
 
 interface LogView extends LogEntrada {
+  // Feito pelo sistema sozinho (a preventiva): ícone no lugar das iniciais.
+  automatico: boolean;
   dataFormatada: string;
   horaFormatada: string;
   iniciais: string;
@@ -98,32 +101,35 @@ export class LogsComponent {
 
   private toView(log: LogEntrada): LogView {
     const data = new Date(log.data);
+    const automatico = log.usuarioUid === 'sistema';
     return {
       ...log,
+      descricao: limparTexto(log.descricao),
+      usuarioNome: automatico ? 'Manutenção preventiva' : log.usuarioNome,
+      automatico,
       dataFormatada: this.formatador.format(data),
       horaFormatada: this.formatadorHora.format(data),
       iniciais: log.usuarioNome.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase(),
       icone: ICONE_ALVO[log.alvo] ?? 'info',
       corClasse: COR_OPERACAO[log.operacao] ?? 'neutral',
-      detalhesTexto: this.formatarDetalhes(log.detalhes)
+      // Em português: "Próxima execução: 20/10/2026", não "proximaExecucao:
+      // 2026-10-20". Ids viram nomes; os que não têm nome somem.
+      detalhesTexto: descreverDetalhes(log.detalhes, (campo, id) => this.nomeDoId(campo, id))
     };
   }
 
-  // Achata o objeto de detalhes em linhas legíveis, dando forma de
-  // "campo: de → para" quando a entrada guardou um antes/depois.
-  private formatarDetalhes(detalhes: Record<string, unknown> | undefined): string[] {
-    if (!detalhes) return [];
+  private nomeDoId(campo: string, id: string): string | undefined {
+    const ds = this.dataService;
+    if (campo === 'unidadeId') return ds.getUnidadeById(id)?.nome;
+    if (campo === 'contratoId') return ds.getContratoById(id)?.numero;
+    if (campo.startsWith('os')) return ds.getOSById(id)?.numero;
+    return ds.getUsuarioById(id)?.nome;
+  }
 
-    return Object.entries(detalhes).flatMap(([chave, valor]) => {
-      if (valor === null || valor === undefined) return [];
-
-      if (typeof valor === 'object' && 'de' in (valor as object) && 'para' in (valor as object)) {
-        const mudanca = valor as { de: unknown; para: unknown };
-        return [`${chave}: ${mudanca.de ?? '—'} → ${mudanca.para ?? '—'}`];
-      }
-
-      return [`${chave}: ${valor}`];
-    });
+  // O filtro mostra "Criação", não o valor gravado "criar".
+  rotuloOperacao(): string {
+    const op = this.filtroOperacao();
+    return op ? this.operacoes.find(([v]) => v === op)?.[1] ?? op : 'Todas';
   }
 
   rotuloAlvo(alvo: AlvoLog): string {

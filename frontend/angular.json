@@ -33,12 +33,31 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "pdf.worker.min.mjs",
+                "input": "node_modules/pdfjs-dist/build",
+                "output": "/"
               }
             ],
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "allowedCommonJsDependencies": [
+              "qrcode",
+              "dijkstrajs",
+              "html2canvas",
+              "canvg",
+              "raf",
+              "rgbcolor",
+              "core-js"
+            ],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "src/styles"
+              ]
+            }
           },
           "configurations": {
             "production": {
@@ -60,6 +79,40 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "demo": {
+              "outputPath": "dist/demo",
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/app/shared/firebase.ts",
+                  "with": "src/app/shared/firebase.demo.ts"
+                },
+                {
+                  "replace": "src/app/shared/auth.service.ts",
+                  "with": "src/app/shared/auth.service.demo.ts"
+                },
+                {
+                  "replace": "src/app/shared/data.service.ts",
+                  "with": "src/app/shared/data.service.demo.ts"
+                },
+                {
+                  "replace": "src/app/shared/log.service.ts",
+                  "with": "src/app/shared/log.service.demo.ts"
+                },
+                {
+                  "replace": "src/app/shared/arquivos.ts",
+                  "with": "src/app/shared/arquivos.demo.ts"
+                },
+                {
+                  "replace": "src/app/shared/plataforma.service.ts",
+                  "with": "src/app/shared/plataforma.service.demo.ts"
+                },
+                {
+                  "replace": "src/app/shared/modo.ts",
+                  "with": "src/app/shared/modo.demo.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -72,6 +125,9 @@
             },
             "development": {
               "buildTarget": "frontend:build:development"
+            },
+            "demo": {
+              "buildTarget": "frontend:build:development,demo"
             }
           },
           "defaultConfiguration": "development"
@@ -97,7 +153,12 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "src/styles"
+              ]
+            }
           }
         }
       }

@@ -66,34 +66,56 @@ export class LogService {
   }
 
   /**
-   * Histórico de um registro específico, para os painéis de detalhe.
+   * Histórico de um ou mais registros, para os painéis de detalhe.
    *
    * É uma consulta pontual em vez de filtrar a lista da tela de logs porque
    * aquela é limitada às entradas mais recentes — um contrato antigo ficaria
    * sem histórico se dependesse dela.
+   *
+   * Recebe vários ids porque o atendimento de um chamado se espalha por três
+   * registros: o chamado, a OS e o orçamento. Antes cada painel consultava só
+   * o próprio id, e o chamado não via orçamento nem execução, nem a OS via a
+   * abertura e o encerramento.
+   *
+   * Só a gestão lê `logs` (firestore.rules). Para os outros perfis a consulta
+   * nem sai: antes ela saía, voltava "permission-denied", e o erro engolido
+   * aparecia como "Nenhuma ação registrada".
    */
-  async historicoDe(id: string): Promise<LogEntrada[]> {
+  async historicoDe(ids: string | string[]): Promise<LogEntrada[]> {
+    const lista = [...new Set((Array.isArray(ids) ? ids : [ids]).filter(Boolean))];
+    if (!lista.length || this.injector.get(DataService).perfilSessao !== 'gestor') return [];
+
     // São duas consultas porque cada entrada tem UM pai só. "Criou a OS X a
     // partir do chamado Y" aponta pro chamado (é lá que faz sentido ler), e
     // por alvoPaiId a própria OS não veria a própria criação. Buscar também
-    // por alvoId fecha essa lacuna, nos dois sentidos.
+    // por alvoId fecha essa lacuna, nos dois sentidos. O `in` aceita até 30
+    // ids e usa os mesmos índices (alvoPaiId/alvoId + data).
     const logs = this.injector.get(DataService).col('logs');
-    const porPai = query(logs, where('alvoPaiId', '==', id), orderBy('data', 'desc'), limit(50));
-    const porAlvo = query(logs, where('alvoId', '==', id), orderBy('data', 'desc'), limit(50));
+    const consultas = [];
+    for (let i = 0; i < lista.length; i += 30) {
+      const lote = lista.slice(i, i + 30);
+      consultas.push(getDocs(query(logs, where('alvoPaiId', 'in', lote), orderBy('data', 'desc'), limit(100))));
+      consultas.push(getDocs(query(logs, where('alvoId', 'in', lote), orderBy('data', 'desc'), limit(100))));
+    }
 
     try {
-      const [paiSnap, alvoSnap] = await Promise.all([getDocs(porPai), getDocs(porAlvo)]);
+      const snaps = await Promise.all(consultas);
 
-      // As duas consultas se sobrepõem (a maioria das entradas tem
+      // As consultas se sobrepõem (a maioria das entradas tem
       // alvoPaiId == alvoId), então o Map desduplica por id.
       const porId = new Map<string, LogEntrada>();
-      for (const doc of [...paiSnap.docs, ...alvoSnap.docs]) {
-        const entrada = doc.data() as LogEntrada;
-        porId.set(entrada.id, entrada);
+      for (const snap of snaps) {
+        for (const doc of snap.docs) {
+          const entrada = doc.data() as LogEntrada;
+          porId.set(entrada.id, entrada);
+        }
       }
 
       return [...porId.values()].sort((a, b) => b.data.localeCompare(a.data));
-    } catch {
+    } catch (erro) {
+      // A linha do tempo continua com o que os registros dizem; o log só
+      // acrescenta hora e autor.
+      console.warn('Não foi possível ler o histórico.', erro);
       return [];
     }
   }

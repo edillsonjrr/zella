@@ -25,3 +25,11 @@ Thumbs.db
 .claude/
 .angular-accessibility-skill/
 .motion-principles-skill/
+
+# Segredos e saídas geradas (15/10/2026)
+/functions/.env*
+!/functions/.env.example
+brag-output*/
+/chamado/dist/
+# Repositório público: análises de negócio ficam fora.
+/founder/

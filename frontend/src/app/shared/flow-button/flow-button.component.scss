@@ -18,9 +18,20 @@
     width: 100%;
   }
 
+  /* Ocupando a largura toda, o rótulo longo quebra linha em vez de vazar
+     do painel estreito. */
   .flow-button {
     width: 100%;
+    height: auto;
+    padding-block: 8px;
+    line-height: 1.25;
+    white-space: normal;
+    text-wrap: balance;
   }
+
+  .flow-button--sm { min-height: 32px; }
+  .flow-button--default { min-height: 36px; }
+  .flow-button--lg { min-height: 40px; }
 }
 
 .flow-button-outline {
@@ -96,7 +107,7 @@
     border-color: var(--primary-500);
     color: var(--primary-contrast);
   }
-  font-weight: 550;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -112,16 +123,17 @@
     font-size: 0.8125rem;
   }
 
+  /* Altura do guia da its: 40 px no computador, 44 px no celular. */
   &--default {
-    height: 36px;
+    height: var(--its-botao-altura);
     padding: 0 16px;
-    font-size: 0.875rem;
+    font-size: var(--its-t-corpo);
   }
 
   &--lg {
-    height: 40px;
-    padding: 0 24px;
-    font-size: 0.875rem;
+    height: var(--its-botao-altura);
+    padding: 0 20px;
+    font-size: var(--its-t-corpo);
   }
 
   /* Ações secundárias (Cancelar/Fechar): mesma geometria e mesmo contorno

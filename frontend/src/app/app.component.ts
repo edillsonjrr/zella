@@ -24,7 +24,10 @@ export class AppComponent {
       queueMicrotask(() => {
         const main = document.getElementById('main-content');
         const heading = main?.querySelector('h1')?.textContent?.trim();
-        main?.focus();
+        // preventScroll: sem ele, nas páginas públicas com barra fixa
+        // (Compras), o navegador rolava o <main> para baixo da barra e o selo
+        // do topo saía cortado.
+        main?.focus({ preventScroll: true });
         if (heading) this.feedback.announce(`${heading}. Página carregada.`);
       });
     });

@@ -4,7 +4,9 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "start:demo": "ng serve --configuration demo --host 127.0.0.1 --port 4202",
     "build": "ng build",
+    "build:demo": "ng build --configuration demo",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "deploy": "firebase deploy"
@@ -24,8 +26,11 @@
     "@ng-icons/core": "^31.4.0",
     "@ng-icons/phosphor-icons": "^31.4.0",
     "apexcharts": "^4.7.0",
+    "fflate": "^0.8.3",
     "firebase": "^12.19.0",
+    "jspdf": "^4.2.1",
     "ng-apexcharts": "^1.15.0",
+    "pdfjs-dist": "^4.10.38",
     "qrcode": "^1.5.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",

@@ -74,7 +74,17 @@ import {
   phosphorBell,
   phosphorUserGear,
   phosphorPause,
-  phosphorPlay
+  phosphorPlay,
+  phosphorPlug,
+  phosphorListChecks,
+  phosphorArrowSquareOut,
+  phosphorHandWaving,
+  phosphorSiren,
+  phosphorArrowRight,
+  phosphorHourglass,
+  phosphorSun,
+  phosphorMoon,
+  phosphorArrowCounterClockwise,
 } from '@ng-icons/phosphor-icons/regular';
 
 const ICON_MAP: Record<string, string> = {
@@ -164,7 +174,17 @@ const ICON_MAP: Record<string, string> = {
   pending_actions: 'phosphorWarningCircle',
   admin_panel_settings: 'phosphorGear',
   notifications: 'phosphorBell',
-  assign_technician: 'phosphorUserGear'
+  assign_technician: 'phosphorUserGear',
+  devices: 'phosphorPlug',
+  checklist: 'phosphorListChecks',
+  open_in_new: 'phosphorArrowSquareOut',
+  waving_hand: 'phosphorHandWaving',
+  priority_high: 'phosphorSiren',
+  arrow_forward: 'phosphorArrowRight',
+  hourglass: 'phosphorHourglass',
+  light_mode: 'phosphorSun',
+  dark_mode: 'phosphorMoon',
+  restart: 'phosphorArrowCounterClockwise'
 };
 
 const ICONS = {
@@ -241,7 +261,17 @@ const ICONS = {
   phosphorBell,
   phosphorUserGear,
   phosphorPause,
-  phosphorPlay
+  phosphorPlay,
+  phosphorPlug,
+  phosphorListChecks,
+  phosphorArrowSquareOut,
+  phosphorHandWaving,
+  phosphorSiren,
+  phosphorArrowRight,
+  phosphorHourglass,
+  phosphorSun,
+  phosphorMoon,
+  phosphorArrowCounterClockwise
 };
 
 @Component({

@@ -1,0 +1,84 @@
+<div class="palco">
+  <div class="escolha" role="radiogroup" aria-label="Item do contrato">
+    @for (it of itens; track it.nome; let i = $index) {
+      <button type="button" role="radio" [attr.aria-checked]="sel() === i" (click)="escolher(i)">{{ it.nome }}</button>
+    }
+  </div>
+
+  <div class="instrumento" [class.instrumento--critico]="critico()">
+    <svg viewBox="0 0 200 200" role="img"
+         [attr.aria-label]="item().nome + ': contratado ' + item().contratado + ' ' + item().un + ' = usado ' + consumido() + ' + separado ' + reservado() + ' + livre ' + disponivel() + (critico() ? '. Alerta: mais de 90% já usado ou separado' : '')">
+      <defs>
+        <radialGradient id="mn-mostrador" cx="50%" cy="42%" r="60%">
+          <stop offset="0" stop-color="#fbfaf6" />
+          <stop offset="0.85" stop-color="#ecebe4" />
+          <stop offset="1" stop-color="#d9d8cf" />
+        </radialGradient>
+        <linearGradient id="mn-aro" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#f4f7f8" />
+          <stop offset="0.45" stop-color="#9aa5a9" />
+          <stop offset="0.55" stop-color="#6f7a7e" />
+          <stop offset="1" stop-color="#dfe5e7" />
+        </linearGradient>
+        <linearGradient id="mn-vidro" x1="0" y1="0" x2="0.6" y2="1">
+          <stop offset="0" stop-color="#fff" stop-opacity="0.55" />
+          <stop offset="0.5" stop-color="#fff" stop-opacity="0" />
+        </linearGradient>
+      </defs>
+
+      <circle cx="100" cy="100" r="99" fill="url(#mn-aro)" />
+      <circle cx="100" cy="100" r="92" fill="#3b4447" />
+      <circle cx="100" cy="100" r="90" fill="url(#mn-mostrador)" />
+
+      @for (f of faixas; track f.cor) {
+        <path [attr.d]="f.d" fill="none" [attr.stroke]="f.cor" stroke-width="7" opacity="0.85" />
+      }
+      @for (m of marcas; track $index) {
+        <line x1="100" [attr.y1]="m.maior ? 20 : 24" x2="100" y2="30" stroke="#2a3134"
+              [attr.stroke-width]="m.maior ? 1.6 : 0.8" [attr.transform]="'rotate(' + m.ang + ' 100 100)'" />
+        @if (m.rotulo) {
+          <text class="num" [attr.x]="m.x" [attr.y]="m.y">{{ m.rotulo }}</text>
+        }
+      }
+      <text class="marca" x="100" y="131">ZELLA</text>
+      <text class="unid" x="100" y="140">% do contratado</text>
+
+      <!-- ponteiro fantasma: consumido + reservado -->
+      <g class="ponteiro fantasma" [style.transform]="'rotate(' + anguloFantasma() + 'deg)'">
+        <path d="M100 26 L103 100 L97 100 Z" fill="#e3922c" opacity="0.55" />
+      </g>
+      <g class="ponteiro" [style.transform]="'rotate(' + anguloPonteiro() + 'deg)'">
+        <path d="M100 22 L103.6 104 L100 116 L96.4 104 Z" fill="#c62f25" />
+      </g>
+      <circle cx="100" cy="100" r="8" fill="#2a3134" />
+      <circle cx="98" cy="98" r="3" fill="#6f7a7e" />
+
+      <circle cx="100" cy="100" r="90" fill="url(#mn-vidro)" pointer-events="none" />
+    </svg>
+
+    <div class="contador" aria-hidden="true">
+      <div class="linha-contador">
+      <div class="janela">
+        @for (d of tambores(); track $index) {
+          <span class="tambor"><span class="fita" [style.transform]="'translateY(' + (-d * 10) + '%)'">
+            @for (n of [0,1,2,3,4,5,6,7,8,9]; track n) { <i>{{ n }}</i> }
+          </span></span>
+        }
+      </div>
+      <i class="lampada" [class.lampada--acesa]="critico()"></i>
+      </div>
+      <span class="legenda"><span class="un">{{ item().un }}</span> livres</span>
+    </div>
+  </div>
+
+  <div class="leitura">
+    <label>
+      <span><i class="pino pino--consumo"></i>Usado (serviço feito) <b>{{ consumido() }} {{ item().un }}</b></span>
+      <input class="r-consumo" type="range" min="0" [max]="item().contratado" [value]="consumido()" (input)="aoConsumir($any($event.target).value)" />
+    </label>
+    <label>
+      <span><i class="pino pino--reserva"></i>Separado (aprovado, esperando o serviço) <b>{{ reservado() }} {{ item().un }}</b></span>
+      <input class="r-reserva" type="range" min="0" [max]="item().contratado" [value]="reservado()" (input)="aoReservar($any($event.target).value)" />
+    </label>
+  </div>
+</div>

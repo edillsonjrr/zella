@@ -1,4 +1,4 @@
-import type { Contrato } from './models';
+import type { Contrato, ItemContrato } from './models';
 
 // Status exibido do contrato, calculado — nunca lido do documento. O campo
 // `status` gravado só distingue 'Encerrado' (decisão do gestor); "Crítico"
@@ -15,6 +15,17 @@ export interface SituacaoContrato {
 
 // Item com 10% ou menos do contratado ainda disponível.
 export const LIMITE_SALDO_CRITICO = 0.1;
+
+/**
+ * Saldo baixo: 10% ou menos do contratado ainda livre. É a regra que deixa o
+ * contrato "Crítico" e a que conta os itens da coluna "Itens com saldo
+ * baixo" da lista de contratos.
+ */
+export function itemComSaldoBaixo(item: Pick<ItemContrato, 'quantidadeContratada' | 'quantidadeDisponivel'>): boolean {
+  return item.quantidadeContratada > 0 && item.quantidadeDisponivel / item.quantidadeContratada <= LIMITE_SALDO_CRITICO;
+}
+
+export const EXPLICACAO_SALDO_BAIXO = `Item com ${Math.round(LIMITE_SALDO_CRITICO * 100)}% ou menos do contratado ainda livre.`;
 // Contrato a 30 dias ou menos do fim da vigência.
 export const DIAS_VIGENCIA_CRITICA = 30;
 
@@ -34,9 +45,7 @@ export function situacaoContrato(contrato: Pick<Contrato, 'status' | 'vigenciaFi
     return { status: 'Vencido', aviso: 'Vencido', diasParaVencer };
   }
 
-  const itensBaixos = contrato.itens.filter(
-    i => i.quantidadeContratada > 0 && i.quantidadeDisponivel / i.quantidadeContratada <= LIMITE_SALDO_CRITICO
-  );
+  const itensBaixos = contrato.itens.filter(itemComSaldoBaixo);
 
   if (diasParaVencer !== null && diasParaVencer <= DIAS_VIGENCIA_CRITICA) {
     const aviso = diasParaVencer === 0 ? 'Vence hoje' : `Vence em ${diasParaVencer} dia${diasParaVencer === 1 ? '' : 's'}`;

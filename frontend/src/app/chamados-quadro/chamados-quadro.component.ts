@@ -7,15 +7,17 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { IconComponent } from '../shared/icon/icon.component';
 import { DataService } from '../shared/data.service';
 import { AuthService } from '../shared/auth.service';
+import { dicaUnidade, nomeUnidade } from '../shared/rotulos';
+import { agoraDaChave, corDoGrupo, rotuloDaChave, situacaoDoChamado, type ChaveSituacao } from '../shared/situacao-servico';
 import type { Chamado } from '../shared/models';
-
-export type StatusChamado = Chamado['status'];
 
 // O status do chamado é derivado da máquina de estados no backend (as rules
 // do Firestore barram escrita direta do cliente em /chamados). Por isso cada
 // coluna declara qual ação de negócio leva o chamado até ela: soltar o card
 // dispara essa ação, em vez de gravar o status na mão. Colunas sem ação
-// (Aberto, Orçamento aprovado) não aceitam drop — nada no fluxo volta pra lá.
+// (Novo chamado, Orçamento recusado) não aceitam drop — nada no fluxo volta
+// pra lá. As colunas são as situações da máquina única (Z0.3), as mesmas da
+// lista e da OS.
 export type AcaoTransicao =
   | 'criar-os'
   | 'criar-orcamento'
@@ -25,13 +27,15 @@ export type AcaoTransicao =
 
 export interface TransicaoChamado {
   chamado: Chamado;
-  destino: StatusChamado;
+  destino: ChaveSituacao;
   acao: AcaoTransicao;
 }
 
 interface ColunaQuadro {
-  status: StatusChamado;
+  chave: ChaveSituacao;
   titulo: string;
+  // Quem age nesta coluna.
+  agora: string;
   corClasse: string;
   acao?: AcaoTransicao;
   chamados: ChamadoCard[];
@@ -42,7 +46,10 @@ interface ChamadoCard extends Chamado {
   responsavelNome: string;
   responsavelIniciais: string;
   unidadeSigla: string;
+  unidadeNome: string;
+  unidadeDica: string;
   osNumero?: string;
+  chave: ChaveSituacao;
 }
 
 @Component({
@@ -65,19 +72,31 @@ export class ChamadosQuadroComponent {
   private auth = inject(AuthService);
 
   @Input() chamados: Chamado[] = [];
+  // "Adicionar chamado" só para quem pede conserto pela tela (a gestão).
+  @Input() podeCriar = false;
   @Output() abrirNovoChamado = new EventEmitter<void>();
   @Output() abrirDetalhe = new EventEmitter<Chamado>();
   @Output() transicao = new EventEmitter<TransicaoChamado>();
 
-  colunas: ColunaQuadro[] = [
-    { status: 'Aberto', titulo: 'Aberto', corClasse: 'info', chamados: [], aceita: () => false },
-    { status: 'Em atendimento', titulo: 'Em atendimento', corClasse: 'warning', acao: 'criar-os', chamados: [], aceita: () => false },
-    { status: 'Em orçamento', titulo: 'Em orçamento', corClasse: 'primary', acao: 'criar-orcamento', chamados: [], aceita: () => false },
-    { status: 'Orçamento aprovado', titulo: 'Orçamento aprovado', corClasse: 'success', chamados: [], aceita: () => false },
-    { status: 'A ser finalizado', titulo: 'A ser finalizado', corClasse: 'warning-accent', acao: 'aprovar-orcamento', chamados: [], aceita: () => false },
-    { status: 'Executado', titulo: 'Executado', corClasse: 'primary-accent', acao: 'executar-os', chamados: [], aceita: () => false },
-    { status: 'Encerrado', titulo: 'Encerrado', corClasse: 'success', acao: 'encerrar-chamado', chamados: [], aceita: () => false }
-  ];
+  colunas: ColunaQuadro[] = (
+    [
+      ['novo', undefined],
+      ['aguardando-orcamento', 'criar-os'],
+      ['orcamento-recusado', undefined],
+      ['aguardando-aprovacao', 'criar-orcamento'],
+      ['aprovado', 'aprovar-orcamento'],
+      ['servico-feito', 'executar-os'],
+      ['encerrado', 'encerrar-chamado']
+    ] as [ChaveSituacao, AcaoTransicao | undefined][]
+  ).map(([chave, acao]) => ({
+    chave,
+    titulo: rotuloDaChave(chave, this.auth.perfil),
+    agora: agoraDaChave(chave, this.auth.perfil),
+    corClasse: corDoGrupo(chave),
+    acao,
+    chamados: [],
+    aceita: () => false
+  }));
 
   constructor() {
     // O predicate é criado uma vez por coluna: o CDK consulta ele a cada
@@ -88,10 +107,9 @@ export class ChamadosQuadroComponent {
   }
 
   ngOnChanges(): void {
+    const cards = this.chamados.map(c => this.toCard(c));
     this.colunas.forEach(coluna => {
-      coluna.chamados = this.chamados
-        .filter(c => c.status === coluna.status)
-        .map(c => this.toCard(c));
+      coluna.chamados = cards.filter(c => c.chave === coluna.chave);
     });
   }
 
@@ -105,14 +123,18 @@ export class ChamadosQuadroComponent {
       responsavelNome: nome,
       responsavelIniciais: responsavel ? nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : '—',
       unidadeSigla: this.dataService.getUnidadeById(chamado.unidadeId)?.sigla ?? '-',
-      osNumero: os?.numero
+      unidadeNome: nomeUnidade(this.dataService.getUnidadeById(chamado.unidadeId), '-'),
+      unidadeDica: dicaUnidade(this.dataService.getUnidadeById(chamado.unidadeId)),
+      osNumero: os?.numero,
+      chave: situacaoDoChamado(this.dataService, chamado, this.auth.perfil).chave
     };
   }
 
   // Espelha as pré-condições das Cloud Functions. Se mudar lá, muda aqui —
   // do contrário o card é solto e a chamada volta com failed-precondition.
   private podeMover(chamado: Chamado | undefined, coluna: ColunaQuadro): boolean {
-    if (!chamado || !coluna.acao || chamado.status === coluna.status) return false;
+    if (!chamado || !coluna.acao) return false;
+    if (situacaoDoChamado(this.dataService, chamado).chave === coluna.chave) return false;
 
     // Chamado encerrado é ponto final: nenhuma função do fluxo o traz de
     // volta. (O criarOrcamento do backend aceitaria e ressuscitaria o
@@ -129,7 +151,7 @@ export class ChamadosQuadroComponent {
 
     switch (coluna.acao) {
       case 'criar-os':
-        return (gestor || this.auth.isGestorContratado()) && !chamado.ordemServicoId;
+        return gestor && !chamado.ordemServicoId;
       case 'criar-orcamento':
         // Logo depois de abrir a OS, ou pra refazer um orçamento rejeitado.
         // Quem orça é a contratada.
@@ -151,7 +173,7 @@ export class ChamadosQuadroComponent {
       case 'criar-os': return 'Abre a Nova OS para este chamado';
       case 'criar-orcamento': return 'Abre o orçamento da OS deste chamado';
       case 'aprovar-orcamento': return 'Aprova o orçamento pendente';
-      case 'executar-os': return 'Marca a OS aprovada como executada';
+      case 'executar-os': return 'Registra o serviço da OS aprovada como feito';
       case 'encerrar-chamado': return 'Encerra o chamado';
       default: return 'Esta coluna é definida pelo fluxo e não aceita arrastar';
     }
@@ -163,7 +185,7 @@ export class ChamadosQuadroComponent {
     const chamado = evento.item.data as ChamadoCard;
     if (!destino.acao || !this.podeMover(chamado, destino)) return;
 
-    this.transicao.emit({ chamado, destino: destino.status, acao: destino.acao });
+    this.transicao.emit({ chamado, destino: destino.chave, acao: destino.acao });
   }
 
   onAbrirNovoChamado(): void {

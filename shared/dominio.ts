@@ -45,6 +45,9 @@ export interface Equipamento {
   salaId: string;
   nome: string;
   patrimonio?: string;
+  // Opcionais. Chegam pela importação por planilha (Z3.1).
+  fabricante?: string;
+  modelo?: string;
 }
 
 /* Contratos --------------------------------------------------------------- */
@@ -117,6 +120,10 @@ export interface AditivoContrato {
 
 /* Chamados ---------------------------------------------------------------- */
 
+// Urgência escolhida por quem pede o conserto. Ausente nos chamados antigos
+// e nos da preventiva.
+export type UrgenciaChamado = 'baixa' | 'media' | 'alta';
+
 export type StatusChamado =
   | 'Aberto'
   | 'Em atendimento'
@@ -145,6 +152,10 @@ export interface Chamado {
   dataFechamento?: string;
   responsavelId?: string;
   ordemServicoId?: string;
+  // Empresa contratada da OS deste chamado: copiada quando a OS é criada e
+  // apagada quando o chamado volta a "Aberto". A regra de leitura da
+  // contratada filtra por este campo, porque não consegue juntar com a OS.
+  empresaContratadaId?: string;
   possuiFoto: boolean;
   // Caminho da foto no Storage; a URL é obtida com o token do usuário.
   fotoPath?: string;
@@ -152,6 +163,13 @@ export interface Chamado {
   origem?: 'manual' | 'preventiva';
   // Preenchido só quando origem === 'preventiva': aponta o plano que gerou.
   planoId?: string;
+  // Onde fica, nas palavras de quem pediu ("Bloco B, sala 12"). Opcional:
+  // os chamados antigos não têm.
+  local?: string;
+  urgencia?: UrgenciaChamado;
+  // Equipamento do cadastro, quando escolhido da lista. `equipamento`
+  // continua com o nome (ou o texto livre de "Outro").
+  equipamentoId?: string;
 }
 
 /* Orçamentos e OS --------------------------------------------------------- */
@@ -179,6 +197,12 @@ export interface Orcamento {
   ajustadoPeloGestor?: boolean;
   itensOriginais?: OrcamentoItem[];
   observacaoAprovacao?: string;
+  // Dia da aprovação (YYYY-MM-DD), quando o saldo foi separado. Ausente nos
+  // antigos: a tela usa dataCriacao no lugar.
+  dataAprovacao?: string;
+  // Itens fora do contrato (Z3.5). Ausente nos orçamentos antigos. Depois da
+  // aprovação, cada um carrega a decisão da gestora.
+  itensForaContrato?: ItemForaContrato[];
 }
 
 // O que a tela manda ao criar orçamento: só item e quantidade. Nome e preço
@@ -187,6 +211,40 @@ export interface Orcamento {
 export interface OrcamentoPedidoItem {
   itemContratoId: string;
   quantidade: number;
+}
+
+// Item fora do contrato (Z3.5): peça ou serviço que não está na planilha do
+// contrato. Não sai do saldo de item nenhum. A prestadora propõe com
+// descrição, quantidade, unidade e preço; a gestora aprova ou recusa cada
+// um, com o total à parte do contrato.
+export type DecisaoForaContrato = 'Aprovado' | 'Recusado';
+
+export interface ItemForaContrato {
+  // Gerado pela Cloud Function ("fc1", "fc2"...): é por ele que a aprovação
+  // e a execução apontam o item.
+  id: string;
+  descricao: string;
+  quantidade: number;
+  unidade: string;
+  precoUnitario: number;
+  // Ausente enquanto o orçamento está pendente.
+  decisao?: DecisaoForaContrato;
+}
+
+// O que a tela manda para cada item fora do contrato.
+export interface ItemForaContratoPedido {
+  descricao: string;
+  quantidade: number;
+  unidade: string;
+  precoUnitario: number;
+}
+
+export interface ItemForaContratoExecutado {
+  id: string;
+  descricao: string;
+  unidade: string;
+  aprovado: number;
+  executado: number;
 }
 
 export type SituacaoOS = 'Aberta' | 'Em vistoria' | 'Aprovada' | 'Rejeitada' | 'Executada' | 'Encerrada' | 'Cancelada';
@@ -209,6 +267,10 @@ export interface OrdemServico {
   dataExecucao?: string;
   executadoPor?: string;
   itensExecutados?: { itemContratoId: string; nome: string; orcado: number; executado: number }[];
+  // Itens fora do contrato usados na execução (Z3.5): aprovado × executado.
+  // Sem preço de propósito: a solicitante lê a OS, e o preço fica no
+  // orçamento, que ela não lê.
+  itensForaContratoExecutados?: ItemForaContratoExecutado[];
   observacaoExecucao?: string;
   // Caminhos no Storage das fotos da execução (até 3).
   fotosExecucao?: string[];
@@ -259,6 +321,13 @@ export interface Usuario {
   // Administrador da plataforma. Sozinho (perfil admin_plataforma) ou junto
   // de um perfil de empresa, quando ele tem cadastro na demonstração.
   adminPlataforma?: boolean;
+}
+
+// Preferências de cada pessoa, em preferencias/{usuarioId} da empresa. Só a
+// própria pessoa lê e escreve (firestore.rules).
+export interface PreferenciasUsuario {
+  // Quando a pessoa fechou a tela "O que você faz aqui". Ausente: ainda não viu.
+  boasVindasEm?: string;
 }
 
 /* Manutenção preventiva --------------------------------------------------- */

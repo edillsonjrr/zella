@@ -1,25 +1,41 @@
 <div class="lp anima-sempre" [class.lp--reduzido]="movimentoReduzido" [class.lp--pausado]="pausado()">
   <!-- Navegação ------------------------------------------------------------ -->
-  <header class="lp-nav">
+  <!-- Celular: fundo escurecido atrás do menu aberto; tocar fora fecha. -->
+  @if (menuAberto()) {
+    <div class="lp-menu-fundo" (click)="menuAberto.set(false)" aria-hidden="true"></div>
+  }
+
+  <header class="lp-nav" (keydown.escape)="fecharMenu()">
     <div class="lp-container lp-nav-inner">
       <a routerLink="/" class="lp-brand" aria-label="Zella, início">
         <app-logo [size]="30" [wordmark]="true"></app-logo>
       </a>
 
       <nav id="lp-links" class="lp-links" [class.lp-links--aberto]="menuAberto()" aria-label="Seções">
+        <button type="button" class="lp-links-fechar" (click)="fecharMenu()">
+          <app-icon name="close" aria-hidden="true"></app-icon>
+          <span>Fechar menu</span>
+        </button>
         <a href="#como-funciona" (click)="menuAberto.set(false)">Como funciona</a>
         <a href="#recursos" (click)="menuAberto.set(false)">Recursos</a>
         <a href="#perfis" (click)="menuAberto.set(false)">Para quem</a>
         <a href="#perguntas" (click)="menuAberto.set(false)">Perguntas</a>
+        <a routerLink="/compras" (click)="menuAberto.set(false)">Para compras</a>
+        <!-- No celular o botão de tema sai da barra (não cabe) e vem para cá, com nome. -->
+        <div class="lp-links-tema">
+          <span>Tema claro/escuro</span>
+          <app-theme-toggle></app-theme-toggle>
+        </div>
       </nav>
 
       <div class="lp-nav-acoes">
-        <button type="button" class="lp-pausa" (click)="alternarPausa()" [attr.aria-pressed]="pausado()" [attr.aria-label]="pausado() ? 'Retomar animações' : 'Pausar animações'" [title]="pausado() ? 'Retomar animações' : 'Pausar animações'">
+        <button type="button" class="lp-pausa" [class.lp-pausa--parado]="pausado()" (click)="alternarPausa()" [attr.aria-label]="rotuloPausa()" [title]="rotuloPausa()">
           <app-icon [name]="pausado() ? 'play_arrow' : 'pause'" aria-hidden="true"></app-icon>
+          <span class="lp-pausa-texto" aria-hidden="true">{{ pausado() ? 'Retomar o movimento' : 'Parar o movimento' }}</span>
         </button>
-        <app-theme-toggle></app-theme-toggle>
+        <app-theme-toggle class="lp-tema-barra"></app-theme-toggle>
         <app-flow-button routerLink="/login" size="default">Entrar</app-flow-button>
-        <button type="button" class="lp-menu" (click)="menuAberto.set(!menuAberto())" [attr.aria-expanded]="menuAberto()" aria-controls="lp-links" aria-label="Abrir menu">
+        <button type="button" class="lp-menu" (click)="menuAberto.set(!menuAberto())" [attr.aria-expanded]="menuAberto()" aria-controls="lp-links" [attr.aria-label]="menuAberto() ? 'Fechar menu' : 'Abrir menu'">
           <span></span><span></span>
         </button>
       </div>
@@ -35,17 +51,11 @@
           <span class="lp-selo">Gestão de manutenção com contrato na mão</span>
           <h1 class="lp-titulo">
             Do chamado à execução,<br />
-            <span class="lp-rotador" aria-label="sem estourar o contrato.">
-              <span class="lp-rotador-trilho" aria-hidden="true">
-                @for (f of frasesTitulo; track $index) {
-                  <span class="lp-titulo-destaque">{{ f }}</span>
-                }
-              </span>
-            </span>
+            <span class="lp-titulo-destaque">sem estourar o contrato.</span>
           </h1>
           <p class="lp-sub">
-            Quem pede, quem aprova e quem executa, no mesmo fluxo. O orçamento reserva saldo
-            do contrato, a execução consome, e nada passa do contratado.
+            Quem pede, quem aprova e quem executa, no mesmo fluxo. Aprovar o orçamento separa
+            o saldo do contrato, o serviço feito conta como usado, e nada passa do contratado.
           </p>
           <div class="lp-hero-acoes">
             <app-flow-button routerLink="/login" size="lg">
@@ -69,15 +79,18 @@
                 <span class="lp-fantasma lp-fantasma--curto"></span>
               </div>
             }
+            <!-- Cartão de exemplo: número do chamado por extenso, o que é e,
+                 ao chegar em Executado, quantas fotos o técnico anexou. -->
             <div class="lp-cartao-vivo">
+              <span class="lp-cartao-tipo">Chamado</span>
               <div class="lp-cartao-vivo-topo">
                 <span class="lp-cartao-icone"><app-icon name="build"></app-icon></span>
-                <div>
-                  <strong>CH-0142</strong>
-                  <small>Ar-condicionado · Sala 12</small>
-                </div>
+                <strong>0142</strong>
               </div>
-              <span class="lp-cartao-foto"><app-icon name="photo_camera"></app-icon> 2</span>
+              <!-- No celular o cartão fica com uns 55 px de largura: o texto
+                   curto cabe inteiro, sem cortar no meio da palavra. -->
+              <small><span class="lp-texto-longo">Ar-condicionado da sala 12</span><span class="lp-texto-curto">Ar da sala 12</span></small>
+              <span class="lp-cartao-foto"><app-icon name="photo_camera"></app-icon> 2 fotos</span>
             </div>
           </div>
           <div class="lp-saldo">
@@ -90,10 +103,11 @@
               <span class="lp-saldo-reservado"></span>
             </div>
             <div class="lp-saldo-legenda">
-              <span><i class="lp-leg lp-leg--cons"></i>Consumido</span>
-              <span><i class="lp-leg lp-leg--res"></i>Reservado</span>
-              <span><i class="lp-leg lp-leg--disp"></i>Disponível</span>
+              <span><i class="lp-leg lp-leg--cons"></i>Usado</span>
+              <span><i class="lp-leg lp-leg--res"></i>Separado</span>
+              <span><i class="lp-leg lp-leg--disp"></i>Livre</span>
             </div>
+            <p class="lp-saldo-explica">{{ legendaSaldo }}</p>
           </div>
           <span class="lp-quadro-brilho"></span>
         </div>
@@ -101,17 +115,13 @@
       </div>
     </section>
 
-    <!-- Faixa infinita ------------------------------------------------------ -->
-    <section class="lp-faixa" aria-label="Capacidades">
-      <div class="lp-faixa-trilho">
-        @for (rodada of [0, 1]; track rodada) {
-          <ul class="lp-faixa-lista" [attr.aria-hidden]="rodada === 1">
-            @for (c of capacidades; track c) {
-              <li><span class="lp-faixa-ponto"></span>{{ c }}</li>
-            }
-          </ul>
+    <!-- Faixa de recursos: parada, só texto (não é link) ------------------------ -->
+    <section class="lp-faixa" aria-label="O que o Zella faz">
+      <ul class="lp-container lp-faixa-lista">
+        @for (c of capacidades; track c) {
+          <li><span class="lp-faixa-ponto" aria-hidden="true"></span>{{ c }}</li>
         }
-      </div>
+      </ul>
     </section>
 
     <!-- Números ------------------------------------------------------------- -->
@@ -119,7 +129,7 @@
       <div class="lp-container lp-numeros-grid">
         @for (n of numeros; track n.rotulo; let i = $index) {
           <div class="lp-numero" data-revelar [style.--i]="i">
-            <span class="lp-numero-valor"><span [attr.data-contar]="n.valor">0</span>{{ n.sufixo }}</span>
+            <span class="lp-numero-valor"><span aria-hidden="true"><span [attr.data-contar]="n.valor">{{ n.valor }}</span>{{ n.sufixo }}</span><span class="sr-only">{{ n.valor }}{{ n.sufixo }}</span></span>
             <span class="lp-numero-rotulo">{{ n.rotulo }}</span>
           </div>
         }
@@ -184,7 +194,7 @@
       <div class="lp-container">
         <div class="lp-cabecalho" data-revelar>
           <h2>Cada perfil vê só o que precisa.</h2>
-          <p>Uma plataforma, quatro jeitos de usar. A contratada só enxerga os próprios contratos; o cliente, a própria unidade.</p>
+          <p>Uma plataforma, quatro jeitos de usar. A contratada só enxerga os próprios contratos; o solicitante, a própria unidade.</p>
         </div>
 
         <div class="lp-orbita" aria-hidden="true" data-revelar>
@@ -256,6 +266,7 @@
     <div class="lp-container lp-rodape-inner">
       <app-logo [size]="24" [wordmark]="true"></app-logo>
       <span>Gestão de chamados, ordens de serviço e contratos de manutenção.</span>
+      <a routerLink="/compras">Para compras e licitação</a>
       <a routerLink="/login">Entrar</a>
     </div>
   </footer>

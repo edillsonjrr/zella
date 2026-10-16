@@ -1,5 +1,6 @@
 @use "@angular/material" as mat;
 @use "./zella-theme" as zella;
+@use "./styles/its";
 
 /* UI Guideline — Zella
  * Tokens globais de cor, tipografia, espaçamento e animação.
@@ -55,7 +56,7 @@ body.light-mode {
   --warning-600: #e3922c;
 
   --danger-50: rgba(255, 77, 79, 0.15);
-  --danger-500: #ff4d4f;
+  --danger-500: #ff7a7c; /* rodada 2: #ff4d4f dava 4,1:1 na tinta sobre o cartão; este dá 5,3:1 */
   --danger-600: #e04345;
 
   --info-50: rgba(110, 168, 254, 0.15);
@@ -103,8 +104,9 @@ body.light-mode {
 
   /* Layout */
   --sidebar-width: 72px;
-  --toolbar-height: 60px;
-  --content-padding: 24px;
+  --toolbar-height: 56px;
+  /* Margem lateral do guia da its: 32 px no computador, 24 no tablet, 16 no celular. */
+  --content-padding: var(--its-margem);
   --card-radius: 12px;
   --button-radius: 8px;
   --badge-radius: 999px;
@@ -115,8 +117,7 @@ body.light-mode {
      Segoe UI no Windows, Roboto no Android).
      O wordmark da logo usa a --font-brand: Manrope 800, a mesma da peça de
      identidade da marca. */
-  --font-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--its-fonte);
   --font-brand: "Manrope", var(--font-sans);
 
   /* Ícones — escala compartilhada (evita valores soltos por componente) */
@@ -168,6 +169,9 @@ body {
 body,
 body.mat-typography {
   font-family: var(--font-sans);
+  /* Corpo do guia: 14 px no computador e 15 px no celular (--its-t-corpo). */
+  font-size: var(--its-t-corpo);
+  line-height: var(--its-lh-corpo);
 }
 
 /* Mesma disputa dos títulos: o Material estiliza `.mat-typography h1…h6`
@@ -257,10 +261,12 @@ textarea,
 
 button, a, input, select, textarea, [role="button"] { transition: color var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast); }
 button:active:not(:disabled), [role="button"]:active { transform: scale(0.98); }
-::view-transition-old(root) { animation: page-exit 140ms ease-in both; }
-::view-transition-new(root) { animation: page-enter var(--transition-enter) both; }
-@keyframes page-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes page-exit { to { opacity: 0; transform: translateY(-4px); } }
+/* Troca de tela (rodada 2): sem view transition. Ela congelava a tela antiga
+   por cima da nova até a nova terminar de carregar (3 a 8 s com os gráficos),
+   as duas apareciam juntas e o clique no menu nesse meio-tempo caía na foto
+   da tela antiga e não navegava. Agora a tela nova entra com o fade de
+   .animate-fade-in (120 ms), e a antiga sai na hora. As telas são baixadas
+   de antemão (PreloadAllModules em app.config.ts): o clique não espera rede. */
 
 /* Reset global de cores para dark mode */
 .mat-mdc-list-item {
@@ -296,24 +302,31 @@ button:active:not(:disabled), [role="button"]:active { transform: scale(0.98); }
 }
 
 /* Tipografia */
+/* Escala do guia da its: título de página 24/22 px em 700, seção 18/17 px,
+   cartão 15 px. A mesma altura de título em todas as telas. */
 h1 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0 0 var(--content-padding);
+  font-size: var(--its-t-titulo);
+  font-weight: 700;
+  line-height: var(--its-lh-titulo);
+  margin: 0 0 var(--its-cabecalho-conteudo);
   color: var(--text-primary);
-  letter-spacing: -0.2px;
+  letter-spacing: var(--its-ls-titulo);
+  text-wrap: balance;
 }
 
 h2 {
-  font-size: 1.1rem;
+  font-size: var(--its-t-secao);
   font-weight: 600;
+  line-height: var(--its-lh-secao);
   margin: 0 0 16px;
   color: var(--text-primary);
+  text-wrap: balance;
 }
 
 h3 {
-  font-size: 1rem;
+  font-size: var(--its-t-cartao);
   font-weight: 600;
+  line-height: var(--its-lh-cartao);
   margin: 0 0 16px;
   color: var(--text-primary);
 }
@@ -329,14 +342,34 @@ p {
   width: 100%;
 }
 
+/* Cabeçalho de página (padrão da its): título à esquerda, ações à direita,
+   24 px até o conteúdo. O mesmo em todas as telas. */
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--content-padding);
+  gap: var(--its-e-4);
+  min-height: 44px;
+  margin-bottom: var(--its-cabecalho-conteudo);
 
   h1 {
     margin: 0;
+  }
+}
+
+/* Subtítulo de uma linha embaixo do título (cabeçalho com .page-header-textos). */
+.page-header-textos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--its-e-1);
+  min-width: 0;
+
+  p {
+    margin: 0;
+    font-size: var(--its-t-pequeno);
+    line-height: var(--its-lh-pequeno);
+    color: var(--text-secondary);
+    max-width: 68ch;
   }
 }
 
@@ -344,7 +377,7 @@ p {
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -371,12 +404,14 @@ p {
   }
 }
 
+/* Entrada da tela nova: 120 ms (rodada 2). Somada ao tempo de montar a tela,
+   a troca fica perto de 200 ms; com movimento reduzido, nada anima. */
 .animate-fade-in-up {
-  animation: fadeInUp var(--transition-enter) forwards;
+  animation: fadeInUp 120ms var(--ease-emphasized) forwards;
 }
 
 .animate-fade-in {
-  animation: fadeIn var(--transition-enter) forwards;
+  animation: fadeIn 120ms var(--ease-emphasized) forwards;
 }
 
 /* Cards */
@@ -419,20 +454,33 @@ p {
   }
 }
 
-/* Badges */
+/* Pílulas de status (guia da its): 24 px de altura, 12 px peso 600, numa
+   linha só. A tabela de cores é uma para o produto inteiro:
+   - azul (aberta): chegou e ninguém mexeu ainda (Novo, Recebido);
+   - âmbar (vistoria): esperando alguém agir (orçamento, aprovação);
+   - verde (aprovada): aprovado, ativo, em dia;
+   - teal (executada): serviço feito, falta conferir;
+   - vermelho (rejeitada): recusado, crítico, vencido;
+   - cinza (neutra/encerrada): concluído, cancelado, sem informação.
+   "Aprovado" é sempre verde, em qualquer tela. */
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: var(--its-e-1);
+  height: 24px;
+  max-width: 100%;
+  padding: 0 var(--its-e-2);
   border-radius: var(--badge-radius);
-  font-size: 0.75rem;
+  font-size: var(--its-t-legenda);
   font-weight: 600;
   line-height: 1;
+  letter-spacing: 0;
   white-space: nowrap;
+  vertical-align: middle;
 
   app-icon {
     font-size: 14px;
+    flex: none;
   }
 
   &--aberta {
@@ -462,10 +510,26 @@ p {
     color: var(--primary-400);
   }
 
-  &--encerrada {
-    background-color: var(--success-50);
-    color: var(--success-500);
+  &--encerrada,
+  &--neutra {
+    background-color: var(--bg-elevated);
+    color: var(--text-secondary);
   }
+
+  /* Mantida por compatibilidade: a pílula nunca quebra; o texto longo vai
+     para a dica ou para a linha "Agora: ..." embaixo dela. */
+  &--longa {
+    white-space: nowrap;
+  }
+}
+
+/* "Quem age agora", embaixo do selo da situação. */
+.situacao-agora {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
 }
 
 /* Tabelas */
@@ -475,12 +539,11 @@ p {
   border-spacing: 0;
   background: transparent;
 
+  /* Cabeçalho de tabela do guia: legenda de 12 px em 600, sem caixa alta. */
   th.mat-mdc-header-cell {
     color: var(--text-tertiary);
-    font-size: 0.6875rem;
+    font-size: var(--its-t-legenda);
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
     background-color: transparent;
     border-bottom: 1px solid var(--border-default);
     height: 36px;
@@ -488,9 +551,9 @@ p {
 
   td.mat-mdc-cell {
     color: var(--text-secondary);
-    font-size: 0.8125rem;
+    font-size: var(--its-t-corpo);
     border-bottom: 1px solid var(--border-default);
-    height: 44px;
+    height: var(--its-linha-tabela);
   }
 
   tr.mat-mdc-row {
@@ -723,10 +786,12 @@ p {
       background-color: var(--bg-elevated) !important;
     }
 
+    /* Valor de campo travado é informação ("Senai Santa Maria", a unidade de
+       quem pede): fica legível (AA). O fundo e a borda já dizem que não muda. */
     input,
     textarea,
     .mat-mdc-select-value {
-      color: var(--text-disabled) !important;
+      color: var(--text-tertiary) !important;
     }
   }
 
@@ -777,11 +842,30 @@ p {
 }
 
 /* Menu (mat-menu) — mesmo tratamento do select, senão herda o tema padrão
-   do Material e fica escuro mesmo no tema claro do app. */
+   do Material e fica escuro mesmo no tema claro do app. Borda e sombra
+   fortes: o painel (notificações, troca de perfil) precisa se destacar da
+   tela de baixo, que tem a mesma cor de cartão. */
 .mat-mdc-menu-panel {
   background-color: var(--bg-tertiary) !important;
-  border: 1px solid var(--border-default) !important;
+  border: 1px solid var(--border-hover) !important;
   border-radius: var(--card-radius) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32), 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+  opacity: 1;
+}
+
+/* Item de menu com texto de duas linhas ("Aprovado, aguardando o serviço",
+   "Diego, gestor da empresa contratada"): a altura cresce com o texto. Antes a
+   altura era fixa e a segunda linha encostava no item de baixo. */
+.mat-mdc-menu-item {
+  height: auto !important;
+  min-height: 44px !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+
+  .mat-mdc-menu-item-text {
+    line-height: 1.35 !important;
+    white-space: normal;
+  }
 }
 
 .mat-mdc-menu-item {
@@ -954,8 +1038,22 @@ body .mat-mdc-checkbox.mat-warn {
   border: 1px solid var(--border-default);
   /* O MDC deixa a surface com overflow-y:auto por padrão; como cada modal já
      tem sua própria região rolável interna (cabeçalho/rodapé fixos), isso
-     cria dois scrollbars empilhados. A surface nunca deve rolar sozinha. */
-  overflow: hidden !important;
+     cria dois scrollbars empilhados. A surface nunca deve rolar sozinha.
+     "clip" e não "hidden": com hidden, focar um campo lá embaixo rolava a
+     surface por código e o título ("Pedir um conserto") sumia cortado. */
+  overflow: clip !important;
+}
+
+/* O formulário cabe na janela (a borda de 1 px da surface entra na conta). */
+.novo-chamado-dialog .modal-form,
+.nova-os-dialog .modal-form,
+.novo-contrato-dialog .modal-form,
+.usuario-form-dialog .modal-form {
+  max-height: calc(90vh - 2px) !important;
+
+  @media (max-width: 760px) {
+    max-height: min(calc(90vh - 2px), calc(100dvh - 18px)) !important;
+  }
 }
 
 .novo-chamado-dialog .mat-mdc-dialog-container,
@@ -1205,32 +1303,39 @@ body.light-mode {
   --bg-overlay: rgba(16, 25, 28, 0.55);
 
   /* Primária — Teal Zella exato. 5.7:1 sobre branco; usada em CTA, seleção
-     e foco. primary-400 (#1f7e81, 4.8:1) para rótulos de foco. */
+     e foco. primary-400 para rótulos e links: #17706f (rodada 2) passa AA
+     também sobre a tinta primary-50 em fundo cinza (4,8:1); o #1f7e81 dava
+     4,4:1 em "Serviço feito" e "Ver contrato". O teal de destaque (500) fica. */
   --primary-50: rgba(15, 107, 110, 0.08);
   --primary-100: rgba(15, 107, 110, 0.15);
-  --primary-400: #1f7e81;
+  --primary-400: #17706f;
   --primary-500: #0f6b6e;
   --primary-600: #0c5b5e;
   --primary-700: #0a4c4e;
   --primary-contrast: #ffffff;
 
-  /* Semânticas ajustadas para fundo claro */
-  --success-50: rgba(30, 158, 79, 0.1);
-  --success-500: #1e9e4f;
-  --success-600: #17843f;
-  --warning-50: rgba(227, 146, 44, 0.12);
-  --warning-500: #e3922c;
-  --warning-600: #c27618;
-  --danger-50: rgba(255, 77, 79, 0.1);
-  --info-50: rgba(26, 111, 207, 0.1);
-  --info-500: #1a6fcf; /* 5.0:1 em branco */
-  --info-600: #145cad;
+  /* Semânticas ajustadas para fundo claro. Rodada 2: as pílulas e o prazo
+     usam a cor 500 como texto sobre a tinta 50, e as do tema escuro davam de
+     2,1:1 (âmbar) a 4,0:1 (azul). Os tons abaixo passam AA (4,5:1) sobre a
+     tinta em fundo branco e em #f1f5f6; o vermelho do escuro não valia aqui. */
+  --success-50: rgba(17, 115, 58, 0.1);
+  --success-500: #11733a; /* 4,7:1 na tinta sobre #f1f5f6 */
+  --success-600: #0d5f2f;
+  --warning-50: rgba(143, 80, 0, 0.1);
+  --warning-500: #8f5000; /* 4,9:1 */
+  --warning-600: #774200;
+  --danger-50: rgba(192, 39, 43, 0.1);
+  --danger-500: #c0272b; /* 4,6:1 */
+  --danger-600: #a51f23;
+  --info-50: rgba(21, 95, 181, 0.1);
+  --info-500: #155fb5; /* 5,0:1 */
+  --info-600: #114e96;
 
   /* Texto — carvão e seus tons. text-tertiary #5f7178 é o cinza-azulado
-     mais claro que ainda passa WCAG AA (5.1:1) em branco. */
+     mais claro que passa AA (4,5:1) também sobre --bg-elevated (#e3ebed): 4,8:1. */
   --text-primary: #10191c;
   --text-secondary: #46595f;
-  --text-tertiary: #5f7178;
+  --text-tertiary: #56686e;
   --text-disabled: #aebbbf;
 
   /* Bordas */
@@ -1278,7 +1383,6 @@ body.light-mode {
 
   h1, h2, h3 {
     font-family: var(--font-sans);
-    letter-spacing: -0.02em;
   }
 
   .mat-mdc-raised-button.mat-primary {
@@ -1443,7 +1547,7 @@ app-icon svg {
 
   .rail-menu-titulo {
     padding: 10px 16px 2px;
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -1483,7 +1587,6 @@ app-icon svg {
   .usuario-menu-perfil {
     font-size: 0.75rem;
     color: var(--text-secondary);
-    text-transform: capitalize;
   }
 
   .mat-mdc-menu-item {
@@ -1494,7 +1597,7 @@ app-icon svg {
 
     .usuario-menu-perfil-tag {
       margin-left: auto;
-      font-size: 0.6875rem;
+      font-size: 0.75rem;
       padding: 2px 6px;
       border-radius: 4px;
       background: var(--bg-elevated);
@@ -1529,14 +1632,26 @@ app-icon svg {
     align-items: flex-start;
 
     h1 {
-      font-size: 1.5rem;
-      line-height: 1.2;
       flex: 1 1 60%;
       min-width: 0;
     }
 
-    > :not(h1) {
+    /* Título e subtítulo ocupam a linha toda; as ações descem para baixo
+       deles e quebram linha entre si, sem passar da borda. */
+    > .page-header-textos {
+      flex: 1 1 100%;
+      min-width: 0;
+    }
+
+    > :not(h1):not(.page-header-textos) {
       flex-shrink: 0;
+      max-width: 100%;
+    }
+
+    > div:not(.page-header-textos) {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--its-e-2);
     }
   }
 
@@ -1548,8 +1663,8 @@ app-icon svg {
     -webkit-overflow-scrolling: touch;
   }
 
-  .mat-mdc-table.app-table,
-  table.app-table {
+  .mat-mdc-table.app-table:not(.app-table--lista),
+  table.app-table:not(.app-table--lista) {
     min-width: 640px;
 
     .mat-mdc-cell,
@@ -1604,4 +1719,211 @@ app-icon svg {
   .segmented-control .segmented-btn { min-height: 40px !important; }
   app-historico-registro .historico-toggle { min-height: 44px; }
   .toolbar-brand { padding: 10px 4px; margin: -10px -4px; }
+}
+
+
+/* ============================================================
+   Abas e linhas de tabela
+   Mecanismo vindo do beUI (MIT): "Tabs - indicador animado por
+   spring" e o realce de linha ao passar o mouse. Nada de codigo
+   copiado - o catalogo e React com Motion, aqui e CSS puro.
+   ============================================================ */
+
+/*
+  As abas passam a ter o tamanho do proprio rotulo, encostadas a esquerda,
+  em vez de esticadas em metades iguais. Era por isso que "Lista" e "Quadro"
+  ficavam em pontas opostas com um sublinhado atravessando meia tela: o
+  Material distribui as abas pela largura toda quando ninguem diz o contrario.
+*/
+.mat-mdc-tab-labels {
+  justify-content: flex-start;
+  gap: 2px;
+}
+
+.mat-mdc-tab {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  padding: 0 18px !important;
+}
+
+/*
+  O indicador desliza entre as abas passando um pouco do ponto e voltando -
+  e o que da a sensacao de peso do spring do catalogo, sem biblioteca de
+  animacao. Propriedades longas de proposito: `var()` dentro do atalho
+  `transition` quebra o parser em alguns navegadores.
+*/
+.mat-mdc-tab .mdc-tab-indicator__content--underline {
+  transition-property: transform, width, border-color;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.34, 1.26, 0.64, 1);
+}
+
+/*
+  Linha da tabela sob o cursor: uma barra de acento cresce na borda esquerda.
+  Cresce por `transform: scaleY`, nao por altura ou sombra - numa lista longa,
+  efeito que repinta derruba a rolagem, e aqui so a linha sob o cursor anima.
+*/
+.mat-mdc-table.app-table tbody tr {
+  transition-property: background-color;
+  transition-duration: 120ms;
+  transition-timing-function: ease;
+}
+
+/* A barra mora na primeira célula, não na linha: um ::before direto no <tr>
+   vira uma célula anônima no Chrome e empurra os dados uma coluna à direita. */
+.mat-mdc-table.app-table tbody tr > td:first-child {
+  position: relative;
+}
+
+.mat-mdc-table.app-table tbody tr > td:first-child::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--primary-500);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition-property: transform;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mat-mdc-table.app-table tbody tr:hover {
+    background-color: var(--bg-secondary);
+  }
+
+  .mat-mdc-table.app-table tbody tr:hover > td:first-child::before {
+    transform: scaleY(1);
+  }
+}
+
+/*
+  Movimento reduzido: o indicador e a barra continuam mudando de lugar, mas
+  sem deslizar. Menos e mais suave, nao zero.
+*/
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion='full']) {
+    .mat-mdc-tab .mdc-tab-indicator__content--underline,
+    .mat-mdc-table.app-table tbody tr > td:first-child::before {
+      transition-duration: 0.01ms;
+    }
+  }
+}
+
+/* ============================================================
+   Avisos de sucesso e de erro (UiFeedbackService): snack bar do
+   Material com os tokens do app. A faixa da esquerda diz se deu
+   certo (verde) ou não (vermelho) sem depender só da cor do texto.
+   ============================================================ */
+.mat-mdc-snack-bar-container.aviso-tela {
+  --mdc-snackbar-container-color: var(--bg-elevated);
+  --mdc-snackbar-supporting-text-color: var(--text-primary);
+  --mdc-snackbar-supporting-text-size: 0.875rem;
+  --mdc-snackbar-supporting-text-weight: 500;
+  --mdc-snackbar-container-shape: var(--button-radius);
+  --mat-snack-bar-button-color: var(--primary-400);
+
+  .mdc-snackbar__surface {
+    border: 1px solid var(--border-default);
+    border-left: 4px solid var(--success-500);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  }
+}
+
+.mat-mdc-snack-bar-container.aviso-tela--erro .mdc-snackbar__surface {
+  border-left-color: var(--danger-500);
+}
+
+/* No celular a barra de navegação mora embaixo: o aviso sobe acima dela. */
+@media (max-width: 760px) {
+  .mat-mdc-snack-bar-container.aviso-tela {
+    margin-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+
+/* ======================================================================== */
+/* Tabela que vira lista de cartões no celular (guia da its, seção 4).       */
+/* Marque a tabela com .app-table--lista e cada célula com data-rotulo.      */
+/* A primeira coluna (.celula-principal) vira o título do cartão e a coluna */
+/* de ações fica no canto de cima, à direita.                                */
+/* ======================================================================== */
+@media (max-width: 767px) {
+  .mat-mdc-card-content:has(> table.app-table--lista),
+  .mat-mdc-card-content:has(> .app-table--lista) {
+    overflow-x: visible;
+  }
+
+  table.app-table.app-table--lista {
+    min-width: 0;
+
+    thead,
+    tr.mat-mdc-header-row {
+      display: none;
+    }
+
+    tbody,
+    tr.mat-mdc-row,
+    td.mat-mdc-cell {
+      display: block;
+      width: 100%;
+    }
+
+    tr.mat-mdc-row {
+      position: relative;
+      height: auto;
+      padding: var(--its-e-3) var(--its-e-4);
+      border-bottom: 1px solid var(--border-default);
+    }
+
+    td.mat-mdc-cell {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--its-e-3);
+      height: auto;
+      min-height: 0;
+      padding: var(--its-e-1) 0;
+      border: 0;
+      white-space: normal;
+      text-align: right;
+      overflow-wrap: anywhere;
+      font-size: var(--its-t-corpo);
+    }
+
+    td.mat-mdc-cell::before {
+      content: attr(data-rotulo);
+      flex: none;
+      font-size: var(--its-t-legenda);
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-align: left;
+    }
+
+    td.mat-mdc-cell:not([data-rotulo])::before {
+      content: none;
+    }
+
+    td.celula-principal {
+      display: block;
+      padding-right: 96px;
+      text-align: left;
+    }
+
+    td.celula-acoes {
+      position: absolute;
+      top: var(--its-e-1);
+      right: var(--its-e-1);
+      width: auto;
+      padding: 0;
+    }
+  }
+}
+
+/* Ação destrutiva dentro do menu "⋯": vermelha e por último. */
+.mat-mdc-menu-item.menu-item-perigo,
+.mat-mdc-menu-item.menu-item-perigo app-icon {
+  color: var(--danger-500) !important;
 }

@@ -1,0 +1,29 @@
+colunas do quadro: Novo | Aguardando orçamento | Aprovado | Serviço feito
+foto 00-pagina-inicial: sem rolagem lateral=true
+perfis na pagina inicial: Cada perfil vê só o que precisa. Uma plataforma, quatro jeitos de usar. A contratada só enxerga os próprios contratos; o solicitante, a própria unidade. Gestor Responsável da contratada Técnico Solicitante Gestor Dono dos contratos Abre OS e aprova orçamentos Registra aditivos Acompanha saldo e prazos Responsável da contratada Pela empresa prestadora Orça com itens do contrato Designa técnicos Exe
+foto 00b-pagina-inicial-perfis: sem rolagem lateral=true
+dica diego: Você é Diego Rocha, responsável da Elétrica Sul, a empresa contratada para a parte elétrica. Você vê só os chamados e as OS dos contratos da Elétrica Sul. || Em "Ordens de serviço", abra a OS-2026-0035, que aguarda o orçamento da sua empresa, e envie o orçamento. || Escolha o técnico que vai fazer cada OS. || Em "Saldo dos contratos", acompanhe o que já foi usado do contrato CTR-2026-002. || Os dados são de exemplo e nada sai de verdade. O que você fizer fica salvo neste navegador; para recomeçar, use "Recomeçar" na faixa do topo. Para ver o sistema por outra pessoa, use "Trocar perfil".
+diego lista: Mostrando 16 de 16 chamados.
+foto 01-diego-so-os-proprios-chamados: sem rolagem lateral=true
+dica carla: Em Chamados, abra o pedido CH-2026-0047, do ar-condicionado, e envie para a Ar Condicionado Ltda, que tem esse conserto no contrato. || Abra o pedido CH-2026-0049, da luminária, envie para a Elétrica Sul e escolha o técnico Eduardo. || Aprove o orçamento da OS-2026-0038 e veja o valor ficar separado no saldo do contrato. || Encerre o chamado CH-2026-0040, que já teve o serviço feito, e confira o Painel gerencial.
+foto 02-carla-dica: sem rolagem lateral=true
+titulos "Nova ordem" na pagina: 1
+aviso: ar-condicionado no contrato da Eletrica Sul: O contrato CTR-2026-002 parece não cobrir este conserto Nenhum item deste contrato (Elétrica Sul) parece ser para "Ar Split 12000 BTUs". Itens do contrato: Lâmpada LED 9W, Troca de reator. Se o conserto é de outro tipo, escolha o contrato da empresa certa. Enviar mesmo assim: confirmo que este contrato cobre o conserto
+foto 03-carla-aviso-contrato-sem-item: sem rolagem lateral=true
+clicou Enviar sem confirmar: /ordens-servico/nova | Marque a confirmação acima para enviar, ou troque o contrato.
+foto 04-carla-pede-confirmacao: sem rolagem lateral=true
+ar-condicionado na Ar Condicionado Ltda: sem aviso
+luminaria na Eletrica Sul: sem aviso
+eduardo: botoes no detalhe da OS-2026-0035: Linha do tempo | Criar orçamento | Fechar
+foto 05-eduardo-detalhe-os: sem rolagem lateral=true
+exemplo da busca: Digite para buscar: ar split, projetor, quadro…
+quem pede: Pedido em nome de Ana Souza (você)
+urgencia: Mostra à gestão o que atender primeiro. A urgência não muda o prazo do pedido. | radios: Pode esperar: Dá para continuar usando o local. / Atrapalha o trabalho: Atrapalha, mas não para o trabalho. / Urgente: Risco para alguém ou trabalho parado.
+busca bebedouro: Nenhum equipamento com "bebedouro" no cadastro desta unidade. Escolha "Outro (descrever)".
+foto 06-ana-busca-sem-resultado: sem rolagem lateral=true
+pedido repetido: Já existe um pedido em andamento para este equipamento CH-2026-0047: Ar Split 12000 BTUs, aberto em 14/10. Se for o mesmo defeito, não precisa pedir de novo. É outro defeito: enviar mesmo assim
+foto 07-ana-pedido-repetido: sem rolagem lateral=true
+rotulo "Onde fica" parado: fundo do rotulo=rgba(0, 0, 0, 0) linear-gradient(rgb(26, 36, 39 | campo vazio=false
+faixa: Dicas: o que tentar | Trocar perfil | Recomeçar
+menu de perfis abriu no 1o clique depois de fechar as dicas: 4
+foto 08-trocar-perfil: sem rolagem lateral=true

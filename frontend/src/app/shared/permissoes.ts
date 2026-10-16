@@ -9,12 +9,19 @@ import type { PerfilUsuario } from './models';
  * política declarada falha fechada em vez de ficar aberta por esquecimento.
  */
 export const PERFIS_POR_ROTA: Record<string, PerfilUsuario[]> = {
-  // Quem escaneia o QR Code entra como convidado e só chega até aqui.
-  'chamados/novo': ['convidado', 'cliente', 'gestor', 'gestor_contratado', 'tecnico'],
+  // Quem escaneia o QR Code entra como convidado e só chega até aqui. Pede
+  // conserto quem usa o prédio e a gestão; a contratada e o técnico recebem
+  // a OS (a callable criarChamado recusa os dois).
+  'chamados/novo': ['convidado', 'cliente', 'gestor'],
 
-  dashboard: ['cliente', 'gestor', 'gestor_contratado', 'tecnico'],
-  'ordens-servico': ['cliente', 'gestor', 'gestor_contratado', 'tecnico'],
-  'ordens-servico/nova': ['gestor', 'gestor_contratado'],
+  // A solicitante tem a tela dela ("Meus pedidos"): não cai no painel de
+  // gestão nem na lista de OS, que são de quem administra e de quem executa.
+  'meus-pedidos': ['cliente'],
+  dashboard: ['gestor', 'gestor_contratado', 'tecnico'],
+  'ordens-servico': ['gestor', 'gestor_contratado', 'tecnico'],
+  // Só o gestor transforma chamado em OS: a contratada não enxerga chamado
+  // que ainda não é dela (rodada 3), então não teria o que escolher.
+  'ordens-servico/nova': ['gestor'],
 
   // Contrato e saldo são dinheiro: cliente e técnico ficam de fora.
   contratos: ['gestor', 'gestor_contratado'],
@@ -24,6 +31,7 @@ export const PERFIS_POR_ROTA: Record<string, PerfilUsuario[]> = {
 
   // Cadastro e administração do sistema são só do gestor.
   unidades: ['gestor'],
+  equipamentos: ['gestor'],
   usuarios: ['gestor'],
   preventiva: ['gestor'],
   qrcodes: ['gestor'],
@@ -39,6 +47,10 @@ export const PERFIS_POR_ROTA: Record<string, PerfilUsuario[]> = {
 export function rotaInicial(perfil: PerfilUsuario): string {
   if (perfil === 'admin_plataforma') return '/empresas';
   if (perfil === 'convidado') return '/chamados/novo';
+  if (perfil === 'cliente') return '/meus-pedidos';
+  // O técnico começa nas OS dele ("Minhas OS para executar"), não na lista
+  // de chamados da gestão.
+  if (perfil === 'tecnico') return '/ordens-servico';
   return '/dashboard';
 }
 

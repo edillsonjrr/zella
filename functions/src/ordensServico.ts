@@ -3,8 +3,33 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { db, colecao, exigirPerfil, exigirMesmaContratada } from './admin';
 import { proximoNumero } from './contadores';
 import { registrarLog, resolverAutor } from './logs';
-import { notificar } from './notificacoes';
+import { notificar, lerSolicitante, avisarSolicitante } from './notificacoes';
+import { rotuloOS } from '../../shared/historico';
 import type { OrdemServico } from './types';
+
+/**
+ * Quem manda o orçamento na contratada (Z0.4). Com responsável da
+ * contratada cadastrado, é ele: foi ele quem recebeu "Aguarda orçamento", e
+ * o técnico só executa depois da aprovação. Sem responsável, o técnico é a
+ * única pessoa da contratada no sistema e orça ele mesmo. A callable aceita
+ * orçamento dos dois perfis; isto só decide o que cada um recebe de aviso.
+ */
+export async function quemOrca(empresaId: string, empresaContratadaId: string | undefined): Promise<'prestadora' | 'tecnico'> {
+  if (!empresaContratadaId) return 'tecnico';
+  const snap = await colecao(empresaId, 'usuarios')
+    .where('empresaContratadaId', '==', empresaContratadaId)
+    .where('perfil', '==', 'gestor_contratado')
+    .limit(1)
+    .get();
+  return snap.empty ? 'tecnico' : 'prestadora';
+}
+
+/** O que o técnico designado precisa fazer, conforme a etapa da OS e quem orça. */
+export function textoParaTecnico(situacao: string, orca: 'prestadora' | 'tecnico'): string {
+  if (situacao === 'Aprovada') return 'O orçamento já foi aprovado: faça o serviço e registre como feito.';
+  if (orca === 'tecnico') return 'Confira o pedido e envie o orçamento para a gestão aprovar.';
+  return 'Sua empresa manda o orçamento. Depois que a gestão aprovar, você faz o serviço e registra como feito.';
+}
 
 export interface CriarOSInput {
   chamadoId: string;
@@ -12,8 +37,10 @@ export interface CriarOSInput {
   tecnicoId?: string;
 }
 
+// Só o gestor do cliente transforma chamado em OS. A contratada não enxerga
+// os chamados que ainda não são dela (rodada 3), então não escolhe chamado.
 export const criarOS = onCall<CriarOSInput>(async (request) => {
-  const ctx = exigirPerfil(request, ['gestor', 'gestor_contratado']);
+  const ctx = exigirPerfil(request, ['gestor']);
   const { empresaId } = ctx;
 
   const { chamadoId, contratoId, tecnicoId } = request.data;
@@ -25,6 +52,20 @@ export const criarOS = onCall<CriarOSInput>(async (request) => {
   const contratoRef = colecao(empresaId, 'contratos').doc(contratoId);
   const osRef = colecao(empresaId, 'ordensServico').doc();
   const autor = await resolverAutor(request, empresaId);
+
+  // Técnico escolhido na criação: precisa ser técnico e, conferido dentro da
+  // transação, da contratada do contrato (a mesma regra de atribuirTecnicoOS).
+  // Antes a tela listava técnicos de todas as contratadas, e a OS nascia com
+  // alguém que o detalhe da OS não mostrava.
+  let tecnico: FirebaseFirestore.DocumentData | undefined;
+  if (tecnicoId) {
+    tecnico = (await colecao(empresaId, 'usuarios').doc(tecnicoId).get()).data();
+    if (!tecnico || tecnico['perfil'] !== 'tecnico') {
+      throw new HttpsError('invalid-argument', 'O usuário escolhido não é um técnico.');
+    }
+  }
+  // Fora da transação: só decide o texto do aviso ao técnico.
+  const orca = tecnicoId ? await quemOrca(empresaId, (await contratoRef.get()).data()?.['empresaContratadaId']) : 'tecnico';
 
   const numero = await db.runTransaction(async (tx) => {
     const chamadoSnap = await tx.get(chamadoRef);
@@ -50,6 +91,13 @@ export const criarOS = onCall<CriarOSInput>(async (request) => {
       throw new HttpsError('failed-precondition', `O contrato ${contrato.numero} está encerrado ou vencido.`);
     }
     exigirMesmaContratada(ctx, contrato as { empresaContratadaId?: string });
+    if (tecnico && contrato.empresaContratadaId && tecnico['empresaContratadaId'] !== contrato.empresaContratadaId) {
+      throw new HttpsError('failed-precondition', 'O técnico precisa ser da empresa contratada do contrato escolhido.');
+    }
+
+    // Leitura antes do contador: ele já escreve, e depois de uma escrita a
+    // transação não aceita mais leituras.
+    const solicitante = await lerSolicitante(tx, empresaId, chamadoSnap.data());
 
     const numero = await proximoNumero(tx, empresaId, 'OS');
 
@@ -66,15 +114,18 @@ export const criarOS = onCall<CriarOSInput>(async (request) => {
     };
 
     tx.set(osRef, os);
+    // A empresa contratada vai junto para o chamado: é por este campo que a
+    // regra deixa a contratada ler só os chamados dos próprios contratos.
     tx.update(chamadoRef, {
       status: 'Em atendimento',
-      ordemServicoId: osRef.id
+      ordemServicoId: osRef.id,
+      empresaContratadaId: contrato.empresaContratadaId ?? FieldValue.delete()
     });
 
     registrarLog(tx, empresaId, autor, {
       alvo: 'ordemServico',
       operacao: 'criar',
-      descricao: `Criou a OS ${numero} a partir do chamado ${chamadoSnap.data()!.numero}`,
+      descricao: `Criou a ${rotuloOS(numero)} a partir do chamado ${chamadoSnap.data()!.numero}`,
       alvoId: osRef.id,
       alvoRotulo: numero,
       alvoPaiId: chamadoId,
@@ -86,21 +137,27 @@ export const criarOS = onCall<CriarOSInput>(async (request) => {
       notificar(tx, empresaId, {
         paraPerfil: 'gestor_contratado',
         empresaContratadaId: contrato.empresaContratadaId,
-        titulo: `Nova OS ${numero}`,
-        texto: `Aberta no contrato ${contrato.numero} para o chamado ${chamadoSnap.data()!.numero}. Aguarda orçamento.`,
-        link: '/ordens-servico',
+        titulo: `Nova ${rotuloOS(numero)}`,
+        texto: `Aberta no contrato ${contrato.numero} para o chamado ${chamadoSnap.data()!.numero}. Aguarda o orçamento da sua empresa.`,
+        link: `/ordens-servico?os=${osRef.id}`,
         alvo: { tipo: 'ordemServico', id: osRef.id, numero }
       });
     }
     if (tecnicoId) {
       notificar(tx, empresaId, {
         paraUsuarioId: tecnicoId,
-        titulo: `OS ${numero} designada a você`,
-        texto: `Chamado ${chamadoSnap.data()!.numero}: ${chamadoSnap.data()!.equipamento}. Envie o orçamento.`,
-        link: '/ordens-servico',
+        titulo: `${rotuloOS(numero)} designada a você`,
+        texto: `Chamado ${chamadoSnap.data()!.numero}: ${chamadoSnap.data()!.equipamento}. ${textoParaTecnico('Aberta', orca)}`,
+        link: `/ordens-servico?os=${osRef.id}`,
         alvo: { tipo: 'ordemServico', id: osRef.id, numero }
       });
     }
+
+    // Quem pediu fica sabendo que o pedido saiu da mesa da gestão.
+    avisarSolicitante(tx, empresaId, solicitante, ctx.usuarioId, { id: chamadoId, numero: chamadoSnap.data()!.numero as string }, {
+      titulo: `Pedido ${chamadoSnap.data()!.numero} encaminhado`,
+      texto: `Seu pedido foi enviado à empresa contratada (${rotuloOS(numero)}). Ela vai avaliar o serviço.`
+    });
 
     return numero;
   });
@@ -133,6 +190,8 @@ export const atribuirTecnicoOS = onCall<{ osId: string; tecnicoId: string | null
     }
     nomeTecnico = (tecnico['nome'] as string) ?? tecnicoId;
   }
+  // Fora da transação: só decide o texto do aviso ao técnico.
+  const orca = tecnicoId ? await quemOrca(empresaId, (await osRef.get()).data()?.['empresaContratadaId']) : 'tecnico';
 
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(osRef);
@@ -142,7 +201,7 @@ export const atribuirTecnicoOS = onCall<{ osId: string; tecnicoId: string | null
     const os = snap.data()!;
     exigirMesmaContratada(ctx, os as { empresaContratadaId?: string });
     if (['Executada', 'Encerrada', 'Cancelada'].includes(os.situacao)) {
-      throw new HttpsError('failed-precondition', `A OS ${os.numero} está ${os.situacao} e não muda mais de técnico.`);
+      throw new HttpsError('failed-precondition', `A ${rotuloOS(os.numero)} já foi ${os.situacao === 'Cancelada' ? 'cancelada' : 'feita'} e não muda mais de técnico.`);
     }
     if (tecnico && os.empresaContratadaId && tecnico['empresaContratadaId'] !== os.empresaContratadaId) {
       throw new HttpsError('failed-precondition', 'O técnico precisa ser da empresa contratada desta OS.');
@@ -153,7 +212,7 @@ export const atribuirTecnicoOS = onCall<{ osId: string; tecnicoId: string | null
     registrarLog(tx, empresaId, autor, {
       alvo: 'ordemServico',
       operacao: 'editar',
-      descricao: tecnicoId ? `Designou a OS ${os.numero} a ${nomeTecnico}` : `Removeu o técnico da OS ${os.numero}`,
+      descricao: tecnicoId ? `Designou a ${rotuloOS(os.numero)} a ${nomeTecnico}` : `Removeu o técnico da ${rotuloOS(os.numero)}`,
       alvoId: osId,
       alvoRotulo: os.numero as string,
       detalhes: { tecnico: { de: os.tecnicoId ?? null, para: tecnicoId ?? null } }
@@ -162,9 +221,9 @@ export const atribuirTecnicoOS = onCall<{ osId: string; tecnicoId: string | null
     if (tecnicoId) {
       notificar(tx, empresaId, {
         paraUsuarioId: tecnicoId,
-        titulo: `OS ${os.numero} designada a você`,
-        texto: 'Confira o chamado e envie o orçamento, ou execute se já estiver aprovada.',
-        link: '/ordens-servico',
+        titulo: `${rotuloOS(os.numero)} designada a você`,
+        texto: textoParaTecnico(os.situacao as string, orca),
+        link: `/ordens-servico?os=${osId}`,
         alvo: { tipo: 'ordemServico', id: osId, numero: os.numero as string }
       });
     }

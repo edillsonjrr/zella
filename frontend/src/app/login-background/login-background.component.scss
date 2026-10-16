@@ -148,7 +148,7 @@ $ciclo: 14s;
   height: 20px;
   padding: 0 8px;
   border-radius: 999px;
-  font-size: 10px;
+  font-size: 10px; // its-ok: fundo decorativo com aria-hidden, miniatura de pílula animada
   font-weight: 600;
   white-space: nowrap;
   animation: etapa-cor $ciclo steps(1, end) infinite;

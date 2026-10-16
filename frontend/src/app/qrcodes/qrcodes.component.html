@@ -26,7 +26,7 @@
           <ng-container matColumnDef="acoes">
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let u">
-              <app-flow-button (click)="gerarQrCodeUnidade(u)">
+              <app-flow-button variant="secondary" size="sm" (click)="gerarQrCodeUnidade(u)">
                 <app-icon class="btn-icon" name="qr_code" aria-hidden="true"></app-icon>
                 Gerar QR Code
               </app-flow-button>
@@ -54,7 +54,7 @@
             <ng-container matColumnDef="acoes">
               <th mat-header-cell *matHeaderCellDef></th>
               <td mat-cell *matCellDef="let b">
-                <app-flow-button (click)="gerarQrCodeBloco(b)">
+                <app-flow-button variant="secondary" size="sm" (click)="gerarQrCodeBloco(b)">
                   <app-icon class="btn-icon" name="qr_code" aria-hidden="true"></app-icon>
                   Gerar QR Code
                 </app-flow-button>
@@ -85,7 +85,7 @@
             <ng-container matColumnDef="acoes">
               <th mat-header-cell *matHeaderCellDef></th>
               <td mat-cell *matCellDef="let s">
-                <app-flow-button (click)="gerarQrCodeSala(s)">
+                <app-flow-button variant="secondary" size="sm" (click)="gerarQrCodeSala(s)">
                   <app-icon class="btn-icon" name="qr_code" aria-hidden="true"></app-icon>
                   Gerar QR Code
                 </app-flow-button>
@@ -116,7 +116,7 @@
             <ng-container matColumnDef="acoes">
               <th mat-header-cell *matHeaderCellDef></th>
               <td mat-cell *matCellDef="let e">
-                <app-flow-button (click)="gerarQrCodeEquipamento(e)">
+                <app-flow-button variant="secondary" size="sm" (click)="gerarQrCodeEquipamento(e)">
                   <app-icon class="btn-icon" name="qr_code" aria-hidden="true"></app-icon>
                   Gerar QR Code
                 </app-flow-button>

@@ -61,7 +61,8 @@ async function gerarChamadoDoPlano(empresaId: string, plano: PlanoManutencao): P
       dataVencimento: plano.proximaExecucao,
       possuiFoto: false,
       origem: 'preventiva',
-      planoId: plano.id
+      planoId: plano.id,
+      equipamentoId: plano.equipamentoId
     };
 
     tx.set(chamadoRef, chamado);

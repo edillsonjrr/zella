@@ -1,5 +1,5 @@
 import { Component, Inject, Optional, computed, inject, signal } from '@angular/core';
-import { CurrencyPipe } from '@angular/common';
+import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -12,7 +12,7 @@ import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/materia
 import { IconComponent } from '../shared/icon/icon.component';
 import { FlowButtonComponent } from '../shared/flow-button/flow-button.component';
 import { DataService } from '../shared/data.service';
-import type { OrdemServico, Contrato, Orcamento } from '../shared/models';
+import type { OrdemServico, Orcamento, DecisaoForaContrato, ItemForaContratoPedido } from '../shared/models';
 
 interface ItemSelecionado {
   itemContratoId: string;
@@ -24,13 +24,24 @@ interface ItemSelecionado {
   selecionado: boolean;
 }
 
+// Item fora do contrato (Z3.5), como a prestadora preenche. Os números ficam
+// null enquanto o campo está vazio.
+interface LinhaForaContrato {
+  descricao: string;
+  quantidade: number | null;
+  unidade: string;
+  precoUnitario: number | null;
+  // Só no orçamento já decidido, para mostrar o que a gestão fez.
+  decisao?: DecisaoForaContrato;
+}
+
 interface OrcamentoDialogData {
   os: OrdemServico;
 }
 
 @Component({
   selector: 'app-orcamento',
-  imports: [
+  imports: [DecimalPipe, 
     FormsModule,
     CurrencyPipe,
     MatCardModule,
@@ -49,10 +60,13 @@ interface OrcamentoDialogData {
 })
 export class OrcamentoComponent {
   private dataService = inject(DataService);
+  // No celular os botões do rodapé ocupam a largura toda, um embaixo do outro.
+  readonly celular = typeof matchMedia === 'function' && matchMedia('(max-width: 480px)').matches;
 
   os: OrdemServico = inject(MAT_DIALOG_DATA).os;
   orcamentoExistente = signal<Orcamento | undefined>(undefined);
   itensSelecionados = signal<ItemSelecionado[]>([]);
+  itensFora = signal<LinhaForaContrato[]>([]);
   salvando = signal(false);
   erro = signal('');
 
@@ -74,7 +88,27 @@ export class OrcamentoComponent {
 
   recalcular(): void {
     this.itensSelecionados.update(lista => [...lista]);
+    this.itensFora.update(lista => [...lista]);
   }
+
+  acrescentarForaContrato(): void {
+    this.itensFora.update(lista => [...lista, { descricao: '', quantidade: 1, unidade: 'un', precoUnitario: null }]);
+    // Leva o foco para a descrição do item novo.
+    setTimeout(() => {
+      const campos = document.querySelectorAll<HTMLInputElement>('.fora-descricao input');
+      campos[campos.length - 1]?.focus();
+    });
+  }
+
+  removerForaContrato(indice: number): void {
+    this.itensFora.update(lista => lista.filter((_, i) => i !== indice));
+  }
+
+  subtotalFora(f: LinhaForaContrato): number {
+    return (Number(f.quantidade) || 0) * (Number(f.precoUnitario) || 0);
+  }
+
+  totalFora = computed(() => this.itensFora().reduce((s, f) => s + this.subtotalFora(f), 0));
 
   total = computed(() => {
     return this.itensSelecionados()
@@ -96,6 +130,7 @@ export class OrcamentoComponent {
     const contrato = this.contrato();
     if (!contrato) {
       this.itensSelecionados.set([]);
+      this.itensFora.set([]);
       return;
     }
 
@@ -113,13 +148,25 @@ export class OrcamentoComponent {
     });
 
     this.itensSelecionados.set(itens);
+    this.itensFora.set(
+      (orcamento?.itensForaContrato ?? []).map(f => ({
+        descricao: f.descricao,
+        quantidade: f.quantidade,
+        unidade: f.unidade,
+        precoUnitario: f.precoUnitario,
+        // A decisão só vale para o orçamento que ela decidiu; no reenvio
+        // depois de recusado, os itens voltam sem decisão.
+        decisao: orcamento?.situacao === 'Aprovado' ? f.decisao : undefined
+      }))
+    );
   }
 
   salvar(): void {
     this.erro.set('');
     const selecionados = this.itensSelecionados().filter(i => i.selecionado);
-    if (!selecionados.length) {
-      this.erro.set('Selecione ao menos um item.');
+    const fora = this.itensFora();
+    if (!selecionados.length && !fora.length) {
+      this.erro.set('Selecione ao menos um item do contrato ou acrescente um item fora do contrato.');
       return;
     }
     for (const item of selecionados) {
@@ -128,7 +175,27 @@ export class OrcamentoComponent {
         return;
       }
       if (Number(item.quantidade) > item.saldo) {
-        this.erro.set(`Saldo insuficiente para ${item.nome}. Disponível: ${item.saldo}.`);
+        this.erro.set(`Saldo insuficiente para ${item.nome}. Restam ${item.saldo} ${item.unidadeMedida} no contrato.`);
+        return;
+      }
+    }
+
+    for (const [i, f] of fora.entries()) {
+      const qual = f.descricao.trim() ? `"${f.descricao.trim()}"` : `o item fora do contrato ${i + 1}`;
+      if (f.descricao.trim().length < 3) {
+        this.erro.set(`Escreva a descrição do item fora do contrato ${i + 1}.`);
+        return;
+      }
+      if (!(Number(f.quantidade) > 0)) {
+        this.erro.set(`Informe uma quantidade maior que zero para ${qual}.`);
+        return;
+      }
+      if (!f.unidade.trim()) {
+        this.erro.set(`Informe a unidade de ${qual} (un, m, h...).`);
+        return;
+      }
+      if (!(Number(f.precoUnitario) > 0)) {
+        this.erro.set(`Informe o preço unitário de ${qual}.`);
         return;
       }
     }
@@ -139,13 +206,21 @@ export class OrcamentoComponent {
       itemContratoId: i.itemContratoId,
       quantidade: Number(i.quantidade)
     }));
+    // Fora do contrato vai com descrição, unidade e preço: não há contrato
+    // de onde copiar.
+    const itensForaContrato: ItemForaContratoPedido[] = fora.map(f => ({
+      descricao: f.descricao.trim(),
+      quantidade: Number(f.quantidade),
+      unidade: f.unidade.trim(),
+      precoUnitario: Number(f.precoUnitario)
+    }));
 
     // Não existe Cloud Function pra editar um orçamento Pendente existente
     // (as rules bloqueiam escrita direta em orcamentos/*) — reenviar cria um
     // orçamento novo e o pendente anterior passa a "Substituído".
     this.salvando.set(true);
     this.erro.set('');
-    this.dataService.criarOrcamento(this.os.id, itens)
+    this.dataService.criarOrcamento(this.os.id, itens, itensForaContrato)
       .then(() => this.fechar())
       .catch((e: unknown) => this.erro.set(e instanceof Error ? e.message : 'Não foi possível salvar o orçamento.'))
       .finally(() => this.salvando.set(false));

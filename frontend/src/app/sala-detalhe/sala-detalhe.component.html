@@ -5,7 +5,7 @@
     </div>
     <div>
       <h2>{{ sala.nome }}</h2>
-      <span class="painel-subtitulo">{{ unidade?.sigla }}{{ bloco ? ' · ' + bloco.nome : '' }}</span>
+      <span class="painel-subtitulo">{{ unidade?.nome }}{{ bloco ? ' · ' + bloco.nome : '' }}</span>
     </div>
   </div>
   <button mat-icon-button (click)="fechar()" aria-label="Fechar">
@@ -48,7 +48,7 @@
           <td mat-cell *matCellDef="let e">
             <strong>{{ e.nome }}</strong>
             @if (e.patrimonio) {
-              <span class="equipamento-patrimonio">{{ e.patrimonio }}</span>
+              <span class="equipamento-patrimonio">{{ rotuloPatrimonio(e.patrimonio) }}</span>
             }
           </td>
         </ng-container>

@@ -1,3 +1,5 @@
+import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Component, inject } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -9,6 +11,7 @@ import { DataService } from '../shared/data.service';
 import { DialogoService } from '../shared/dialogo/dialogo.service';
 import { UiFeedbackService } from '../shared/ui-feedback.service';
 import { UsuarioFormComponent } from '../usuario-form/usuario-form.component';
+import { PERFIS_CADASTRAVEIS, rotuloPerfil } from '../shared/rotulos';
 import type { PerfilUsuario, Usuario } from '../shared/models';
 
 @Component({
@@ -17,6 +20,8 @@ import type { PerfilUsuario, Usuario } from '../shared/models';
     MatCardModule,
     MatTableModule,
     MatButtonModule,
+    MatMenuModule,
+    MatTooltipModule,
     MatDialogModule,
     IconComponent,
     FlowButtonComponent
@@ -33,12 +38,7 @@ export class UsuariosComponent {
   displayedColumns: string[] = ['nome', 'email', 'perfil', 'unidade', 'contratada', 'acoes'];
   usuarios = this.dataService.usuarios;
 
-  perfis: { value: PerfilUsuario; label: string }[] = [
-    { value: 'cliente', label: 'Cliente' },
-    { value: 'gestor', label: 'Gestor' },
-    { value: 'gestor_contratado', label: 'Gestor contratado' },
-    { value: 'tecnico', label: 'Técnico' }
-  ];
+  perfis = PERFIS_CADASTRAVEIS;
 
   nova(): void {
     this.dialog.open(UsuarioFormComponent, {
@@ -72,6 +72,6 @@ export class UsuariosComponent {
   }
 
   perfilLabel(perfil: PerfilUsuario): string {
-    return this.perfis.find(p => p.value === perfil)?.label ?? perfil;
+    return rotuloPerfil(perfil);
   }
 }

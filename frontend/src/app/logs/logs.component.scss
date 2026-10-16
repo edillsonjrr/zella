@@ -126,8 +126,14 @@
     border-radius: 50%;
     background: var(--primary-50);
     color: var(--primary-400);
-    font-size: 0.625rem;
+    font-size: var(--its-t-legenda);
     font-weight: 700;
+
+    &--sistema app-icon {
+      font-size: 12px;
+      width: 12px;
+      height: 12px;
+    }
   }
 
   .etiqueta {

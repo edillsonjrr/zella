@@ -92,7 +92,7 @@ export class PlanoFormComponent {
     const eq = this.dataService.getEquipamentoById(equipamentoId);
     if (!eq) return equipamentoId;
     const sala = this.dataService.getSalaById(eq.salaId)?.nome;
-    const unidade = this.dataService.getUnidadeById(eq.unidadeId)?.sigla;
+    const unidade = this.dataService.getUnidadeById(eq.unidadeId)?.nome;
     return [eq.nome, sala, unidade].filter(Boolean).join(' · ');
   }
 

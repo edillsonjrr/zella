@@ -15,6 +15,9 @@ interface CartaoFluxo {
 @Component({
   selector: 'app-login-background',
   standalone: true,
+  // Só decoração: o leitor de tela não deve ler os cartões do fundo (antes
+  // lia oito vezes o mesmo fluxo antes de chegar ao formulário).
+  host: { 'aria-hidden': 'true', inert: '' },
   templateUrl: './login-background.component.html',
   styleUrl: './login-background.component.scss'
 })

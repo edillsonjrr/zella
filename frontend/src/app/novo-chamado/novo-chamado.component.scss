@@ -2,6 +2,34 @@
   display: block;
 }
 
+.pagina-estreita {
+  max-width: var(--its-l-estreita);
+}
+
+/* Página (não diálogo): formulário de uma coluna na largura estreita do
+   guia, e sem cartão no celular (era cartão dentro de cartão). */
+.standalone-card:not(.modal-card) {
+  max-width: var(--its-l-estreita);
+
+  @media (max-width: 760px) {
+    background: transparent !important;
+    border: none !important;
+
+    &:hover {
+      background: transparent !important;
+    }
+
+    .mat-mdc-card-content {
+      padding: 0 !important;
+    }
+
+    .modal-scrollable-body,
+    .modal-scrollable-footer {
+      padding-inline: 0;
+    }
+  }
+}
+
 .standalone-card {
   &.modal-card {
     background: transparent !important;
@@ -133,8 +161,14 @@
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  // minmax(0, 1fr): a mensagem de erro de um campo não alarga a coluna dele
+  // nem espreme a do lado quando aparece.
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+
+  > * {
+    min-width: 0;
+  }
 
   .full-width {
     grid-column: 1 / -1;
@@ -163,7 +197,15 @@
 
 .li-error {
   font-size: 0.75rem;
+  line-height: 1.35;
   color: var(--danger-500);
+  overflow-wrap: anywhere;
+}
+
+// O erro do campo quebra a linha em vez de passar da borda.
+:host ::ng-deep .mat-mdc-form-field-error {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .upload-area {
@@ -206,6 +248,7 @@
     }
 
     small {
+      font-size: 0.75rem;
       color: var(--text-tertiary);
     }
   }
@@ -323,4 +366,191 @@
 .qr-unidade-rotulo {
   font-size: 12px;
   color: var(--text-secondary);
+}
+
+.opcional {
+  font-weight: 400;
+  font-size: 0.8125rem;
+  color: var(--text-tertiary);
+}
+
+/* Equipamento do cadastro (lista com busca) */
+.campo-equipamento {
+  margin-top: 14px;
+}
+
+.campo-equipamento-icone {
+  margin: 0 6px 0 10px;
+  color: var(--text-tertiary);
+}
+
+.link-voltar-lista {
+  align-self: flex-start;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  color: var(--primary-400);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* Urgência: três cartões grandes, fáceis de tocar no celular. */
+.urgencia {
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+
+  legend {
+    padding: 0;
+  }
+}
+
+.urgencia-opcoes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.urgencia-opcao {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--button-radius);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+
+  strong {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+  }
+
+  span {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    line-height: 1.35;
+  }
+
+  &:focus-within {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
+  }
+
+  &--marcada {
+    border-color: var(--primary-500);
+    background: var(--primary-50);
+  }
+
+  &--alta.urgencia-opcao--marcada {
+    border-color: var(--danger-500);
+    background: var(--danger-50);
+  }
+}
+
+@media (max-width: 560px) {
+  .urgencia-opcoes {
+    grid-template-columns: 1fr;
+  }
+
+  .urgencia-opcao {
+    min-height: 0;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Opções da lista de equipamentos (renderizadas no overlay do autocomplete). */
+.opcao-equipamento-nome {
+  display: block;
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+
+.opcao-equipamento-detalhe {
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: var(--text-tertiary);
+}
+
+.opcao-equipamento--outro .opcao-equipamento-nome {
+  font-weight: 600;
+  color: var(--primary-400);
+}
+
+.urgencia-nota {
+  margin: 0 0 8px;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+// A solicitante já entrou: o nome dela, sem campo para digitar.
+.pedido-em-nome {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+
+  app-icon {
+    flex-shrink: 0;
+    font-size: var(--icon-sm);
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+  }
+}
+
+// Pedido parecido em andamento: aviso com confirmação (não bloqueia).
+.aviso-repetido {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--warning-500);
+  border-radius: var(--input-radius);
+  background: var(--warning-50);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  line-height: 1.45;
+
+  p {
+    margin: 0;
+  }
+}
+
+.aviso-repetido-titulo {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--warning-500);
+
+  app-icon {
+    flex-shrink: 0;
+    font-size: var(--icon-md);
+    width: var(--icon-md);
+    height: var(--icon-md);
+  }
+}
+
+.aviso-repetido-pedido {
+  font-weight: 600;
+  color: var(--danger-500);
 }

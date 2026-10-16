@@ -1,6 +1,7 @@
 .conta-grid {
   display: grid;
   grid-template-columns: minmax(280px, 520px);
+  gap: 16px;
 }
 
 .conta-form {
@@ -72,4 +73,14 @@
   flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.conta-lista {
+  margin: 12px 0 4px;
+  padding-left: 18px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }

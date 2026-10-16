@@ -1,3 +1,5 @@
+import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -21,6 +23,8 @@ import type { EmpresaContratada } from '../shared/models';
   selector: 'app-contratadas',
   imports: [
     FormsModule,
+    MatMenuModule,
+    MatTooltipModule,
     MatCardModule,
     MatTableModule,
     MatButtonModule,

@@ -1,0 +1,227 @@
+:host {
+  display: block;
+}
+
+.pedidos {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pedidos-topo {
+  h1 {
+    margin: 0 0 4px;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+/* O botão que importa nesta tela: grande, no topo, ao alcance do polegar. */
+.botao-pedir {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-height: 80px;
+  padding: 16px 20px;
+  border: none;
+  border-radius: var(--card-radius);
+  background: var(--primary-500);
+  /* Texto de contraste do teal nos dois temas (escuro no tema escuro, onde o
+     teal é claro). O branco fixo dava 2,1:1 no tema escuro. */
+  color: var(--primary-contrast);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), transform var(--transition-fast);
+
+  &:focus-visible {
+    outline: 3px solid var(--primary-400);
+    outline-offset: 3px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: var(--primary-600);
+    }
+  }
+
+  &:active {
+    transform: scale(0.99);
+  }
+}
+
+.botao-pedir-icone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary-contrast) 14%, transparent);
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+.botao-pedir-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  strong {
+    font-size: 1.125rem;
+    line-height: 1.2;
+  }
+
+  span {
+    font-size: 0.875rem;
+  }
+}
+
+.pedidos-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 40px 16px;
+  border: 1px dashed var(--border-default);
+  border-radius: var(--card-radius);
+  text-align: center;
+
+  app-icon {
+    font-size: 40px;
+    color: var(--text-tertiary);
+    margin-bottom: 8px;
+  }
+
+  p {
+    margin: 0;
+    max-width: 380px;
+  }
+}
+
+.pedidos-secao h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.contagem {
+  min-width: 22px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.pedidos-nada {
+  margin: 0;
+  color: var(--text-tertiary);
+}
+
+.pedidos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pedido {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--card-radius);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-elevated);
+    }
+  }
+}
+
+.pedido-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.pedido-numero {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.pedido-equipamento {
+  font-size: 1rem;
+  line-height: 1.3;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.pedido-onde {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: 0.8125rem;
+
+  app-icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+    font-size: 14px;
+  }
+}
+
+.pedido-agora {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.pedido-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.pedido-atrasado {
+  color: var(--danger-500);
+  font-weight: 600;
+}
+
+.pedido-ver {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  color: var(--primary-400);
+  font-weight: 600;
+}

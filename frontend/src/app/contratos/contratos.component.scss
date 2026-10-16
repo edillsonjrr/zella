@@ -60,3 +60,24 @@
 .linha-clicavel {
   cursor: pointer;
 }
+
+.cabecalho-dica {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: help;
+
+  app-icon {
+    font-size: 12px;
+  }
+}
+
+.saldo-baixo strong {
+  color: var(--danger-500);
+}
+
+.cabecalho-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}

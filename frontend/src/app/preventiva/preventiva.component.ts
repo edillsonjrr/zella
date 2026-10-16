@@ -1,3 +1,6 @@
+import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { plural } from '../../../../shared/historico';
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,7 +27,7 @@ interface PlanoView extends PlanoManutencao {
 
 @Component({
   selector: 'app-preventiva',
-  imports: [MatCardModule, MatButtonModule, MatTableModule, MatDialogModule, IconComponent, FlowButtonComponent],
+  imports: [MatCardModule, MatButtonModule, MatTableModule, MatDialogModule, MatMenuModule, MatTooltipModule, IconComponent, FlowButtonComponent],
   templateUrl: './preventiva.component.html',
   styleUrl: './preventiva.component.scss'
 })
@@ -73,7 +76,7 @@ export class PreventivaComponent {
   private toView(plano: PlanoManutencao): PlanoView {
     const equipamento = this.dataService.getEquipamentoById(plano.equipamentoId);
     const sala = equipamento ? this.dataService.getSalaById(equipamento.salaId)?.nome : undefined;
-    const unidade = equipamento ? this.dataService.getUnidadeById(equipamento.unidadeId)?.sigla : undefined;
+    const unidade = equipamento ? this.dataService.getUnidadeById(equipamento.unidadeId)?.nome : undefined;
     const item = plano.contratoId && plano.itemContratoId
       ? this.dataService.getContratoById(plano.contratoId)?.itens.find(i => i.id === plano.itemContratoId)
       : undefined;
@@ -108,9 +111,9 @@ export class PreventivaComponent {
   private rotuloSituacao(situacao: PlanoView['situacao'], dias: number): string {
     switch (situacao) {
       case 'inativo': return 'Inativo';
-      case 'atrasado': return `Atrasado ${Math.abs(dias)} dia(s)`;
-      case 'proximo': return dias === 0 ? 'Hoje' : `Em ${dias} dia(s)`;
-      default: return `Em ${dias} dia(s)`;
+      case 'atrasado': return `Atrasado ${plural(Math.abs(dias), 'dia', 'dias')}`;
+      case 'proximo': return dias === 0 ? 'Hoje' : `Em ${plural(dias, 'dia', 'dias')}`;
+      default: return `Em ${plural(dias, 'dia', 'dias')}`;
     }
   }
 
@@ -128,13 +131,13 @@ export class PreventivaComponent {
   // execução automática passou de 26 h ou terminou com erro.
   monitor = computed(() => {
     const op = this.dataService.operacaoPreventiva();
-    if (!op) return { nivel: 'aviso' as const, texto: 'A geração automática ainda não registrou nenhuma execução. Ela roda todo dia às 6h; até lá, use "Gerar agora".' };
+    if (!op) return { nivel: 'aviso' as const, texto: 'A geração automática ainda não registrou nenhuma execução. Ela roda todo dia às 6h; até lá, use "Abrir chamados vencendo".' };
     if (op.ultimoErro) return { nivel: 'erro' as const, texto: `Última execução (${op.ultimaOrigem}) falhou: ${op.ultimoErro}` };
     if (!op.ultimaAgendada) return { nivel: 'aviso' as const, texto: 'Nenhuma execução agendada registrada ainda (só manuais).' };
     const horas = (Date.now() - new Date(op.ultimaAgendada).getTime()) / 3600000;
     if (horas > 26) return { nivel: 'erro' as const, texto: `A geração automática não roda há ${Math.floor(horas)} h. Confira o agendamento no Firebase.` };
     const r = op.ultimoResultado;
-    return { nivel: 'ok' as const, texto: `Geração automática em dia (última há ${Math.floor(horas)} h${r ? `: ${r.gerados} gerado(s), ${r.duplicados} repetido(s), ${r.ignorados} ignorado(s)` : ''}).` };
+    return { nivel: 'ok' as const, texto: `Geração automática em dia (última há ${Math.floor(horas)} h${r ? `: ${plural(r.gerados, 'chamado aberto', 'chamados abertos')}, ${plural(r.duplicados, 'repetido', 'repetidos')}, ${plural(r.ignorados, 'ignorado', 'ignorados')}` : ''}).` };
   });
   resultadoGeracao = signal<string>('');
 
@@ -145,11 +148,11 @@ export class PreventivaComponent {
       const r = await this.dataService.rodarPreventivaAgora();
       this.resultadoGeracao.set(
         r.gerados
-          ? `${r.gerados} chamado(s) gerado(s).`
-          : 'Nenhum plano venceu a janela de antecedência agora.'
+          ? `${plural(r.gerados, 'chamado aberto', 'chamados abertos')}.`
+          : 'Nenhum chamado para abrir: nenhum plano está vencendo agora.'
       );
     } catch (e) {
-      this.resultadoGeracao.set(e instanceof Error ? e.message : 'Falha ao gerar.');
+      this.resultadoGeracao.set(e instanceof Error ? e.message : 'Não foi possível abrir os chamados.');
     } finally {
       this.gerando.set(false);
     }

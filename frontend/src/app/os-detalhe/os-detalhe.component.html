@@ -5,7 +5,7 @@
     </div>
     <div>
       <h2>{{ ordem.numero }}</h2>
-      <span class="painel-subtitulo">Ordem de Serviço</span>
+      <span class="painel-subtitulo">Ordem de serviço (OS)</span>
     </div>
   </div>
   <button mat-icon-button (click)="fechar()" aria-label="Fechar">
@@ -16,39 +16,132 @@
 <mat-divider class="painel-divider"></mat-divider>
 
 <div class="painel-conteudo">
-  <div class="campo">
-    <span class="campo-label">Status</span>
-    <span class="badge" [ngClass]="badgeClass(ordem.situacao)">
-      <app-icon [name]="statusIcon(ordem.situacao)"></app-icon>
-      {{ ordem.situacao }}
+  <div class="campo campo--bloco">
+    <span class="campo-label">Situação</span>
+    <span class="badge" [ngClass]="situacao().classe">
+      <app-icon [name]="situacao().icone" aria-hidden="true"></app-icon>
+      {{ situacao().selo }}
     </span>
+    <span class="situacao-agora">{{ situacao().agora }}</span>
+    @if (situacao().chave === 'servico-feito' || situacao().chave === 'encerrado') {
+      <span class="situacao-agora">{{ explicacaoFim }}</span>
+    }
   </div>
 
-  <div class="campo">
-    <span class="campo-label">Ativo / Equipamento</span>
-    <span class="campo-valor">{{ ativo }}</span>
-  </div>
+  @if (erroAcao) {
+    <p class="acao-erro" role="alert">{{ erroAcao }}</p>
+  }
+
+  <!-- Aprovação: os itens vêm antes dos botões, aqui em cima, e não no rodapé
+       fixo — senão o botão aparece antes do que ele aprova. -->
+  @if (podeAprovarOrcamento() && orcamento; as orc) {
+    <section class="bloco-aprovar" aria-labelledby="titulo-aprovar">
+      <h3 id="titulo-aprovar" class="bloco-titulo">Orçamento para aprovar</h3>
+      <p class="bloco-ajuda">Confira os itens. Em "Aprovar orçamento" você ainda pode reduzir as quantidades, com o motivo, antes de confirmar. Ao aprovar, as quantidades ficam separadas no saldo do contrato.</p>
+      <ul class="lista-itens">
+        @for (i of orc.itens; track $index) {
+          <li>
+            <span class="lista-itens-nome">{{ i.nome }}</span>
+            <span class="lista-itens-conta">{{ i.quantidade }} × {{ i.precoUnitario | currency:'BRL' }}</span>
+            <strong class="lista-itens-valor">{{ i.quantidade * i.precoUnitario | currency:'BRL' }}</strong>
+          </li>
+        }
+      </ul>
+      <div class="bloco-total">
+        <span>{{ itensFora.length ? 'Total do contrato' : 'Total' }}</span>
+        <strong>{{ totalOrcamento | currency:'BRL' }}</strong>
+      </div>
+      @if (itensFora.length) {
+        <p class="bloco-ajuda bloco-ajuda--fora">Fora do contrato: não sai do saldo. Você aprova ou recusa cada um na próxima tela.</p>
+        <ul class="lista-itens lista-itens--fora">
+          @for (f of itensFora; track f.id) {
+            <li>
+              <span class="lista-itens-nome"><span class="selo-fora">Fora do contrato</span> {{ f.descricao }}</span>
+              <span class="lista-itens-conta">{{ f.quantidade }} {{ f.unidade }} × {{ f.precoUnitario | currency:'BRL' }}</span>
+              <strong class="lista-itens-valor">{{ f.quantidade * f.precoUnitario | currency:'BRL' }}</strong>
+            </li>
+          }
+        </ul>
+        <div class="bloco-total bloco-total--fora">
+          <span>Fora do contrato (à parte)</span>
+          <strong>{{ totalFora | currency:'BRL' }}</strong>
+        </div>
+      }
+      <div class="bloco-acoes">
+        <app-flow-button class="full-width" (click)="aprovarOrcamento()">
+          <app-icon class="btn-icon" name="check_circle"></app-icon> Aprovar orçamento
+        </app-flow-button>
+        <button mat-stroked-button color="warn" class="full-width" (click)="rejeitarOrcamento()">
+          <app-icon class="btn-icon" name="cancel"></app-icon> Recusar orçamento
+        </button>
+      </div>
+    </section>
+  }
+
+  @if (chamado; as c) {
+    <section class="pedido-original" aria-labelledby="titulo-pedido">
+      <h3 id="titulo-pedido" class="bloco-titulo">Pedido original</h3>
+      <p class="pedido-meta">{{ c.numero }} · aberto por {{ c.solicitanteNome }} em {{ c.dataCriacao | date:'dd/MM/yyyy' }}</p>
+      <p class="pedido-descricao">{{ descricaoPedido }}</p>
+      <dl class="pedido-dados">
+        <div>
+          <dt>Equipamento</dt>
+          <dd>{{ c.equipamento }}</dd>
+        </div>
+        <div>
+          <dt>Onde fica</dt>
+          <dd>{{ localPedido || 'Não informado' }}</dd>
+        </div>
+        @if (c.urgencia) {
+          <div>
+            <dt>Urgência</dt>
+            <dd [class.pedido-urgente]="c.urgencia === 'alta'">{{ rotuloUrgencia(c.urgencia) }}</dd>
+          </div>
+        }
+        @if (prazo; as p) {
+          <div>
+            <dt>Prazo</dt>
+            <dd [class.pedido-urgente]="p.atrasado">{{ p.data }}{{ p.atrasado ? ' (atrasado)' : '' }}</dd>
+          </div>
+        }
+      </dl>
+      @if (fotoPedidoUrl(); as url) {
+        <a [href]="url" target="_blank" rel="noopener" class="pedido-foto">
+          <img [src]="url" alt="Foto enviada por quem pediu" />
+        </a>
+      } @else if (c.fotoPath) {
+        <p class="pedido-meta">Carregando a foto…</p>
+      }
+    </section>
+  }
 
   <div class="campo">
     <span class="campo-label">Contrato</span>
     <span class="campo-valor">{{ contratoLabel }}</span>
   </div>
 
+  <!-- O técnico aparece sempre por nome, o mesmo da lista de OS. Quem pode
+       trocar ganha a lista logo abaixo, só com técnicos da contratada. -->
   <div class="campo">
     <span class="campo-label">Técnico responsável</span>
-    @if (podeDesignarTecnico()) {
+    <span class="campo-valor">{{ tecnicoNomeAtual }}</span>
+  </div>
+  @if (tecnicoDeOutraContratada) {
+    <p class="aviso-tecnico" role="note">Este técnico não é da empresa contratada desta OS. Escolha um técnico dela.</p>
+  }
+  @if (podeDesignarTecnico()) {
+    <div class="campo">
+      <span class="campo-label">Trocar técnico</span>
       <mat-form-field appearance="outline" class="campo-select">
-        <mat-select [value]="ordem.tecnicoId ?? ''" (selectionChange)="designarTecnico($event.value)" aria-label="Técnico responsável">
+        <mat-select [value]="ordem.tecnicoId ?? ''" (selectionChange)="designarTecnico($event.value)" aria-label="Trocar técnico responsável">
           <mat-option value="">Sem técnico designado</mat-option>
-          @for (t of tecnicosDaContratada(); track t.id) {
+          @for (t of opcoesTecnico(); track t.id) {
             <mat-option [value]="t.id">{{ t.nome }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
-    } @else {
-      <span class="campo-valor">{{ tecnicoNomeAtual }}</span>
-    }
-  </div>
+    </div>
+  }
   @if (ordem.dataExecucao) {
     <div class="campo">
       <span class="campo-label">Executada em</span>
@@ -71,82 +164,103 @@
       </div>
     </div>
   }
-  @if (erroAcao) {
-    <p class="acao-erro" role="alert">{{ erroAcao }}</p>
-  }
 
   <div class="campo">
     <span class="campo-label">Data de abertura</span>
     <span class="campo-valor">{{ ordem.dataCriacao | date:'dd/MM/yyyy' }}</span>
   </div>
 
-  <div class="campo">
-    <span class="campo-label">Total do orçamento</span>
-    <span class="campo-valor valor-destaque">{{ totalOrcamento | currency:'BRL' }}</span>
-  </div>
-
-  <mat-divider class="painel-divider"></mat-divider>
-
-  <div class="campo campo--bloco">
-    <span class="campo-label">Itens do orçamento</span>
-    @if (orcamento) {
-      <table mat-table [dataSource]="orcamento.itens" class="app-table full-width">
-        <ng-container matColumnDef="item">
-          <th mat-header-cell *matHeaderCellDef>Item</th>
-          <td mat-cell *matCellDef="let i"><strong>{{ i.nome }}</strong></td>
-        </ng-container>
-
-        <ng-container matColumnDef="quantidade">
-          <th mat-header-cell *matHeaderCellDef>Qtd</th>
-          <td mat-cell *matCellDef="let i">{{ i.quantidade }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="precoUnitario">
-          <th mat-header-cell *matHeaderCellDef>Preço unit.</th>
-          <td mat-cell *matCellDef="let i">{{ i.precoUnitario | currency:'BRL' }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="executado">
-          <th mat-header-cell *matHeaderCellDef>Exec.</th>
-          <td mat-cell *matCellDef="let i">{{ executadoDe(i.itemContratoId) ?? '—' }}</td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-      </table>
-      @if (orcamento.ajustadoPeloGestor) {
-        <p class="sem-orcamento">Quantidades ajustadas pelo gestor na aprovação{{ orcamento.observacaoAprovacao ? ': ' + orcamento.observacaoAprovacao : '' }}.</p>
-      }
-    } @else {
-      <p class="sem-orcamento">Nenhum orçamento criado para esta OS.</p>
+  @if (!podeAprovarOrcamento()) {
+    <div class="campo">
+      <span class="campo-label">{{ itensFora.length ? 'Total do contrato' : 'Total do orçamento' }}</span>
+      <span class="campo-valor valor-destaque">{{ totalOrcamento | currency:'BRL' }}</span>
+    </div>
+    @if (itensFora.length) {
+      <div class="campo">
+        <span class="campo-label">Fora do contrato{{ foraDecidido ? ' (aprovado, à parte)' : ' (à parte)' }}</span>
+        <span class="campo-valor valor-destaque">{{ totalFora | currency:'BRL' }}</span>
+      </div>
     }
-  </div>
+
+    <mat-divider class="painel-divider"></mat-divider>
+
+    <div class="campo campo--bloco">
+      <span class="campo-label">Itens do orçamento</span>
+      @if (orcamento) {
+        <table mat-table [dataSource]="orcamento.itens" class="app-table full-width">
+          <ng-container matColumnDef="item">
+            <th mat-header-cell *matHeaderCellDef>Item</th>
+            <td mat-cell *matCellDef="let i"><strong>{{ i.nome }}</strong></td>
+          </ng-container>
+
+          <ng-container matColumnDef="quantidade">
+            <th mat-header-cell *matHeaderCellDef>Qtd</th>
+            <td mat-cell *matCellDef="let i">{{ i.quantidade }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="precoUnitario">
+            <th mat-header-cell *matHeaderCellDef>Preço unit.</th>
+            <td mat-cell *matCellDef="let i">{{ i.precoUnitario | currency:'BRL' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="executado">
+            <th mat-header-cell *matHeaderCellDef>Exec.</th>
+            <td mat-cell *matCellDef="let i">{{ executadoDe(i.itemContratoId) ?? '—' }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+        @if (orcamento.ajustadoPeloGestor) {
+          <p class="sem-orcamento">Quantidades ajustadas pelo gestor na aprovação{{ orcamento.observacaoAprovacao ? ': ' + orcamento.observacaoAprovacao : '' }}.</p>
+        }
+      } @else {
+        <p class="sem-orcamento">Nenhum orçamento criado para esta OS.</p>
+      }
+    </div>
+
+    @if (itensFora.length) {
+      <div class="campo campo--bloco">
+        <span class="campo-label">Itens fora do contrato</span>
+        <p class="sem-orcamento">Não saem do saldo do contrato.</p>
+        <ul class="lista-itens lista-itens--fora">
+          @for (f of itensFora; track f.id) {
+            <li [class.lista-itens--recusado]="f.decisao === 'Recusado'">
+              <span class="lista-itens-nome">
+                <span class="selo-fora">Fora do contrato</span> {{ f.descricao }}
+                @if (f.decisao) {
+                  <span class="fora-decisao" [class.fora-decisao--recusado]="f.decisao === 'Recusado'">{{ f.decisao }}</span>
+                }
+              </span>
+              <span class="lista-itens-conta">
+                {{ f.quantidade }} {{ f.unidade }} × {{ f.precoUnitario | currency:'BRL' }}
+                @if (executadoForaDe(f.id) !== undefined) {
+                  · usado {{ executadoForaDe(f.id) }}
+                }
+              </span>
+              <strong class="lista-itens-valor">{{ f.quantidade * f.precoUnitario | currency:'BRL' }}</strong>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  }
 </div>
 
 <div class="painel-conteudo painel-historico">
-  <app-historico-registro [alvoPaiId]="ordem.id" titulo="Histórico desta OS"></app-historico-registro>
+  <app-historico-registro [chamadoId]="ordem.chamadoId" titulo="Linha do tempo"></app-historico-registro>
 </div>
 
 <div class="painel-acoes">
-  @if (podeCriarOrcamento()) {
-    <app-flow-button class="full-width" (click)="abrirOrcamento()">
-      <app-icon class="btn-icon" name="request_quote"></app-icon>
-      {{ rotuloBotaoOrcamento }}
-    </app-flow-button>
-  }
-  @if (podeAprovarOrcamento()) {
-    <app-flow-button class="full-width" (click)="aprovarOrcamento()">
-      <app-icon class="btn-icon" name="check_circle"></app-icon> Aprovar orçamento
-    </app-flow-button>
-  }
-  @if (podeRejeitarOrcamento()) {
-    <button mat-stroked-button color="warn" class="full-width" (click)="rejeitarOrcamento()">
-      <app-icon class="btn-icon" name="cancel"></app-icon> Rejeitar orçamento
-    </button>
-  }
   @if (podeExecutar()) {
     <app-flow-button class="full-width" (click)="executarOS()">
-      <app-icon class="btn-icon" name="build"></app-icon> Executar OS
+      <app-icon class="btn-icon" name="photo_camera"></app-icon> Registrar serviço feito
+    </app-flow-button>
+  }
+  @if (podeCriarOrcamento()) {
+    <app-flow-button class="full-width" [variant]="podeExecutar() ? 'secondary' : 'primary'" (click)="abrirOrcamento()">
+      <app-icon class="btn-icon" name="request_quote"></app-icon>
+      {{ rotuloBotaoOrcamento }}
     </app-flow-button>
   }
   <app-flow-button variant="secondary" class="full-width" type="button" (click)="fechar()">Fechar</app-flow-button>

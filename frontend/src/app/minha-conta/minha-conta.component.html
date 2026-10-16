@@ -28,7 +28,7 @@
           <dt>Perfil</dt>
           <dd>{{ perfilRotulo }}</dd>
           @if (usuario().empresaNome) {
-            <dt>Empresa</dt>
+            <dt>{{ contratadaNome ? 'Cliente atendido' : 'Empresa' }}</dt>
             <dd>{{ usuario().empresaNome }}</dd>
           }
           @if (unidadeNome) {
@@ -60,4 +60,33 @@
       </form>
     </mat-card-content>
   </mat-card>
+
+  <!-- Exportação completa (Z3.3): só o gestor, que é quem lê tudo. -->
+  @if (podeExportar) {
+    <mat-card class="app-card animate-fade-in-up">
+      <mat-card-content>
+        <div class="conta-titulo">
+          <app-icon name="download" aria-hidden="true"></app-icon>
+          <div>
+            <h2>Exportar todos os dados</h2>
+            <span>Um arquivo .zip com uma planilha por cadastro: unidades, blocos, salas, equipamentos, chamados, OS, orçamentos, contratos e itens, aditivos e planos preventivos.</span>
+          </div>
+        </div>
+        <ul class="conta-lista">
+          <li>Abre no Excel, no LibreOffice ou no Google Planilhas.</li>
+          <li>Datas em dd/mm/aaaa e nomes no lugar dos códigos internos.</li>
+          <li>A planilha de equipamentos pode ser importada de volta.</li>
+        </ul>
+        @if (erroExportacao()) {
+          <p class="conta-msg conta-msg--erro" role="alert">{{ erroExportacao() }}</p>
+        }
+        <div class="conta-acoes">
+          <app-flow-button type="button" (click)="exportar()" [disabled]="exportando()">
+            <app-icon class="btn-icon" name="download" aria-hidden="true"></app-icon>
+            {{ exportando() ? 'Preparando o arquivo...' : 'Exportar todos os dados' }}
+          </app-flow-button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
 </div>

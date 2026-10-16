@@ -98,6 +98,9 @@ export interface QrTokenResolvido {
   unidadeId: string;
   unidadeNome: string | null;
   tipo: QrAlvoTipo;
+  // Id do alvo do QR (unidade, bloco, sala ou equipamento). Com tipo
+  // 'equipamento', é o equipamento que o chamado leva em `equipamentoId`.
+  id: string;
   nome?: string;
 }
 
@@ -127,14 +130,55 @@ export async function resolverQrToken(token: string): Promise<QrTokenResolvido> 
   if (Date.now() > (dados.expiraEm as Timestamp).toMillis()) {
     throw new HttpsError('deadline-exceeded', 'Link expirado. Escaneie o QR Code novamente.');
   }
+  // Um token abre um chamado, e só. Sem isto, quem capturasse o link dentro
+  // da janela de 3 minutos poderia reenviá-lo quantas vezes quisesse.
+  if (dados.usadoEm) {
+    throw new HttpsError('already-exists', 'Este link já foi usado para abrir um chamado. Escaneie o QR Code novamente.');
+  }
 
   return {
     empresaId: dados.empresaId as string,
     unidadeId: dados.unidadeId as string,
     unidadeNome: (dados.unidadeNome as string | null) ?? null,
     tipo: dados.tipo as QrAlvoTipo,
+    id: dados.id as string,
     nome: (dados.nome as string | null) ?? undefined
   };
+}
+
+import type { Transaction } from 'firebase-admin/firestore';
+
+/**
+ * Queima o token dentro da transação de quem está criando o chamado.
+ *
+ * Fica na mesma transação de propósito: ou o chamado nasce e o token é gasto
+ * junto, ou nada acontece. Consumir antes deixaria a pessoa sem link se a
+ * gravação falhasse — perdendo o que ela digitou; consumir depois abriria
+ * janela para o mesmo link virar dois chamados.
+ *
+ * Firestore exige toda leitura antes de toda escrita numa transação, então
+ * isto precisa ser chamado no início do bloco, junto das outras leituras.
+ */
+export async function lerQrTokenNaTransacao(tx: Transaction, token: string): Promise<void> {
+  const ref = db.collection('qrLinks').doc(token);
+  const snap = await tx.get(ref);
+
+  if (!snap.exists) {
+    throw new HttpsError('not-found', 'Link inválido. Escaneie o QR Code novamente.');
+  }
+
+  const dados = snap.data()!;
+  if (Date.now() > (dados.expiraEm as Timestamp).toMillis()) {
+    throw new HttpsError('deadline-exceeded', 'Link expirado. Escaneie o QR Code novamente.');
+  }
+  if (dados.usadoEm) {
+    throw new HttpsError('already-exists', 'Este link já foi usado para abrir um chamado. Escaneie o QR Code novamente.');
+  }
+}
+
+/** A escrita do consumo, depois das leituras da transação. */
+export function marcarQrTokenUsado(tx: Transaction, token: string): void {
+  tx.update(db.collection('qrLinks').doc(token), { usadoEm: Timestamp.now() });
 }
 
 // O formulário chama isso ao carregar com ?qrToken=... pra saber se ainda

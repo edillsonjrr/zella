@@ -62,8 +62,45 @@
     line-height: 1.35;
   }
 
+  .historico-detalhe {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
   .historico-meta {
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     color: var(--text-tertiary);
   }
+}
+
+/* Linha do tempo: cada etapa com um ponto na linha; as que fecham o
+   atendimento (serviço feito, encerrado) em verde, cancelado em cinza. */
+.historico-lista--tempo li {
+  position: relative;
+  padding-left: 14px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--bg-primary, #fff);
+    border: 2px solid var(--primary-500);
+  }
+}
+
+.historico-marco--executado::before,
+.historico-marco--encerrado::before {
+  border-color: var(--success-500) !important;
+  background: var(--success-500) !important;
+}
+
+.historico-marco--recusado::before,
+.historico-marco--cancelado::before {
+  border-color: var(--text-tertiary) !important;
 }

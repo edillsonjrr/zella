@@ -63,8 +63,8 @@
           @if (isEdicao) {
             <p class="aviso-saldo">
               <app-icon name="info" aria-hidden="true"></app-icon>
-              {{ data.item?.quantidadeReservada }} reservada(s), {{ data.item?.quantidadeConsumida }} consumida(s) e
-              {{ data.item?.quantidadeDisponivel }} disponível(is). A quantidade contratada é o que foi acordado:
+              Separado: {{ data.item?.quantidadeReservada }} · Usado: {{ data.item?.quantidadeConsumida }} ·
+              Livre: {{ data.item?.quantidadeDisponivel }}. A quantidade contratada é o que foi acordado:
               para alterá-la, registre um aditivo no painel do contrato.
             </p>
           }

@@ -1,10 +1,14 @@
 <div class="clickup-page">
   <header class="page-title-row animate-fade-in">
-    <div class="title-left">
-      <div class="workspace-badge">PG</div>
-      <h1>Painel Gerencial</h1>
+    <div class="title-left page-header-textos">
+      <h1>Painel gerencial</h1>
+      <p>Quantos chamados entraram, quanto tempo levaram e onde estão os atrasos.</p>
     </div>
     <div class="title-right">
+      <button type="button" class="relatorio-btn" (click)="abrirRelatorio()">
+        <app-icon name="description" aria-hidden="true"></app-icon>
+        <span>Relatório do mês</span>
+      </button>
       <div class="segmented-control">
         <button class="segmented-btn" [class.segmented-btn--active]="periodoDias() === 30" (click)="selecionarPeriodo(30)">
           <span>30 dias</span>
@@ -20,45 +24,59 @@
   </header>
 
   <div class="resumo-grupo animate-fade-in-up">
-    <mat-card class="app-card resumo-card resumo-card--perigo resumo-card--destaque">
-      <mat-card-content>
-        <div class="resumo-icone"><app-icon name="warning" aria-hidden="true"></app-icon></div>
-        <div class="resumo-conteudo">
-          <span class="resumo-valor">{{ kpis().atrasados }}</span>
-          <span class="resumo-label">Chamados em atraso</span>
-        </div>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card class="app-card resumo-card">
-      <mat-card-content>
-        <div class="resumo-icone"><app-icon name="support_agent" aria-hidden="true"></app-icon></div>
-        <div class="resumo-conteudo">
-          <span class="resumo-valor">{{ kpis().abertos }}</span>
-          <span class="resumo-label">Chamados em aberto</span>
-        </div>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card class="app-card resumo-card">
-      <mat-card-content>
-        <div class="resumo-icone"><app-icon name="check_circle" aria-hidden="true"></app-icon></div>
-        <div class="resumo-conteudo">
-          <span class="resumo-valor">{{ kpis().taxaConclusao }}%</span>
-          <span class="resumo-label">Taxa de conclusão</span>
-        </div>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card class="app-card resumo-card resumo-card--alerta">
-      <mat-card-content>
-        <div class="resumo-icone"><app-icon name="description" aria-hidden="true"></app-icon></div>
-        <div class="resumo-conteudo">
-          <span class="resumo-valor">{{ kpis().contratosEmAtencao }}</span>
-          <span class="resumo-label">Contratos em atenção</span>
-        </div>
-      </mat-card-content>
-    </mat-card>
+    <!-- Cada cartão é um link para a lista de chamados com o mesmo recorte. -->
+    @for (cartao of cartoes(); track cartao.rotulo) {
+      <a
+        class="resumo-link"
+        [routerLink]="cartao.link.rota"
+        [queryParams]="cartao.link.params ?? null"
+        [matTooltip]="cartao.ajuda ?? ''"
+        [matTooltipDisabled]="!cartao.ajuda"
+        matTooltipPosition="above"
+      >
+      <mat-card
+        class="app-card resumo-card"
+        [class.resumo-card--perigo]="cartao.variante === 'perigo'"
+        [class.resumo-card--alerta]="cartao.variante === 'alerta'"
+      >
+        <mat-card-content>
+          <div class="resumo-topo">
+            <span class="resumo-label">{{ cartao.rotulo }}</span>
+            <span class="resumo-icone"><app-icon [name]="cartao.icone" aria-hidden="true"></app-icon></span>
+          </div>
+          <div class="resumo-linha">
+            <span class="resumo-numero">
+              <span class="resumo-valor" [appCountUp]="cartao.valor" [countFormat]="cartao.formato"></span>
+              @if (cartao.sufixo) {
+                <span class="resumo-sufixo">{{ cartao.sufixo }}</span>
+              }
+            </span>
+            @if (pontosSpark(cartao.spark); as pontos) {
+              <svg class="resumo-spark" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true">
+                <polyline [attr.points]="pontos" vector-effect="non-scaling-stroke" />
+              </svg>
+            }
+          </div>
+          <div class="resumo-rodape">
+            @if (cartao.delta; as delta) {
+              <span
+                class="resumo-delta"
+                [class.resumo-delta--bom]="delta.bom === true"
+                [class.resumo-delta--ruim]="delta.bom === false"
+                [title]="delta.descricao"
+              >
+                <span aria-hidden="true">{{ delta.tendencia === 'sobe' ? '▲' : delta.tendencia === 'desce' ? '▼' : '—' }}</span>
+                {{ delta.texto }}
+              </span>
+              <span class="resumo-dica">{{ delta.antes }}</span>
+            } @else if (cartao.dica) {
+              <span class="resumo-dica">{{ cartao.dica }}</span>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+      </a>
+    }
   </div>
 
   @if (chamadosNoPeriodo().length === 0) {
@@ -72,26 +90,93 @@
         <mat-card-header>
           <app-icon class="section-icon" name="bar_chart" aria-hidden="true"></app-icon>
           <mat-card-title>Volume de chamados</mat-card-title>
+          <span class="grafico-acoes">
+            @if (!verTabela()) {
+              <button
+                type="button"
+                class="grafico-toggle"
+                [class.grafico-toggle--ligado]="compararAnterior()"
+                [attr.aria-pressed]="compararAnterior()"
+                (click)="compararAnterior.set(!compararAnterior())"
+              >
+                <span class="legenda-tracejada" aria-hidden="true"></span>
+                Comparar com período anterior
+              </button>
+            }
+            <button type="button" class="grafico-toggle" [attr.aria-pressed]="verTabela()" (click)="verTabela.set(!verTabela())">
+              <!-- Action Swap: o rótulo troca com desfoque em vez de piscar. -->
+              @if (verTabela()) {
+                <span class="rotulo-troca">Ver gráfico</span>
+              } @else {
+                <span class="rotulo-troca">Ver como tabela</span>
+              }
+            </button>
+          </span>
         </mat-card-header>
         <mat-card-content>
-          <apx-chart
-            [series]="volumeChartOptions().series!"
-            [chart]="volumeChartOptions().chart!"
-            [xaxis]="volumeChartOptions().xaxis!"
-            [colors]="volumeChartOptions().colors!"
-            [stroke]="volumeChartOptions().stroke!"
-            [fill]="volumeChartOptions().fill!"
-            [dataLabels]="volumeChartOptions().dataLabels!"
-            [grid]="volumeChartOptions().grid!"
-            [tooltip]="volumeChartOptions().tooltip!"
-          ></apx-chart>
+          <!-- Envolve a troca grafico/tabela para o card poder mudar de
+               altura com transicao em vez de saltar (Card resize). -->
+          <div class="troca-suave" [class.troca-suave--tabela]="verTabela()">
+          @if (verTabela()) {
+            <table class="tabela-volume">
+              <thead>
+                <tr><th scope="col">A partir de</th><th scope="col">Este período</th><th scope="col">Período anterior</th></tr>
+              </thead>
+              <tbody>
+                @for (linha of volume(); track linha.rotulo) {
+                  <tr><td>{{ linha.rotulo }}</td><td>{{ linha.atual }}</td><td>{{ linha.anterior }}</td></tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <apx-chart
+              [series]="volumeChartOptions().series!"
+              [chart]="volumeChartOptions().chart!"
+              [xaxis]="volumeChartOptions().xaxis!"
+              [colors]="volumeChartOptions().colors!"
+              [stroke]="volumeChartOptions().stroke!"
+              [fill]="volumeChartOptions().fill!"
+              [dataLabels]="volumeChartOptions().dataLabels!"
+              [legend]="volumeChartOptions().legend!"
+              [grid]="volumeChartOptions().grid!"
+              [tooltip]="volumeChartOptions().tooltip!"
+            ></apx-chart>
+          }
+                  </div>
         </mat-card-content>
       </mat-card>
+
+      @if (mapaCalor().unidades.length > 0) {
+        <mat-card class="app-card grafico-card grafico-card--largo">
+          <mat-card-header>
+            <app-icon class="section-icon" name="calendar_month" aria-hidden="true"></app-icon>
+            <div>
+              <mat-card-title>Quando e onde os chamados nascem</mat-card-title>
+              <p class="grafico-subtitulo">Chamados criados por dia da semana em cada unidade. Ajuda a escalar técnicos e rotas.</p>
+            </div>
+          </mat-card-header>
+          <mat-card-content>
+            <apx-chart
+              [series]="calorChartOptions().series!"
+              [chart]="calorChartOptions().chart!"
+              [xaxis]="calorChartOptions().xaxis!"
+              [yaxis]="calorChartOptions().yaxis!"
+              [colors]="calorChartOptions().colors!"
+              [plotOptions]="calorChartOptions().plotOptions!"
+              [dataLabels]="calorChartOptions().dataLabels!"
+              [stroke]="calorChartOptions().stroke!"
+              [legend]="calorChartOptions().legend!"
+              [grid]="calorChartOptions().grid!"
+              [tooltip]="calorChartOptions().tooltip!"
+            ></apx-chart>
+          </mat-card-content>
+        </mat-card>
+      }
 
       <mat-card class="app-card grafico-card">
         <mat-card-header>
           <app-icon class="section-icon" name="flag" aria-hidden="true"></app-icon>
-          <mat-card-title>Chamados por status</mat-card-title>
+          <mat-card-title>Chamados por situação</mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <apx-chart
@@ -170,7 +255,7 @@
       <mat-card class="app-card grafico-card">
         <mat-card-header>
           <app-icon class="section-icon" name="construction" aria-hidden="true"></app-icon>
-          <mat-card-title>Top equipamentos com mais chamados</mat-card-title>
+          <mat-card-title>Equipamentos com mais chamados</mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <apx-chart

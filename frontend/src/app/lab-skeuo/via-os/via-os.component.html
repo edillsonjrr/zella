@@ -1,0 +1,68 @@
+<div class="palco">
+  <div class="talao" [attr.data-via]="via()">
+    <!-- as vias de trás aparecem pela borda, como no bloco de verdade -->
+    <i class="folha-tras t2"></i>
+    <i class="folha-tras t1"></i>
+
+    <article class="folha" aria-label="Ordem de serviço OS-2026-0205">
+      <header class="topo">
+        <div>
+          <span class="empresa">ZELLA · MANUTENÇÃO PREDIAL</span>
+          <h3>Ordem de Serviço</h3>
+        </div>
+        <div class="numero">
+          <span>Nº</span>
+          <b>0205</b>
+        </div>
+      </header>
+
+      <div class="linhas">
+        <div class="campo"><span>Equipamento</span><em>Split 12.000 BTUs · Sala 204</em></div>
+        <div class="campo"><span>Contrato</span><em>CT-2026/014 · Frio Norte</em></div>
+        <div class="campo dupla">
+          <div><span>Abertura</span><em>18/09/2026</em></div>
+          <div><span>Técnico</span><em>Rafael Souza</em></div>
+        </div>
+      </div>
+
+      <table class="orcamento">
+        <thead><tr><th>Item</th><th>Qtd</th><th>Valor</th></tr></thead>
+        <tbody>
+          @for (i of itens; track i.nome) {
+            <tr><td>{{ i.nome }}</td><td>{{ i.qtd }} {{ i.un }}</td><td>{{ i.qtd * i.preco | currency:'BRL' }}</td></tr>
+          }
+        </tbody>
+        <tfoot><tr><td colspan="2">Total do orçamento</td><td>{{ total | currency:'BRL' }}</td></tr></tfoot>
+      </table>
+
+      <div class="assinaturas">
+        <div><i></i><span>Contratada</span></div>
+        <div><i></i><span>Gestor</span></div>
+      </div>
+
+      <span class="rodape-via">{{ via() === 'gestor' ? '1ª via · Gestor' : via() === 'contratada' ? '2ª via · Contratada' : '3ª via · Arquivo' }}</span>
+
+      @if (carimbo(); as c) {
+        @for (b of [batida()]; track b) {
+          <div class="carimbo" [class.carimbo--rejeitado]="c === 'rejeitado'" role="status">
+            <span class="c-linha">{{ c === 'aprovado' ? 'Aprovado' : 'Recusado' }}</span>
+            <span class="c-data">21 SET 2026 · GESTOR</span>
+          </div>
+        }
+      }
+    </article>
+  </div>
+
+  <div class="controles">
+    <div class="vias" role="radiogroup" aria-label="Via da OS">
+      @for (v of vias; track v.id) {
+        <button type="button" role="radio" class="via-btn via-btn--{{ v.id }}" [attr.aria-checked]="via() === v.id" (click)="via.set(v.id)">{{ v.rotulo }}</button>
+      }
+    </div>
+    <div class="acoes">
+      <button type="button" class="acao acao--ok" (click)="carimbar('aprovado')">Aprovar orçamento</button>
+      <button type="button" class="acao acao--nao" (click)="carimbar('rejeitado')">Recusar</button>
+      <button type="button" class="acao acao--limpa" (click)="limpar()" [disabled]="!carimbo()">Limpar</button>
+    </div>
+  </div>
+</div>

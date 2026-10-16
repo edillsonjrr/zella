@@ -12,6 +12,7 @@ import { DataService } from '../shared/data.service';
 import { DialogoService } from '../shared/dialogo/dialogo.service';
 import { UiFeedbackService } from '../shared/ui-feedback.service';
 import { QrcodeDetalheComponent } from '../qrcode-detalhe/qrcode-detalhe.component';
+import { rotuloPatrimonio } from '../shared/rotulos';
 import type { Sala, Equipamento } from '../shared/models';
 
 @Component({
@@ -37,6 +38,7 @@ export class SalaDetalheComponent {
   private dialogRef = inject(MatDialogRef<SalaDetalheComponent>);
 
   colunasEquipamentos = ['nome', 'acoes'];
+  readonly rotuloPatrimonio = rotuloPatrimonio;
 
   sala = inject<Sala>(MAT_DIALOG_DATA);
   unidade = this.dataService.getUnidadeById(this.sala.unidadeId);
@@ -94,7 +96,7 @@ export class SalaDetalheComponent {
         tipo: 'equipamento',
         id: equipamento.id,
         titulo: equipamento.nome,
-        subtitulo: `${this.unidade?.sigla ?? ''} · ${equipamento.nome}`
+        subtitulo: `${this.unidade?.nome ?? ''} · ${equipamento.nome}`
       },
       position: { right: '0', top: '0' },
       height: '100vh',

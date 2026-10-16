@@ -1,51 +1,69 @@
-<div class="qrcode-panel">
-  <header class="qrcode-header">
-    <div class="qrcode-title">
-      <div class="qrcode-icon">
-        <app-icon name="qr_code" aria-hidden="true"></app-icon>
+<!--
+  O QR Code como ele vai existir de verdade: uma plaqueta de alumínio rebitada
+  no local ou no equipamento. Quem abre esta janela vê o que vai para a parede,
+  não uma imagem solta — e numa folha com cinquenta códigos impressos é a
+  plaqueta (nome, local, patrimônio) que diz qual é qual.
+
+  O código fica num poço branco, nos dois temas: leitor de QR precisa de
+  contraste alto e câmera ruim falha sobre metal ou superfície escura.
+  O arquivo baixado é a mesma plaqueta, chapada para impressão.
+-->
+<div class="qr">
+  <button type="button" class="qr-fechar" (click)="fechar()" aria-label="Fechar">
+    <app-icon name="close" aria-hidden="true"></app-icon>
+  </button>
+
+  <div class="palco" (pointermove)="mover($event)" (pointerleave)="soltar()">
+    <div class="placa"
+         [style.--bx]="brilhoX() + '%'" [style.--by]="brilhoY() + '%'"
+         [style.--rx]="incX() + 'deg'" [style.--ry]="incY() + 'deg'">
+      <i class="rebite r1"></i><i class="rebite r2"></i><i class="rebite r3"></i><i class="rebite r4"></i>
+      <div class="faixa" aria-hidden="true"><span>ZELLA</span><span>{{ placa.faixa }}</span></div>
+
+      <div class="poco">
+        @if (qrDataUrl(); as src) {
+          <img [src]="src" [alt]="'QR Code para ' + alvo.titulo" width="200" height="200" />
+        } @else if (erro()) {
+          <p class="qr-erro" role="alert">{{ erro() }}</p>
+        } @else {
+          <div class="qr-carregando" aria-hidden="true"></div>
+        }
       </div>
-      <div>
-        <h2>QR Code</h2>
-        <span class="qrcode-subtitle">{{ alvo.titulo }}</span>
+
+      <div class="dados">
+        <span class="gravado rotulo">{{ placa.rotulo }}</span>
+        <strong class="gravado">{{ alvo.titulo }}</strong>
+        @if (placa.local) {
+          <span class="gravado rotulo">Local</span>
+          <span class="gravado">{{ placa.local }}</span>
+        }
+        @if (placa.codigo) {
+          <span class="codigo">{{ placa.codigo }}</span>
+        }
       </div>
+      <p class="gravado instrucao">Problema? Aponte a câmera e abra um chamado.</p>
     </div>
-    <button mat-icon-button type="button" class="qrcode-close" (click)="fechar()" aria-label="Fechar">
-      <app-icon name="close" aria-hidden="true"></app-icon>
-    </button>
-  </header>
+  </div>
 
-  <div class="qrcode-body">
-    <div class="qrcode-image-wrap">
-      @if (qrDataUrl(); as src) {
-        <img [src]="src" [alt]="'QR Code para ' + alvo.titulo" width="240" height="240" />
-      } @else if (erro()) {
-        <p class="qrcode-erro" role="alert">{{ erro() }}</p>
-      } @else {
-        <div class="qrcode-loading" aria-hidden="true"></div>
-      }
-    </div>
+  <app-flow-button type="button" (click)="baixar()" [disabled]="!qrDataUrl()">
+    <app-icon class="btn-icon" name="download" aria-hidden="true"></app-icon>
+    {{ podeCompartilhar ? 'Salvar ou compartilhar' : 'Baixar plaqueta' }}
+  </app-flow-button>
 
-    <p class="qrcode-hint">
-      Qualquer pessoa que escanear este código abre o formulário de novo chamado já com
-      <strong>{{ alvo.subtitulo }}</strong> preenchido.
-    </p>
-
-    <mat-divider class="qrcode-divider"></mat-divider>
-
-    <div class="qrcode-link-row">
-      <app-icon name="link" aria-hidden="true"></app-icon>
-      <span class="qrcode-link">{{ url }}</span>
-    </div>
-
-    <div class="qrcode-actions">
-      <button mat-stroked-button type="button" (click)="copiarLink()">
-        <app-icon class="btn-icon" name="copy" aria-hidden="true"></app-icon>
-        {{ linkCopiado() ? 'Link copiado!' : 'Copiar link' }}
+  <!-- Testar sem celular: o mesmo endereço que a câmera lê. -->
+  <div class="qr-teste">
+    <span class="qr-teste-titulo">Testar sem celular</span>
+    <div class="qr-teste-acoes">
+      <button type="button" class="qr-teste-botao" (click)="copiarLink()">
+        <app-icon [name]="linkCopiado() ? 'check_circle' : 'copy'" aria-hidden="true"></app-icon>
+        {{ linkCopiado() ? 'Link copiado' : 'Copiar link' }}
       </button>
-      <app-flow-button type="button" (click)="baixar()" [disabled]="!qrDataUrl()">
-        <app-icon class="btn-icon" name="download" aria-hidden="true"></app-icon>
-        {{ podeCompartilhar ? 'Salvar ou compartilhar' : 'Baixar QR Code' }}
-      </app-flow-button>
+      <button type="button" class="qr-teste-botao" (click)="abrirPrevia()">
+        <app-icon name="open_in_new" aria-hidden="true"></app-icon>
+        Abrir prévia
+      </button>
     </div>
+    <p class="qr-teste-ajuda">A prévia abre numa aba nova o formulário que aparece para quem escaneia. Se enviar por lá, o chamado é aberto de verdade.</p>
+    <code class="qr-teste-link">{{ url }}</code>
   </div>
 </div>

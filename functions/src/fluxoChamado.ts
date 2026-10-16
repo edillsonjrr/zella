@@ -1,7 +1,9 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
-import { db, colecao, exigirPerfil } from './admin';
+import { db, colecao, exigirPerfil, exigirMesmaContratada } from './admin';
 import { registrarLog, resolverAutor } from './logs';
+import { lerSolicitante, avisarSolicitante } from './notificacoes';
+import { situacaoDoServico } from '../../shared/situacao';
 import type { Orcamento, OrcamentoItem } from './types';
 
 function hojeISO(): string {
@@ -26,7 +28,8 @@ function agregarPorItem(itens: OrcamentoItem[]): Map<string, number> {
  * transação do cancelamento.
  */
 export const cancelarChamado = onCall<{ chamadoId: string; motivo?: string }>(async (request) => {
-  const { empresaId } = exigirPerfil(request, ['gestor', 'gestor_contratado']);
+  const ctx = exigirPerfil(request, ['gestor', 'gestor_contratado']);
+  const { empresaId, usuarioId } = ctx;
   const { chamadoId } = request.data;
   const motivo = (request.data.motivo ?? '').trim().slice(0, 300);
   if (!chamadoId) {
@@ -43,8 +46,22 @@ export const cancelarChamado = onCall<{ chamadoId: string; motivo?: string }>(as
     }
     const chamado = chamadoSnap.data()!;
     if (['Executado', 'Encerrado', 'Cancelado'].includes(chamado.status)) {
-      throw new HttpsError('failed-precondition', `Chamado ${chamado.numero} está ${chamado.status} e não pode ser cancelado.`);
+      throw new HttpsError(
+        'failed-precondition',
+        `O chamado ${chamado.numero} está "${situacaoDoServico({ chamado: { status: chamado.status } }).rotulo.toLowerCase()}" e não pode mais ser cancelado.`
+      );
     }
+    // A contratada só cancela chamado dos próprios contratos, o mesmo recorte
+    // da regra de leitura. Chamado sem OS ainda não é de contratada nenhuma.
+    if (ctx.perfil === 'gestor_contratado') {
+      const dono = chamado.empresaContratadaId
+        ? chamado
+        : chamado.ordemServicoId
+          ? (await tx.get(colecao(empresaId, 'ordensServico').doc(chamado.ordemServicoId))).data()
+          : undefined;
+      exigirMesmaContratada(ctx, dono);
+    }
+    const solicitante = await lerSolicitante(tx, empresaId, chamado);
 
     let saldoDevolvido = 0;
     if (chamado.ordemServicoId) {
@@ -60,15 +77,21 @@ export const cancelarChamado = onCall<{ chamadoId: string; motivo?: string }>(as
             colecao(empresaId, 'contratos').doc(os.contratoId).collection('itens').doc(itemId)
           );
           const snaps = await Promise.all(refs.map((ref) => tx.get(ref)));
+          // Devolve o que está de fato separado: com um item inconsistente
+          // (menos separado que o orçado), o Math.max de antes devolvia ao
+          // livre mais do que saía do separado, e a conta do item deixava de
+          // fechar.
           snaps.forEach((snap, i) => {
             if (!snap.exists) return;
             const qtd = porItem.get([...porItem.keys()][i])!;
             const dados = snap.data()!;
+            const reservada = Number(dados.quantidadeReservada) || 0;
+            const devolver = Math.min(reservada, qtd);
             tx.update(refs[i], {
-              quantidadeReservada: Math.max(0, (dados.quantidadeReservada as number) - qtd),
-              quantidadeDisponivel: (dados.quantidadeDisponivel as number) + qtd
+              quantidadeReservada: reservada - devolver,
+              quantidadeDisponivel: (Number(dados.quantidadeDisponivel) || 0) + devolver
             });
-            saldoDevolvido += qtd;
+            saldoDevolvido += devolver;
           });
         }
       }
@@ -94,6 +117,11 @@ export const cancelarChamado = onCall<{ chamadoId: string; motivo?: string }>(as
         osCanceladaJunto: chamado.ordemServicoId ?? null,
         saldoDevolvido
       }
+    });
+
+    avisarSolicitante(tx, empresaId, solicitante, usuarioId, { id: chamadoId, numero: chamado.numero as string }, {
+      titulo: `Pedido ${chamado.numero} cancelado`,
+      texto: motivo ? `O pedido foi cancelado. Motivo: ${motivo}` : 'O pedido foi cancelado. Se o problema continuar, faça um novo pedido.'
     });
   });
 
@@ -125,13 +153,14 @@ export const reabrirChamado = onCall<{ chamadoId: string; motivo?: string }>(asy
     }
     const chamado = chamadoSnap.data()!;
     if (!['Encerrado', 'Cancelado'].includes(chamado.status)) {
-      throw new HttpsError('failed-precondition', `Chamado ${chamado.numero} não está encerrado nem cancelado.`);
+      throw new HttpsError('failed-precondition', `O chamado ${chamado.numero} ainda está em andamento; só reabre depois de encerrado ou cancelado.`);
     }
 
     tx.update(chamadoRef, {
       status: 'Aberto',
       dataFechamento: FieldValue.delete(),
-      ordemServicoId: FieldValue.delete()
+      ordemServicoId: FieldValue.delete(),
+      empresaContratadaId: FieldValue.delete()
     });
 
     registrarLog(tx, empresaId, autor, {

@@ -1,34 +1,38 @@
 @if (!isDialog) {
   <div class="page-header animate-fade-in">
-    <h1>Nova Ordem de Serviço</h1>
+    <div class="page-header-textos">
+      <h1>Nova ordem de serviço (OS)</h1>
+      <p>A OS leva o chamado à empresa contratada do contrato escolhido.</p>
+    </div>
   </div>
 }
 
 <mat-card class="app-card animate-fade-in-up standalone-card" [class.modal-card]="isDialog">
   <mat-card-content>
     <form (ngSubmit)="salvar(osForm)" #osForm="ngForm" class="modal-form" novalidate>
+      <!-- Na página, o título já está no cabeçalho: aqui ele só aparece na janela. -->
+      @if (isDialog) {
       <div class="modal-scrollable-header">
         <div class="modal-title">
           <div class="modal-icon">
             <app-icon name="assignment" aria-hidden="true"></app-icon>
           </div>
           <div>
-            <h2>Nova Ordem de Serviço</h2>
-            <span class="modal-subtitle">Crie uma OS vinculada a um contrato</span>
+            <h2>Nova ordem de serviço (OS)</h2>
+            <span class="modal-subtitle">A OS leva o chamado à empresa contratada do contrato escolhido</span>
           </div>
         </div>
-        @if (isDialog) {
-          <button mat-icon-button type="button" class="modal-close" (click)="cancelar()" aria-label="Fechar">
-            <app-icon name="close" aria-hidden="true"></app-icon>
-          </button>
-        }
+        <button mat-icon-button type="button" class="modal-close" (click)="cancelar()" aria-label="Fechar">
+          <app-icon name="close" aria-hidden="true"></app-icon>
+        </button>
       </div>
+      }
 
       <div class="modal-scrollable-body">
-        @if (chamadoOrigem) {
+        @if (chamadoOrigem(); as origem) {
           <div class="chamado-origem">
             <app-icon name="support_agent" aria-hidden="true"></app-icon>
-            <span>Chamado de origem: <strong>{{ chamadoOrigem.numero }}</strong> — {{ chamadoOrigem.equipamento }}</span>
+            <span>Chamado de origem: <strong>{{ origem.numero }}</strong> — {{ origem.equipamento }}</span>
           </div>
         } @else {
           <section class="form-section">
@@ -58,50 +62,74 @@
             <h3>Informações da OS</h3>
           </div>
           <div class="form-grid">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Ativo / Equipamento</mat-label>
-              <input matInput #ativoCtrl="ngModel" [(ngModel)]="ativo" name="ativo" placeholder="Ex: Ar Split - Sala 101…" required />
-              @if (ativoCtrl.invalid && ativoCtrl.touched) {
-                <mat-error>Informe o ativo/equipamento</mat-error>
-              }
-            </mat-form-field>
+            @if (chamadoOrigem(); as origem) {
+              <p class="full-width nova-os-equipamento">
+                <app-icon name="handyman" aria-hidden="true"></app-icon>
+                <span>Equipamento: <strong>{{ origem.equipamento }}</strong>. A empresa contratada vê o pedido original dentro da OS.</span>
+              </p>
+            }
 
             <mat-form-field appearance="outline">
-              <mat-label>Contrato / Ata</mat-label>
-              <mat-select #contratoCtrl="ngModel" [(ngModel)]="contratoId" name="contratoId" required>
+              <mat-label>Contrato</mat-label>
+              <mat-select #contratoCtrl="ngModel" [ngModel]="contratoId()" (ngModelChange)="trocarContrato($event)" name="contratoId" required>
                 @for (c of contratos(); track c.id) {
                   <mat-option [value]="c.id">{{ c.numero }} — {{ c.fornecedor }}</mat-option>
                 }
               </mat-select>
+              <mat-hint>A OS vai para a empresa contratada deste contrato.</mat-hint>
               @if (contratoCtrl.invalid && contratoCtrl.touched) {
                 <mat-error>Selecione o contrato</mat-error>
               }
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>Técnico Responsável</mat-label>
-              <mat-select #tecnicoCtrl="ngModel" [(ngModel)]="tecnicoId" name="tecnicoId" required>
+              <mat-label>Técnico (opcional)</mat-label>
+              <mat-select [(ngModel)]="tecnicoId" name="tecnicoId" [disabled]="!contratoId()">
+                <mat-option value="">Deixar a contratada escolher</mat-option>
                 @for (t of tecnicos(); track t.id) {
                   <mat-option [value]="t.id">{{ t.nome }}</mat-option>
                 }
               </mat-select>
-              @if (tecnicoCtrl.invalid && tecnicoCtrl.touched) {
-                <mat-error>Selecione o técnico</mat-error>
+              @if (!contratoId()) {
+                <mat-hint>Escolha o contrato primeiro.</mat-hint>
+              } @else if (!tecnicos().length) {
+                <mat-hint>{{ nomeContratada() || 'A contratada' }} não tem técnico cadastrado. Ela designa depois.</mat-hint>
+              } @else {
+                <mat-hint>Só técnicos da contratada deste contrato ({{ nomeContratada() || 'sem nome' }}).</mat-hint>
               }
             </mat-form-field>
-
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Diagnóstico Técnico</mat-label>
-              <textarea matInput rows="3" [(ngModel)]="diagnostico" name="diagnostico" placeholder="Descreva o diagnóstico e o serviço necessário…"></textarea>
-            </mat-form-field>
           </div>
+
+          @if (semItemParaOConserto() && chamadoOrigem(); as origem) {
+            <div class="nova-os-aviso" role="alert">
+              <p class="nova-os-aviso-titulo">
+                <app-icon name="warning" aria-hidden="true"></app-icon>
+                <span>O contrato {{ contratoEscolhido()?.numero }} parece não cobrir este conserto</span>
+              </p>
+              <p>
+                Nenhum item deste contrato ({{ nomeContratada() || 'sem empresa' }}) parece ser para "{{ origem.equipamento }}".
+                Itens do contrato: {{ itensDoContrato() || 'nenhum' }}.
+                Se o conserto é de outro tipo, escolha o contrato da empresa certa.
+              </p>
+              <mat-checkbox [checked]="confirmouSemItem()" (change)="confirmouSemItem.set($event.checked); pediuConfirmacao.set(false)">
+                Enviar mesmo assim: confirmo que este contrato cobre o conserto
+              </mat-checkbox>
+              @if (pediuConfirmacao()) {
+                <p class="nova-os-aviso-pedido">Marque a confirmação acima para enviar, ou troque o contrato.</p>
+              }
+            </div>
+          }
         </section>
+
+        @if (erro()) {
+          <p class="nova-os-erro" role="alert">{{ erro() }}</p>
+        }
       </div>
 
       <div class="modal-scrollable-footer">
         <app-flow-button variant="secondary" type="button" (click)="cancelar()">Cancelar</app-flow-button>
-        <app-flow-button type="submit">
-          <app-icon class="btn-icon" name="save" aria-hidden="true"></app-icon> Salvar OS
+        <app-flow-button type="submit" [disabled]="enviando()">
+          <app-icon class="btn-icon" name="arrow_forward" aria-hidden="true"></app-icon> {{ enviando() ? 'Enviando…' : 'Enviar para a contratada' }}
         </app-flow-button>
       </div>
     </form>

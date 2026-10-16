@@ -1,13 +1,13 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { FieldValue } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import { db, colecao, exigirPerfil, PERFIS } from './admin';
+import { db, colecao, exigirPerfil } from './admin';
 import { proximoNumero } from './contadores';
 import { registrarLog, resolverAutor } from './logs';
 import { notificar } from './notificacoes';
-import { resolverQrToken } from './qrLinks';
+import { resolverQrToken, lerQrTokenNaTransacao, marcarQrTokenUsado } from './qrLinks';
 import { empresaRef } from './admin';
-import type { Chamado } from './types';
+import type { Chamado, UrgenciaChamado } from './types';
 
 export const SLA_PADRAO_DIAS = 5;
 
@@ -40,6 +40,56 @@ export interface CriarChamadoInput {
   foto?: string;
   // Presente quando o formulário foi aberto escaneando um QR Code.
   qrToken?: string;
+  // Campos novos, todos opcionais (quem chama com o formato antigo continua
+  // funcionando). "Onde fica" em texto livre, a urgência que a pessoa
+  // escolheu e o equipamento do cadastro, quando ela escolheu da lista.
+  local?: string;
+  urgencia?: UrgenciaChamado;
+  equipamentoId?: string;
+}
+
+export const URGENCIAS: readonly UrgenciaChamado[] = ['baixa', 'media', 'alta'];
+export const LOCAL_MAX = 120;
+
+const ROTULO_URGENCIA: Record<UrgenciaChamado, string> = {
+  baixa: 'pode esperar',
+  media: 'atrapalha o trabalho',
+  alta: 'urgente'
+};
+
+/**
+ * Confere os campos opcionais do pedido e devolve a forma limpa. Fica fora
+ * da callable para o teste conferir a regra sem subir o emulador.
+ */
+export function validarCamposOpcionais(dados: Pick<CriarChamadoInput, 'local' | 'urgencia' | 'equipamentoId'>): {
+  local?: string;
+  urgencia?: UrgenciaChamado;
+  equipamentoId?: string;
+} {
+  const saida: { local?: string; urgencia?: UrgenciaChamado; equipamentoId?: string } = {};
+  if (dados.local !== undefined && dados.local !== null) {
+    if (typeof dados.local !== 'string') {
+      throw new HttpsError('invalid-argument', 'O campo "Onde fica" precisa ser um texto.');
+    }
+    const local = dados.local.trim();
+    if (local.length > LOCAL_MAX) {
+      throw new HttpsError('invalid-argument', `O campo "Onde fica" aceita até ${LOCAL_MAX} letras.`);
+    }
+    if (local) saida.local = local;
+  }
+  if (dados.urgencia !== undefined && dados.urgencia !== null && (dados.urgencia as string) !== '') {
+    if (!URGENCIAS.includes(dados.urgencia)) {
+      throw new HttpsError('invalid-argument', 'Urgência inválida. Use baixa, média ou alta.');
+    }
+    saida.urgencia = dados.urgencia;
+  }
+  if (dados.equipamentoId !== undefined && dados.equipamentoId !== null && (dados.equipamentoId as string) !== '') {
+    if (typeof dados.equipamentoId !== 'string' || dados.equipamentoId.length > 200) {
+      throw new HttpsError('invalid-argument', 'Equipamento inválido.');
+    }
+    saida.equipamentoId = dados.equipamentoId;
+  }
+  return saida;
 }
 
 const FOTO_MAX_BYTES = 4 * 1024 * 1024;
@@ -86,14 +136,20 @@ export const criarChamado = onCall<CriarChamadoInput>(async (request) => {
   let empresaId: string;
   let unidadeId: string;
   let solicitanteId: string;
+  const opcionais = validarCamposOpcionais(dados);
 
   if (dados.qrToken) {
     const alvo = await resolverQrToken(dados.qrToken);
     empresaId = alvo.empresaId;
     unidadeId = alvo.unidadeId;
     solicitanteId = request.auth.uid;
+    // QR colado num equipamento: o equipamento vem do token, não do corpo.
+    opcionais.equipamentoId = alvo.tipo === 'equipamento' ? alvo.id : undefined;
   } else {
-    const ctx = exigirPerfil(request, PERFIS);
+    // Pede conserto quem usa o prédio (solicitante) e quem administra
+    // (gestor). A empresa contratada e o técnico recebem a OS; não abrem
+    // chamado no cliente (Z0.7: o botão "Novo chamado" não aparece para eles).
+    const ctx = exigirPerfil(request, ['cliente', 'gestor']);
     if (!dados.unidadeId) {
       throw new HttpsError('invalid-argument', 'Informe a unidade.');
     }
@@ -105,7 +161,19 @@ export const criarChamado = onCall<CriarChamadoInput>(async (request) => {
     // perfis.ts). O seletor da tela já vem travado, mas é aqui que a trava
     // vale de verdade.
     if (ctx.perfil === 'cliente' && ctx.unidadeId && ctx.unidadeId !== unidadeId) {
-      throw new HttpsError('permission-denied', 'Cliente só abre chamado na própria unidade.');
+      throw new HttpsError('permission-denied', 'O solicitante só abre chamado na própria unidade.');
+    }
+
+    // Equipamento escolhido da lista: precisa existir e ser da unidade do
+    // chamado. Quem não acha o seu na lista usa "Outro" e descreve.
+    if (opcionais.equipamentoId) {
+      const equipamento = await colecao(empresaId, 'equipamentos').doc(opcionais.equipamentoId).get();
+      if (!equipamento.exists) {
+        throw new HttpsError('invalid-argument', 'O equipamento escolhido não está no cadastro. Escolha "Outro" e descreva.');
+      }
+      if (equipamento.data()?.['unidadeId'] !== unidadeId) {
+        throw new HttpsError('invalid-argument', 'O equipamento escolhido é de outra unidade.');
+      }
     }
   }
 
@@ -127,6 +195,12 @@ export const criarChamado = onCall<CriarChamadoInput>(async (request) => {
   const slaDias = await slaDiasDaEmpresa(empresaId);
 
   const numero = await db.runTransaction(async (tx) => {
+    // Leitura do token junto das outras leituras da transação: um link abre um
+    // chamado só, e dois envios simultâneos disputam o mesmo documento.
+    if (dados.qrToken) {
+      await lerQrTokenNaTransacao(tx, dados.qrToken);
+    }
+
     const numero = await proximoNumero(tx, empresaId, 'CH');
     const hoje = new Date().toISOString().split('T')[0];
 
@@ -145,10 +219,15 @@ export const criarChamado = onCall<CriarChamadoInput>(async (request) => {
       dataVencimento: somarDias(hoje, slaDias),
       possuiFoto: !!fotoPath,
       fotoPath,
-      origem: 'manual'
+      origem: 'manual',
+      ...opcionais
     };
 
     tx.set(chamadoRef, chamado);
+
+    if (dados.qrToken) {
+      marcarQrTokenUsado(tx, dados.qrToken);
+    }
 
     registrarLog(tx, empresaId, autor, {
       alvo: 'chamado',
@@ -156,14 +235,22 @@ export const criarChamado = onCall<CriarChamadoInput>(async (request) => {
       descricao: `Abriu o chamado ${numero} — ${dados.equipamento}`,
       alvoId: chamadoRef.id,
       alvoRotulo: numero,
-      detalhes: { equipamento: dados.equipamento, unidadeId, solicitante: solicitanteNome, slaDias }
+      detalhes: {
+        equipamento: dados.equipamento,
+        unidadeId,
+        solicitante: solicitanteNome,
+        slaDias,
+        local: opcionais.local ?? null,
+        urgencia: opcionais.urgencia ?? null
+      }
     });
 
+    const urgencia = opcionais.urgencia ? ` Urgência: ${ROTULO_URGENCIA[opcionais.urgencia]}.` : '';
     notificar(tx, empresaId, {
       paraPerfil: 'gestor',
       titulo: `Novo chamado ${numero}`,
-      texto: `${solicitanteNome} abriu "${dados.equipamento}". Prazo: ${slaDias} dia(s).`,
-      link: '/dashboard',
+      texto: `${solicitanteNome} abriu "${dados.equipamento}". Prazo: ${slaDias} ${slaDias === 1 ? 'dia' : 'dias'}.${urgencia}`,
+      link: `/dashboard?chamado=${chamadoRef.id}`,
       alvo: { tipo: 'chamado', id: chamadoRef.id, numero }
     });
 
@@ -173,8 +260,9 @@ export const criarChamado = onCall<CriarChamadoInput>(async (request) => {
   return { id: chamadoRef.id, numero };
 });
 
+// Responsável é da gestão do cliente: só o gestor escolhe (a tela já era só dele).
 export const atribuirResponsavelChamado = onCall<{ chamadoId: string; gestorId: string | null }>(async (request) => {
-  const { empresaId } = exigirPerfil(request, ['gestor', 'gestor_contratado']);
+  const { empresaId } = exigirPerfil(request, ['gestor']);
 
   const { chamadoId, gestorId } = request.data;
   const chamadoRef = colecao(empresaId, 'chamados').doc(chamadoId);

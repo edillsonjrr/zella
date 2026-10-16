@@ -12,16 +12,17 @@ import { DataService } from '../shared/data.service';
 import { HistoricoRegistroComponent } from '../shared/historico-registro/historico-registro.component';
 import { AuthService } from '../shared/auth.service';
 import { OrcamentoComponent } from '../orcamento/orcamento.component';
-import { ExecutarOsDialogComponent, type ExecutarOsResultado } from './executar-os-dialog.component';
-import { AprovarOrcamentoDialogComponent, type AprovarOrcamentoResultado } from './aprovar-orcamento-dialog.component';
-import { UiFeedbackService } from '../shared/ui-feedback.service';
+import { FluxoAcoesService } from '../shared/fluxo-acoes.service';
+import { prazoDoChamado } from '../shared/chamado-prazo';
+import { rotuloUrgencia } from '../shared/rotulos';
 import { FormsModule } from '@angular/forms';
-import { getDownloadURL, ref } from 'firebase/storage';
-import { storage } from '../shared/firebase';
+import { urlDoArquivo } from '../shared/arquivos';
 import { effect, signal } from '@angular/core';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import type { OrdemServico } from '../shared/models';
+import { totalForaDoContrato } from '../shared/servico-os';
+import { EXPLICACAO_FIM, classeDoSelo, situacaoDaOS } from '../shared/situacao-servico';
+import type { ItemForaContrato, OrdemServico } from '../shared/models';
 
 @Component({
   selector: 'app-os-detalhe',
@@ -48,7 +49,7 @@ export class OsDetalheComponent {
   private dataService = inject(DataService);
   private auth = inject(AuthService);
   private dialog = inject(MatDialog);
-  private feedback = inject(UiFeedbackService);
+  private fluxo = inject(FluxoAcoesService);
 
   erroAcao = '';
   tecnicoSelecionado = '';
@@ -59,13 +60,20 @@ export class OsDetalheComponent {
   fotosExecucaoUrls = signal<string[]>([]);
   private fotosCarregadasDe = '';
 
+  constructor() {
+    const fotoPath = this.chamado?.fotoPath;
+    if (fotoPath) {
+      urlDoArquivo(fotoPath).then(url => this.fotoPedidoUrl.set(url)).catch(() => this.fotoPedidoUrl.set(null));
+    }
+  }
+
   private readonly carregarFotos = effect(() => {
     const caminhos = this.ordem.fotosExecucao ?? [];
     const chave = caminhos.join('|');
     if (chave === this.fotosCarregadasDe) return;
     this.fotosCarregadasDe = chave;
     if (!caminhos.length) { this.fotosExecucaoUrls.set([]); return; }
-    Promise.all(caminhos.map(c => getDownloadURL(ref(storage, c)).catch(() => '')))
+    Promise.all(caminhos.map(c => urlDoArquivo(c).catch(() => '')))
       .then(urls => this.fotosExecucaoUrls.set(urls.filter(Boolean)));
   });
 
@@ -93,25 +101,78 @@ export class OsDetalheComponent {
     return this.ordemAtual();
   }
 
+  // Situação no vocabulário único do chamado e da OS (Z0.3), com quem age.
+  situacao = computed(() => {
+    const s = situacaoDaOS(this.dataService, this.ordemAtual(), this.auth.perfil);
+    return { ...s, classe: classeDoSelo(s.chave) };
+  });
+  readonly explicacaoFim = EXPLICACAO_FIM;
+
   get orcamento() {
     return this.orcamentoAtual();
   }
 
   chamado = this.dataService.getChamadoById(this.ordemInicial.chamadoId);
   contrato = this.dataService.getContratoById(this.ordemInicial.contratoId);
-  tecnico = this.dataService.getUsuarioById(this.ordemInicial.tecnicoId ?? '');
 
   ativo = this.chamado?.equipamento ?? '-';
   contratoLabel = this.contrato ? `${this.contrato.numero} — ${this.contrato.fornecedor}` : '-';
-  tecnicoNome = this.tecnico?.nome ?? '-';
 
+  /* Pedido original (Z2.1): o que a pessoa escreveu ao abrir o chamado, para
+     o técnico chegar sabendo o defeito, o lugar e quem chamar. */
+  readonly rotuloUrgencia = rotuloUrgencia;
+  prazo = this.chamado ? prazoDoChamado(this.chamado) : null;
+  fotoPedidoUrl = signal<string | null>(null);
+
+  // Unidade, "onde fica" e a sala do equipamento do cadastro, sem repetir.
+  localPedido = (() => {
+    const c = this.chamado;
+    if (!c) return '';
+    const ds = this.dataService;
+    const equipamento = c.equipamentoId ? ds.getEquipamentoById(c.equipamentoId) : undefined;
+    const sala = equipamento ? ds.getSalaById(equipamento.salaId)?.nome : undefined;
+    const bloco = equipamento?.blocoId ? ds.getBlocoById(equipamento.blocoId)?.nome : undefined;
+    const partes = [ds.getUnidadeById(c.unidadeId)?.nome, c.local || [bloco, sala].filter(Boolean).join(', ')];
+    return partes.filter(Boolean).join(' · ');
+  })();
+
+  // Mesmo nome que a lista de OS mostra (Z0.4). Antes o detalhe só tinha a
+  // lista de escolha filtrada pela contratada: técnico de outra contratada,
+  // escolhido na Nova OS antiga, sumia daqui.
   get tecnicoNomeAtual(): string {
     const id = this.ordem.tecnicoId;
-    return id ? (this.dataService.getUsuarioById(id)?.nome ?? '-') : 'Sem técnico designado';
+    return id ? (this.dataService.getUsuarioById(id)?.nome ?? 'Técnico sem cadastro') : 'Sem técnico designado';
+  }
+
+  get tecnicoDeOutraContratada(): boolean {
+    const t = this.ordem.tecnicoId ? this.dataService.getUsuarioById(this.ordem.tecnicoId) : undefined;
+    return !!t?.empresaContratadaId && !!this.ordem.empresaContratadaId && t.empresaContratadaId !== this.ordem.empresaContratadaId;
+  }
+
+  get descricaoPedido(): string {
+    return this.chamado?.descricao ?? '';
   }
 
   get totalOrcamento(): number {
     return this.orcamento?.itens.reduce((acc, item) => acc + item.quantidade * item.precoUnitario, 0) ?? 0;
+  }
+
+  /* Itens fora do contrato (Z3.5): à parte do total do contrato. */
+  get itensFora(): ItemForaContrato[] {
+    return this.orcamento?.itensForaContrato ?? [];
+  }
+
+  // Depois da decisão, o total à parte conta só o que a gestão aprovou.
+  get foraDecidido(): boolean {
+    return this.itensFora.some(f => !!f.decisao);
+  }
+
+  get totalFora(): number {
+    return totalForaDoContrato(this.orcamento, this.foraDecidido);
+  }
+
+  executadoForaDe(id: string): number | undefined {
+    return this.ordem.itensForaContratoExecutados?.find(i => i.id === id)?.executado;
   }
 
   // Texto do botão de orçamento: depois de uma recusa (ou substituição) o
@@ -154,6 +215,15 @@ export class OsDetalheComponent {
     this.dataService.usuarios().filter(u => u.perfil === 'tecnico' && (!this.ordem.empresaContratadaId || u.empresaContratadaId === this.ordem.empresaContratadaId))
   );
 
+  // A lista de troca mantém o técnico atual, mesmo de outra contratada, para
+  // o campo não aparecer vazio.
+  opcoesTecnico = computed(() => {
+    const lista = this.tecnicosDaContratada();
+    const atual = this.ordemAtual().tecnicoId;
+    const usuario = atual ? this.dataService.getUsuarioById(atual) : undefined;
+    return usuario && !lista.some(t => t.id === usuario.id) ? [usuario, ...lista] : lista;
+  });
+
   async designarTecnico(tecnicoId: string): Promise<void> {
     this.erroAcao = '';
     try {
@@ -164,12 +234,14 @@ export class OsDetalheComponent {
   }
 
   // Aprovar e rejeitar é do gestor do cliente: é o saldo do contrato dele.
+  // Espelha aprovarOrcamento(): orçamento pendente numa OS que ainda espera
+  // decisão (OS cancelada não aprova mais).
   podeAprovarOrcamento(): boolean {
-    return this.auth.isGestor() && this.orcamento?.situacao === 'Pendente';
+    return this.auth.isGestor() && this.orcamento?.situacao === 'Pendente' && ['Aberta', 'Em vistoria'].includes(this.ordem.situacao);
   }
 
   podeRejeitarOrcamento(): boolean {
-    return this.auth.isGestor() && this.orcamento?.situacao === 'Pendente';
+    return this.podeAprovarOrcamento();
   }
 
   podeExecutar(): boolean {
@@ -189,25 +261,9 @@ export class OsDetalheComponent {
     });
   }
 
-  aprovarOrcamento(): void {
-    const orcamento = this.orcamento;
-    if (!orcamento) return;
-    const ref = this.dialog.open(AprovarOrcamentoDialogComponent, {
-      panelClass: 'usuario-form-dialog',
-      width: '520px',
-      maxWidth: '95vw',
-      data: { numeroOS: this.ordem.numero, orcamento }
-    });
-    ref.afterClosed().subscribe(async (r: AprovarOrcamentoResultado | undefined) => {
-      if (!r) return;
-      this.erroAcao = '';
-      try {
-        await this.dataService.aprovarOrcamento(orcamento.id, r.ajustes, r.observacao);
-        this.fechar();
-      } catch (e) {
-        this.erroAcao = e instanceof Error ? e.message : 'Não foi possível aprovar.';
-      }
-    });
+  async aprovarOrcamento(): Promise<void> {
+    this.erroAcao = '';
+    if (await this.fluxo.aprovarOrcamento(this.ordem)) this.fechar();
   }
 
   async rejeitarOrcamento(): Promise<void> {
@@ -221,56 +277,8 @@ export class OsDetalheComponent {
     }
   }
 
-  executarOS(): void {
-    const orcamento = this.orcamento;
-    if (!orcamento) {
-      // OS aprovada sem orçamento carregado: executa por inteiro.
-      this.executar();
-      return;
-    }
-    const ref = this.dialog.open(ExecutarOsDialogComponent, {
-      panelClass: 'usuario-form-dialog',
-      width: '520px',
-      maxWidth: '95vw',
-      data: { numeroOS: this.ordem.numero, orcamento }
-    });
-    ref.afterClosed().subscribe((r: ExecutarOsResultado | undefined) => {
-      if (r) this.executar(r);
-    });
-  }
-
-  private async executar(r?: ExecutarOsResultado): Promise<void> {
+  async executarOS(): Promise<void> {
     this.erroAcao = '';
-    try {
-      await this.dataService.executarOS(this.ordem.id, r?.itens, r?.observacao, r?.fotos);
-      this.fechar();
-    } catch (e) {
-      this.erroAcao = e instanceof Error ? e.message : 'Não foi possível executar a OS.';
-    }
-  }
-
-  badgeClass(status: string): string {
-    switch (status) {
-      case 'Aberta': return 'badge--aberta';
-      case 'Em vistoria': return 'badge--vistoria';
-      case 'Aprovada': return 'badge--aprovada';
-      case 'Rejeitada': return 'badge--rejeitada';
-      case 'Executada': return 'badge--executada';
-      case 'Encerrada': return 'badge--encerrada';
-      case 'Cancelada': return 'badge--rejeitada';
-      default: return '';
-    }
-  }
-
-  statusIcon(status: string): string {
-    switch (status) {
-      case 'Aberta': return 'radio_button_unchecked';
-      case 'Em vistoria': return 'search';
-      case 'Aprovada': return 'check_circle';
-      case 'Rejeitada': return 'cancel';
-      case 'Executada': return 'check_circle';
-      case 'Encerrada': return 'lock';
-      default: return 'help';
-    }
+    if (await this.fluxo.registrarServico(this.ordem)) this.fechar();
   }
 }

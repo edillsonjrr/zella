@@ -1,3 +1,4 @@
+import { plural, rotuloOS } from '../../../../shared/historico';
 import { Injectable, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
 
 import { httpsCallable } from 'firebase/functions';
@@ -6,6 +7,7 @@ import {
   collectionGroup,
   deleteDoc,
   doc,
+  getDocs,
   where,
   type CollectionReference,
   type DocumentReference,
@@ -20,7 +22,7 @@ import {
   type Unsubscribe
 } from 'firebase/firestore';
 import { db, functions } from './firebase';
-import type { Unidade, Bloco, Sala, Equipamento, Contrato, ItemContrato, Chamado, OrdemServico, Orcamento, OrcamentoPedidoItem, Usuario, LogEntrada, PlanoManutencao, EmpresaContratada, Notificacao, OperacaoPreventiva } from './models';
+import type { AditivoContrato, Unidade, Bloco, Sala, Equipamento, Contrato, ItemContrato, Chamado, OrdemServico, Orcamento, OrcamentoPedidoItem, ItemForaContratoPedido, Usuario, LogEntrada, PlanoManutencao, EmpresaContratada, Notificacao, OperacaoPreventiva, PreferenciasUsuario, UrgenciaChamado, QrAlvoTipo } from './models';
 import { UiFeedbackService } from './ui-feedback.service';
 import { LogService } from './log.service';
 
@@ -57,6 +59,10 @@ export class DataService {
   private readonly notificacoesPessoais = signal<Notificacao[]>([]);
   private readonly notificacoesPerfil = signal<Notificacao[]>([]);
   readonly operacaoPreventiva = signal<OperacaoPreventiva | null>(null);
+  // Preferências da pessoa logada (preferencias/{usuarioId}). `undefined`
+  // enquanto a primeira leitura não chegou; `null` quando não há documento
+  // (ou a leitura falhou).
+  readonly preferencias = signal<PreferenciasUsuario | null | undefined>(undefined);
 
   readonly unidades: Signal<Unidade[]> = this.unidadesSig.asReadonly();
   readonly blocos: Signal<Bloco[]> = this.blocosSig.asReadonly();
@@ -97,6 +103,8 @@ export class DataService {
   private empresaId = '';
   // Id do cadastro (usuarios/{id}) da sessão; é o que vai em lidaPor.
   private usuarioAtualId = '';
+  // Perfil da sessão: decide o que dá para ler (ex.: só a gestão lê o log).
+  perfilSessao = '';
 
   col(nome: string): CollectionReference {
     return collection(db, 'empresasClientes', this.empresaId, nome);
@@ -121,6 +129,7 @@ export class DataService {
     this.parar();
     this.empresaId = sessao.empresaId ?? '';
     this.usuarioAtualId = sessao.id;
+    this.perfilSessao = sessao.perfil;
     const perfil = sessao.perfil;
     const gestor = perfil === 'gestor';
     const cliente = perfil === 'cliente';
@@ -160,8 +169,12 @@ export class DataService {
     }
     ouvir('empresasContratadas', this.empresasContratadasSig);
 
+    // A contratada só lê os chamados que viraram OS num contrato dela: a
+    // regra exige o mesmo filtro, senão nega a consulta inteira.
     ouvir('chamados', this.chamadosSig,
-      cliente ? query(this.col('chamados'), where('unidadeId', '==', sessao.unidadeId ?? '')) : undefined);
+      cliente ? query(this.col('chamados'), where('unidadeId', '==', sessao.unidadeId ?? ''))
+      : daContratada ? query(this.col('chamados'), where('empresaContratadaId', '==', sessao.empresaContratadaId ?? ''))
+      : undefined);
 
     ouvir('ordensServico', this.ordensServicoSig,
       cliente ? query(this.col('ordensServico'), where('unidadeId', '==', sessao.unidadeId ?? ''))
@@ -182,6 +195,15 @@ export class DataService {
       if (daContratada) filtros.push(where('empresaContratadaId', '==', sessao.empresaContratadaId ?? ''));
       ouvir('notificacoes', this.notificacoesPerfil,
         query(this.col('notificacoes'), ...filtros, orderBy('data', 'desc'), limit(50)));
+    }
+
+    if (sessao.id) {
+      ligar(onSnapshot(this.docRef('preferencias', sessao.id), snap => {
+        this.preferencias.set(snap.exists() ? (snap.data() as PreferenciasUsuario) : null);
+      }, erro => {
+        erroDeLeitura('preferencias')(erro);
+        this.preferencias.set(null);
+      }));
     }
 
     if (gestor) {
@@ -256,6 +278,7 @@ export class DataService {
     for (const encerrar of this.itensListeners.values()) encerrar();
     this.itensListeners.clear();
     this.empresaId = '';
+    this.perfilSessao = '';
 
     for (const sig of [
       this.unidadesSig, this.blocosSig, this.salasSig, this.equipamentosSig, this.chamadosSig,
@@ -265,6 +288,30 @@ export class DataService {
       (sig as WritableSignal<unknown[]>).set([]);
     }
     this.itensPorContrato.set(new Map());
+    this.preferencias.set(undefined);
+  }
+
+  /**
+   * Guarda que a pessoa já viu a tela "O que você faz aqui". Falhar aqui não
+   * pode travar ninguém: quem chama também guarda no navegador.
+   */
+  async marcarBoasVindasVistas(): Promise<void> {
+    if (!this.usuarioAtualId || !this.empresaId) return;
+    try {
+      await setDoc(this.docRef('preferencias', this.usuarioAtualId), { boasVindasEm: new Date().toISOString() }, { merge: true });
+    } catch (e) {
+      erroDeLeitura('preferencias')(e as Error);
+    }
+  }
+
+  /**
+   * Aditivos de um contrato, lidos na hora (não ficam em memória). O
+   * relatório do mês usa para refazer o contratado de um mês passado. As
+   * regras liberam para o gestor e para a contratada dona do contrato.
+   */
+  async lerAditivos(contratoId: string): Promise<AditivoContrato[]> {
+    const snap = await getDocs(collection(db, 'empresasClientes', this.empresaId, 'contratos', contratoId, 'aditivos'));
+    return snap.docs.map(d => d.data() as AditivoContrato);
   }
 
   // ---------- Leituras auxiliares (iguais ao mock: .find()/.filter()) ----------
@@ -373,10 +420,12 @@ export class DataService {
     });
   }
 
-  salvarBloco(dados: Omit<Bloco, 'id'> & { id?: string }): void {
+  // Devolve a gravação com o id: a importação de equipamentos (Z3.1) cria o
+  // bloco que falta e precisa do id para a sala.
+  salvarBloco(dados: Omit<Bloco, 'id'> & { id?: string }): Promise<string> {
     const ref = dados.id ? this.docRef('blocos', dados.id) : doc(this.col('blocos'));
     const edicao = !!dados.id;
-    setDoc(ref, { id: ref.id, unidadeId: dados.unidadeId, nome: dados.nome });
+    const gravacao = setDoc(ref, { id: ref.id, unidadeId: dados.unidadeId, nome: dados.nome });
     this.log.registrar({
       alvo: 'bloco',
       operacao: edicao ? 'editar' : 'criar',
@@ -385,6 +434,7 @@ export class DataService {
       alvoRotulo: dados.nome,
       detalhes: { unidade: this.getUnidadeById(dados.unidadeId)?.nome ?? dados.unidadeId }
     });
+    return gravacao.then(() => ref.id);
   }
 
   async excluirBloco(id: string): Promise<void> {
@@ -405,11 +455,12 @@ export class DataService {
     });
   }
 
-  salvarSala(dados: Omit<Sala, 'id'> & { id?: string }): void {
+  // Devolve a gravação com o id, como salvarBloco.
+  salvarSala(dados: Omit<Sala, 'id'> & { id?: string }): Promise<string> {
     const ref = dados.id ? this.docRef('salas', dados.id) : doc(this.col('salas'));
     const corpo: Sala = { id: ref.id, unidadeId: dados.unidadeId, nome: dados.nome };
     if (dados.blocoId) corpo.blocoId = dados.blocoId;
-    setDoc(ref, corpo);
+    const gravacao = setDoc(ref, corpo);
     const edicao = !!dados.id;
     this.log.registrar({
       alvo: 'sala',
@@ -419,6 +470,7 @@ export class DataService {
       alvoRotulo: dados.nome,
       detalhes: { unidade: this.getUnidadeById(dados.unidadeId)?.nome ?? dados.unidadeId }
     });
+    return gravacao.then(() => ref.id);
   }
 
   async excluirSala(id: string): Promise<void> {
@@ -438,12 +490,24 @@ export class DataService {
     });
   }
 
-  salvarEquipamento(dados: Omit<Equipamento, 'id'> & { id?: string }): void {
+  /**
+   * Cria ou edita o equipamento. Devolve a promessa da gravação com o id:
+   * quem só cadastra um pode ignorar; a importação por planilha (Z3.1) usa
+   * para saber o que foi gravado.
+   */
+  salvarEquipamento(dados: Omit<Equipamento, 'id'> & { id?: string }): Promise<string> {
     const ref = dados.id ? this.docRef('equipamentos', dados.id) : doc(this.col('equipamentos'));
     const corpo: Equipamento = { id: ref.id, unidadeId: dados.unidadeId, salaId: dados.salaId, nome: dados.nome };
     if (dados.blocoId) corpo.blocoId = dados.blocoId;
     if (dados.patrimonio) corpo.patrimonio = dados.patrimonio;
-    setDoc(ref, corpo);
+    // Fabricante e modelo: formulário que não tem os campos (o da sala) não
+    // apaga o que a planilha trouxe. Quem manda o campo, vazio ou não, decide.
+    const anterior = dados.id ? this.getEquipamentoById(dados.id) : undefined;
+    const fabricante = ('fabricante' in dados ? dados.fabricante : anterior?.fabricante)?.trim();
+    const modelo = ('modelo' in dados ? dados.modelo : anterior?.modelo)?.trim();
+    if (fabricante) corpo.fabricante = fabricante;
+    if (modelo) corpo.modelo = modelo;
+    const gravacao = setDoc(ref, corpo);
     const edicao = !!dados.id;
     this.log.registrar({
       alvo: 'equipamento',
@@ -453,6 +517,7 @@ export class DataService {
       alvoRotulo: dados.nome,
       detalhes: { sala: this.getSalaById(dados.salaId)?.nome ?? dados.salaId, patrimonio: dados.patrimonio ?? null }
     });
+    return gravacao.then(() => ref.id);
   }
 
   excluirEquipamento(id: string): void {
@@ -611,7 +676,7 @@ export class DataService {
   async rodarPreventivaAgora(): Promise<{ gerados: number; duplicados: number; ignorados: number }> {
     const rodar = httpsCallable<void, { gerados: number; duplicados: number; ignorados: number }>(functions, 'rodarPreventivaAgora');
     const res = await rodar();
-    this.feedback.announce(`Preventiva: ${res.data.gerados} chamado(s) gerado(s).`);
+    this.feedback.announce(`Preventiva: ${plural(res.data.gerados, 'chamado aberto', 'chamados abertos')}.`);
     return res.data;
   }
 
@@ -715,7 +780,7 @@ export class DataService {
     // apontando pra um item inexistente.
     if (item.quantidadeReservada > 0 || item.quantidadeConsumida > 0) {
       throw new Error(
-        `"${item.nome}" não pode ser excluído: há ${item.quantidadeReservada} reservada(s) e ${item.quantidadeConsumida} consumida(s).`
+        `"${item.nome}" não pode ser excluído: tem ${item.quantidadeReservada} separado e ${item.quantidadeConsumida} usado.`
       );
     }
 
@@ -745,16 +810,65 @@ export class DataService {
 
   // ---------- Ações de workflow: Cloud Functions (máquina de estado) ----------
 
-  async adicionarChamado(dados: Omit<Chamado, 'id' | 'numero' | 'dataCriacao' | 'status'> & { foto?: string }): Promise<void> {
+  /**
+   * Abre o chamado pela Cloud Function. Devolve id e número para a tela
+   * mostrar a confirmação ("Pedido CH-... enviado"). `local`, `urgencia` e
+   * `equipamentoId` são opcionais e vão só quando preenchidos.
+   */
+  async adicionarChamado(dados: {
+    titulo: string;
+    equipamento: string;
+    numeroSerie?: string;
+    descricao: string;
+    unidadeId: string;
+    solicitanteNome: string;
+    possuiFoto: boolean;
+    foto?: string;
+    local?: string;
+    urgencia?: UrgenciaChamado;
+    equipamentoId?: string;
+  }): Promise<{ id: string; numero: string }> {
+    const corpo = Object.fromEntries(Object.entries(dados).filter(([, v]) => v !== undefined && v !== '')) as typeof dados;
     const criarChamado = httpsCallable<typeof dados, { id: string; numero: string }>(functions, 'criarChamado');
-    const res = await criarChamado(dados);
-    this.feedback.announce(`Chamado ${res.data.numero} criado com sucesso.`);
+    const res = await criarChamado(corpo);
+    return res.data;
+  }
+
+  /**
+   * Descobre o que o link temporário do QR Code aponta (unidade e, conforme
+   * o tipo, o nome do bloco, sala ou equipamento), para montar o formulário
+   * de quem escaneou. Recusa quando o link venceu (functions/src/qrLinks.ts).
+   */
+  async validarQrToken(token: string): Promise<{ unidadeId: string; unidadeNome: string | null; tipo: QrAlvoTipo; nome?: string }> {
+    const validar = httpsCallable<{ token: string }, { unidadeId: string; unidadeNome: string | null; tipo: QrAlvoTipo; nome?: string }>(functions, 'validarQrToken');
+    return (await validar({ token })).data;
+  }
+
+  /**
+   * Abre o chamado pelo formulário do QR Code. A unidade e o solicitante
+   * não vão no corpo: o backend tira os dois do token e da sessão.
+   */
+  async criarChamadoPeloQr(dados: {
+    titulo: string;
+    equipamento: string;
+    numeroSerie?: string;
+    descricao: string;
+    solicitanteNome: string;
+    possuiFoto: boolean;
+    foto?: string;
+    qrToken: string;
+    local?: string;
+    urgencia?: UrgenciaChamado;
+  }): Promise<{ id: string; numero: string }> {
+    const criarChamado = httpsCallable<typeof dados, { id: string; numero: string }>(functions, 'criarChamado');
+    return (await criarChamado(dados)).data;
   }
 
   async cancelarChamado(chamadoId: string, motivo?: string): Promise<void> {
     const cancelar = httpsCallable<{ chamadoId: string; motivo?: string }, { ok: true }>(functions, 'cancelarChamado');
     await cancelar({ chamadoId, motivo });
-    this.feedback.announce('Chamado cancelado.');
+    const numero = this.getChamadoById(chamadoId)?.numero;
+    this.feedback.sucesso(numero ? `Chamado ${numero} cancelado.` : 'Chamado cancelado.');
   }
 
   async reabrirChamado(chamadoId: string, motivo?: string): Promise<void> {
@@ -766,13 +880,18 @@ export class DataService {
   async adicionarOS(dados: { chamadoId: string; contratoId: string; tecnicoId?: string }): Promise<void> {
     const criarOS = httpsCallable<typeof dados, { id: string; numero: string }>(functions, 'criarOS');
     const res = await criarOS(dados);
-    this.feedback.announce(`Ordem de serviço ${res.data.numero} criada com sucesso.`);
+    this.feedback.sucesso(`${rotuloOS(res.data.numero)} criada e enviada para a empresa contratada.`);
   }
 
-  async criarOrcamento(osId: string, itens: OrcamentoPedidoItem[]): Promise<void> {
-    const criarOrcamento = httpsCallable<{ osId: string; itens: OrcamentoPedidoItem[] }, { id: string }>(functions, 'criarOrcamento');
-    await criarOrcamento({ osId, itens });
-    this.feedback.announce('Orçamento criado com sucesso.');
+  /**
+   * Envia o orçamento. `itensForaContrato` (Z3.5) vai só quando há: são as
+   * peças ou serviços que não estão no contrato e não mexem em saldo.
+   */
+  async criarOrcamento(osId: string, itens: OrcamentoPedidoItem[], itensForaContrato: ItemForaContratoPedido[] = []): Promise<void> {
+    const criarOrcamento = httpsCallable<{ osId: string; itens: OrcamentoPedidoItem[]; itensForaContrato?: ItemForaContratoPedido[] }, { id: string }>(functions, 'criarOrcamento');
+    await criarOrcamento({ osId, itens, ...(itensForaContrato.length ? { itensForaContrato } : {}) });
+    const numero = this.getOSById(osId)?.numero;
+    this.feedback.sucesso(`Orçamento${numero ? ` da ${numero}` : ''} enviado. A gestão foi avisada para aprovar.`);
   }
 
   // Importação de contratos por CSV: valida no backend (formato, contrato
@@ -792,7 +911,7 @@ export class DataService {
   async importarContratos(csv: string): Promise<{ contratosCriados: number; itensCriados: number }> {
     const importar = httpsCallable<{ csv: string }, { contratosCriados: number; itensCriados: number }>(functions, 'importarContratos');
     const res = await importar({ csv });
-    this.feedback.announce(`${res.data.contratosCriados} contrato(s) importado(s).`);
+    this.feedback.announce(`${plural(res.data.contratosCriados, 'contrato importado', 'contratos importados')}.`);
     return res.data;
   }
 
@@ -813,28 +932,56 @@ export class DataService {
     return res.data.numero;
   }
 
-  async aprovarOrcamento(orcamentoId: string, ajustes?: { itemContratoId: string; quantidade: number }[], observacao?: string): Promise<void> {
-    const aprovar = httpsCallable<{ orcamentoId: string; ajustes?: { itemContratoId: string; quantidade: number }[]; observacao?: string }, { ok: true }>(functions, 'aprovarOrcamento');
-    await aprovar({ orcamentoId, ...(ajustes?.length ? { ajustes } : {}), ...(observacao ? { observacao } : {}) });
-    this.feedback.announce(ajustes?.length ? 'Orçamento aprovado com ajustes.' : 'Orçamento aprovado.');
+  async aprovarOrcamento(
+    orcamentoId: string,
+    ajustes?: { itemContratoId: string; quantidade: number }[],
+    observacao?: string,
+    foraContrato?: { id: string; aprovado: boolean }[]
+  ): Promise<void> {
+    const aprovar = httpsCallable<{ orcamentoId: string; ajustes?: { itemContratoId: string; quantidade: number }[]; observacao?: string; foraContrato?: { id: string; aprovado: boolean }[] }, { ok: true }>(functions, 'aprovarOrcamento');
+    await aprovar({
+      orcamentoId,
+      ...(ajustes?.length ? { ajustes } : {}),
+      ...(observacao ? { observacao } : {}),
+      ...(foraContrato?.length ? { foraContrato } : {})
+    });
+    this.feedback.sucesso(
+      ajustes?.length
+        ? 'Orçamento aprovado com ajustes. O saldo ficou separado no contrato e a empresa contratada foi avisada.'
+        : 'Orçamento aprovado. O saldo ficou separado no contrato e a empresa contratada foi avisada.'
+    );
   }
 
   async rejeitarOrcamento(orcamentoId: string): Promise<void> {
     const rejeitar = httpsCallable<{ orcamentoId: string }, { ok: true }>(functions, 'rejeitarOrcamento');
     await rejeitar({ orcamentoId });
-    this.feedback.announce('Orçamento rejeitado.');
+    this.feedback.sucesso('Orçamento recusado. A empresa contratada foi avisada para enviar outro.');
   }
 
-  async executarOS(osId: string, itens?: { itemContratoId: string; quantidadeExecutada: number }[], observacao?: string, fotos?: string[]): Promise<void> {
-    const executar = httpsCallable<{ osId: string; itens?: { itemContratoId: string; quantidadeExecutada: number }[]; observacao?: string; fotos?: string[] }, { ok: true }>(functions, 'executarOS');
-    await executar({ osId, ...(itens ? { itens } : {}), ...(observacao ? { observacao } : {}), ...(fotos?.length ? { fotos } : {}) });
-    this.feedback.announce('Ordem de serviço marcada como executada.');
+  async executarOS(
+    osId: string,
+    itens?: { itemContratoId: string; quantidadeExecutada: number }[],
+    observacao?: string,
+    fotos?: string[],
+    foraContrato?: { id: string; quantidadeExecutada: number }[]
+  ): Promise<void> {
+    const executar = httpsCallable<{ osId: string; itens?: { itemContratoId: string; quantidadeExecutada: number }[]; observacao?: string; fotos?: string[]; foraContrato?: { id: string; quantidadeExecutada: number }[] }, { ok: true }>(functions, 'executarOS');
+    await executar({
+      osId,
+      ...(itens ? { itens } : {}),
+      ...(observacao ? { observacao } : {}),
+      ...(fotos?.length ? { fotos } : {}),
+      ...(foraContrato?.length ? { foraContrato } : {})
+    });
+    const numero = this.getOSById(osId)?.numero;
+    this.feedback.sucesso(`Serviço registrado${numero ? ` na ${numero}` : ''}. A gestão foi avisada para conferir e encerrar.`);
   }
 
   async encerrarChamado(chamadoId: string): Promise<void> {
     const encerrar = httpsCallable<{ chamadoId: string }, { ok: true }>(functions, 'encerrarChamado');
     await encerrar({ chamadoId });
-    this.feedback.announce('Chamado encerrado.');
+    const numero = this.getChamadoById(chamadoId)?.numero;
+    this.feedback.sucesso(numero ? `Chamado ${numero} encerrado.` : 'Chamado encerrado.');
   }
 
   async atribuirTecnicoOS(osId: string, tecnicoId: string | null): Promise<void> {

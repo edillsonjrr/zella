@@ -1,6 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { getDownloadURL, ref } from 'firebase/storage';
-import { storage } from '../shared/firebase';
+import { urlDoArquivo } from '../shared/arquivos';
 import { IconComponent } from '../shared/icon/icon.component';
 import { FlowButtonComponent } from '../shared/flow-button/flow-button.component';
 import { NgClass, DatePipe } from '@angular/common';
@@ -16,7 +15,10 @@ import { DataService } from '../shared/data.service';
 import { DialogoService } from '../shared/dialogo/dialogo.service';
 import { HistoricoRegistroComponent } from '../shared/historico-registro/historico-registro.component';
 import { AuthService } from '../shared/auth.service';
-import { faseDoChamado } from '../shared/chamado-fase';
+import { EXPLICACAO_FIM, classeDoSelo, situacaoDoChamado } from '../shared/situacao-servico';
+import { prazoDoChamado } from '../shared/chamado-prazo';
+import { rotuloPatrimonio, rotuloUrgencia } from '../shared/rotulos';
+import { FluxoAcoesService } from '../shared/fluxo-acoes.service';
 import type { Chamado } from '../shared/models';
 
 @Component({
@@ -43,10 +45,42 @@ export class ChamadoDetalheComponent {
   dataService = inject(DataService);
   private dialogo = inject(DialogoService);
   private auth = inject(AuthService);
+  private fluxo = inject(FluxoAcoesService);
 
   chamado: Chamado = inject(MAT_DIALOG_DATA);
 
+  // Situação no vocabulário único do chamado e da OS, lida ao vivo: as ações
+  // daqui mudam o chamado com o painel aberto.
+  private chamadoAtual = computed(() => this.dataService.getChamadoById(this.chamado.id) ?? this.chamado);
+  situacao = computed(() => {
+    const s = situacaoDoChamado(this.dataService, this.chamadoAtual(), this.auth.perfil);
+    return { ...s, classe: classeDoSelo(s.chave) };
+  });
+  readonly explicacaoFim = EXPLICACAO_FIM;
+
+  // A OS que nasceu deste chamado: a numeração da OS é separada da do chamado.
+  osNumero = computed(() => {
+    const id = this.chamadoAtual().ordemServicoId;
+    return id ? this.dataService.getOSById(id)?.numero : undefined;
+  });
   unidadeNome = this.dataService.getUnidadeById(this.chamado.unidadeId)?.nome ?? '-';
+  prazo = prazoDoChamado(this.chamado);
+  urgencia = rotuloUrgencia(this.chamado.urgencia);
+  // Onde fica: o que a pessoa escreveu ou, sem isso, a sala do equipamento
+  // escolhido no cadastro.
+  onde = (() => {
+    if (this.chamado.local) return this.chamado.local;
+    const e = this.chamado.equipamentoId ? this.dataService.getEquipamentoById(this.chamado.equipamentoId) : undefined;
+    if (!e) return '';
+    return [e.blocoId ? this.dataService.getBlocoById(e.blocoId)?.nome : undefined, this.dataService.getSalaById(e.salaId)?.nome]
+      .filter(Boolean)
+      .join(', ');
+  })();
+  // Patrimônio do equipamento do cadastro: antes a tela dizia só "Número de
+  // série: Não informado", com o patrimônio nº 0021 no cadastro.
+  patrimonio = rotuloPatrimonio(
+    this.chamado.equipamentoId ? this.dataService.getEquipamentoById(this.chamado.equipamentoId)?.patrimonio : undefined
+  );
   gestores = computed(() => this.dataService.usuarios().filter(u => u.perfil === 'gestor'));
   responsavelId = this.chamado.responsavelId ?? '';
   fotoUrl = signal<string | null>(null);
@@ -54,7 +88,7 @@ export class ChamadoDetalheComponent {
 
   constructor() {
     if (this.chamado.fotoPath) {
-      getDownloadURL(ref(storage, this.chamado.fotoPath))
+      urlDoArquivo(this.chamado.fotoPath)
         .then(url => this.fotoUrl.set(url))
         .catch(() => this.fotoUrl.set(null));
     }
@@ -71,7 +105,7 @@ export class ChamadoDetalheComponent {
 
   async cancelarChamado(): Promise<void> {
     const motivo = await this.dialogo.perguntar(`Cancelar o chamado ${this.chamado.numero}?`, 'Motivo', {
-      mensagem: 'Se houver orçamento aprovado, o saldo reservado volta para o contrato.',
+      mensagem: 'Se houver orçamento aprovado, o saldo separado volta para o contrato.',
       confirmar: 'Cancelar chamado',
       perigo: true,
       opcional: true
@@ -100,8 +134,9 @@ export class ChamadoDetalheComponent {
     }
   }
 
+  // Só o gestor transforma chamado em OS (a contratada recebe a OS pronta).
   podeConverterEmOs(): boolean {
-    return (this.auth.isGestor() || this.auth.isGestorContratado()) &&
+    return this.auth.isGestor() &&
       !['Executado', 'Encerrado', 'Cancelado'].includes(this.chamado.status) && !this.chamado.ordemServicoId;
   }
 
@@ -120,13 +155,12 @@ export class ChamadoDetalheComponent {
     this.dataService.atribuirResponsavelChamado(this.chamado.id, this.responsavelId || undefined);
   }
 
+  // Resumo (OS, técnico, observação, itens, custo) e "Confirmar
+  // encerramento" na janela do fluxo; o erro aparece lá dentro.
   async encerrarChamado(): Promise<void> {
-    try {
-      await this.dataService.encerrarChamado(this.chamado.id);
-      this.fechar();
-    } catch (e) {
-      this.erroAcao.set((e as Error).message);
-    }
+    this.erroAcao.set('');
+    const atual = this.dataService.getChamadoById(this.chamado.id) ?? this.chamado;
+    if (await this.fluxo.encerrarChamado(atual)) this.fechar();
   }
 
   converterEmOs(): void {
@@ -143,24 +177,5 @@ export class ChamadoDetalheComponent {
 
   fechar(): void {
     this.dialogRef.close();
-  }
-
-  // Cor e ícone pela fase do chamado; o texto do badge é o status completo.
-  badgeClass(status: Chamado['status']): string {
-    switch (faseDoChamado(status)) {
-      case 'Aberto': return 'badge--aberta';
-      case 'Em atendimento': return 'badge--vistoria';
-      case 'Finalizado': return 'badge--aprovada';
-      case 'Cancelado': return 'badge--rejeitada';
-    }
-  }
-
-  statusIcon(status: Chamado['status']): string {
-    switch (faseDoChamado(status)) {
-      case 'Aberto': return 'radio_button_unchecked';
-      case 'Em atendimento': return 'engineering';
-      case 'Finalizado': return 'check_circle';
-      case 'Cancelado': return 'cancel';
-    }
   }
 }

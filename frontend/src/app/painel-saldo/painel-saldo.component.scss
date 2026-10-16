@@ -30,15 +30,8 @@
 .progresso {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-width: 150px;
-
-  mat-progress-bar {
-    flex: 1;
-    height: 8px;
-    border-radius: 4px;
-    overflow: hidden;
-  }
+  gap: 10px;
+  min-width: 90px;
 }
 
 .progresso-valor {
@@ -46,7 +39,8 @@
   font-weight: 600;
   color: var(--text-secondary);
   min-width: 38px;
-  text-align: right;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
 }
 
 .critico {
@@ -128,5 +122,104 @@
     .toolbar-left { flex: 1 1 100%; }
     .toolbar-left .contrato-select { width: 100%; }
     .toolbar-right button { min-height: 40px; }
+  }
+}
+
+/*
+  Table (beUI, MIT): a descricao do item e longa e de tamanho imprevisivel;
+  sem corte cada linha fica com uma altura e a varredura dos 96 itens fica
+  irregular. O texto inteiro continua no `title`.
+*/
+.item-nome {
+  display: block;
+  max-width: 22rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Os numeros alinham entre as linhas, entao a coluna se le de cima a baixo. */
+.mat-column-consumido,
+.mat-column-reservado,
+.mat-column-disponivel {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/*
+  O `mat-card-content` vem com `overflow: auto` e por isso virava o container
+  de rolagem mais proximo do cabecalho -- so que ele nao rola (quem rola e o
+  `.content`), entao o `sticky` nunca ativava. Soltando o recorte, o cabecalho
+  passa a grudar no scroller de verdade.
+
+  Seguro aqui porque a tabela agora trunca a descricao e nao estoura na
+  horizontal (medido: 0 px de excesso).
+*/
+:host ::ng-deep .mat-mdc-card-content {
+  overflow: visible;
+}
+
+/* Legenda dos três números do saldo, logo acima da tabela. */
+.saldo-legenda {
+  margin: 0 0 12px;
+}
+
+/* O saldo do contrato em reais, acima da tabela. */
+.saldo-reais {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 16px;
+
+  div {
+    padding: 8px 12px;
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    min-width: 0;
+  }
+
+  dt {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: 760px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* A conta escrita do item, embaixo do nome: quem confere refaz de cabeça. */
+.item-conta {
+  display: block;
+  max-width: 22rem;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  font-weight: 400;
+  color: var(--text-tertiary);
+  white-space: normal;
+  font-variant-numeric: tabular-nums;
+
+  &--erro {
+    color: var(--danger-500);
+  }
+}
+
+.cabecalho-dica {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: help;
+
+  app-icon {
+    font-size: 12px;
   }
 }

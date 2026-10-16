@@ -37,7 +37,7 @@ export class QrcodesComponent {
     for (const sala of this.salas()) {
       const unidade = this.dataService.getUnidadeById(sala.unidadeId);
       const bloco = sala.blocoId ? this.dataService.getBlocoById(sala.blocoId) : undefined;
-      mapa.set(sala.id, [unidade?.sigla, bloco?.nome].filter(Boolean).join(' · '));
+      mapa.set(sala.id, [unidade?.nome, bloco?.nome].filter(Boolean).join(' · '));
     }
     return mapa;
   });
@@ -47,17 +47,17 @@ export class QrcodesComponent {
     for (const equipamento of this.equipamentos()) {
       const unidade = this.dataService.getUnidadeById(equipamento.unidadeId);
       const sala = this.dataService.getSalaById(equipamento.salaId);
-      mapa.set(equipamento.id, [unidade?.sigla, sala?.nome].filter(Boolean).join(' · '));
+      mapa.set(equipamento.id, [unidade?.nome, sala?.nome].filter(Boolean).join(' · '));
     }
     return mapa;
   });
 
   nomeUnidade(unidadeId: string): string {
-    return this.dataService.getUnidadeById(unidadeId)?.sigla ?? '—';
+    return this.dataService.getUnidadeById(unidadeId)?.nome ?? '—';
   }
 
   gerarQrCodeUnidade(unidade: Unidade): void {
-    this.abrirDialog({ tipo: 'unidade', id: unidade.id, titulo: unidade.nome, subtitulo: unidade.sigla });
+    this.abrirDialog({ tipo: 'unidade', id: unidade.id, titulo: unidade.nome, subtitulo: unidade.nome });
   }
 
   gerarQrCodeBloco(bloco: Bloco): void {
@@ -66,7 +66,7 @@ export class QrcodesComponent {
       tipo: 'bloco',
       id: bloco.id,
       titulo: bloco.nome,
-      subtitulo: [unidade?.sigla, bloco.nome].filter(Boolean).join(' · ')
+      subtitulo: [unidade?.nome, bloco.nome].filter(Boolean).join(' · ')
     });
   }
 
@@ -76,7 +76,7 @@ export class QrcodesComponent {
       tipo: 'sala',
       id: sala.id,
       titulo: sala.nome,
-      subtitulo: [unidade?.sigla, sala.nome].filter(Boolean).join(' · ')
+      subtitulo: [unidade?.nome, sala.nome].filter(Boolean).join(' · ')
     });
   }
 
@@ -86,7 +86,7 @@ export class QrcodesComponent {
       tipo: 'equipamento',
       id: equipamento.id,
       titulo: equipamento.nome,
-      subtitulo: [unidade?.sigla, equipamento.nome].filter(Boolean).join(' · ')
+      subtitulo: [unidade?.nome, equipamento.nome].filter(Boolean).join(' · ')
     });
   }
 

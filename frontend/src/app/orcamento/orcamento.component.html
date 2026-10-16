@@ -31,7 +31,7 @@
   <section class="form-section">
     <div class="section-title">
       <app-icon name="inventory_2"></app-icon>
-      <h3>Itens do Contrato</h3>
+      <h3>Itens do contrato</h3>
     </div>
     <p class="section-hint">Selecione os itens e quantidades do orçamento</p>
 
@@ -49,9 +49,8 @@
 
             <div class="item-info">
               <strong>{{ item.nome }}</strong>
-              <span class="item-meta">Unidade: {{ item.unidadeMedida }}</span>
               <span class="item-meta item-meta--saldo" [class.item-meta--critico]="item.saldo < 10">
-                Saldo: {{ item.saldo }}
+                Restam {{ item.saldo | number:'1.0-2' }} {{ item.unidadeMedida }} no contrato
               </span>
               <span class="item-meta">Preço unit. (contrato): {{ item.precoUnitario | currency:'BRL' }}</span>
             </div>
@@ -77,12 +76,72 @@
     </div>
   </section>
 
+  <!-- Fora do contrato (Z3.5): o que não está na planilha do contrato. Não
+       sai do saldo; a gestão aprova ou recusa cada um, à parte. -->
+  @if (itensFora().length || !modoLeitura()) {
+    <section class="form-section fora-secao" aria-labelledby="titulo-fora">
+      <div class="section-title">
+        <app-icon name="warning"></app-icon>
+        <h3 id="titulo-fora">Itens fora do contrato</h3>
+      </div>
+      <p class="section-hint">Peça ou serviço que não está no contrato. Não sai do saldo do contrato: a gestão aprova ou recusa cada um, à parte.</p>
+
+      @for (f of itensFora(); track $index; let i = $index) {
+        <div class="fora-card">
+          <div class="fora-topo">
+            <span class="selo-fora">Fora do contrato</span>
+            @if (f.decisao) {
+              <span class="fora-decisao" [class.fora-decisao--recusado]="f.decisao === 'Recusado'">{{ f.decisao }} pela gestão</span>
+            }
+            @if (!modoLeitura()) {
+              <button mat-icon-button type="button" class="fora-remover" (click)="removerForaContrato(i)" [attr.aria-label]="'Remover o item fora do contrato ' + (i + 1)">
+                <app-icon name="delete"></app-icon>
+              </button>
+            }
+          </div>
+          <mat-form-field appearance="outline" class="fora-descricao">
+            <mat-label>Descrição</mat-label>
+            <input matInput [(ngModel)]="f.descricao" [name]="'fora-desc-' + i" maxlength="200" placeholder="Ex: troca do compressor" [disabled]="modoLeitura()" />
+          </mat-form-field>
+          <div class="fora-numeros">
+            <mat-form-field appearance="outline">
+              <mat-label>Qtd</mat-label>
+              <input matInput type="number" min="0" step="any" [(ngModel)]="f.quantidade" (ngModelChange)="recalcular()" [name]="'fora-qtd-' + i" [disabled]="modoLeitura()" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Unidade</mat-label>
+              <input matInput [(ngModel)]="f.unidade" [name]="'fora-un-' + i" maxlength="20" placeholder="un" [disabled]="modoLeitura()" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Preço unit. (R$)</mat-label>
+              <input matInput type="number" min="0" step="0.01" [(ngModel)]="f.precoUnitario" (ngModelChange)="recalcular()" [name]="'fora-preco-' + i" [disabled]="modoLeitura()" />
+            </mat-form-field>
+          </div>
+          <span class="fora-subtotal">Subtotal: {{ subtotalFora(f) | currency:'BRL' }}</span>
+        </div>
+      }
+
+      @if (!modoLeitura()) {
+        <button type="button" class="fora-acrescentar" (click)="acrescentarForaContrato()">
+          <app-icon name="add" aria-hidden="true"></app-icon>
+          Acrescentar item fora do contrato
+        </button>
+      }
+    </section>
+  }
+
   <mat-divider class="orcamento-divider"></mat-divider>
 
   <div class="orcamento-total">
-    <span>Total do orçamento</span>
+    <span>{{ itensFora().length ? 'Total do contrato' : 'Total do orçamento' }}</span>
     <strong>{{ total() | currency:'BRL' }}</strong>
   </div>
+  @if (itensFora().length) {
+    <div class="orcamento-total orcamento-total--fora">
+      <span>Fora do contrato (à parte)</span>
+      <strong>{{ totalFora() | currency:'BRL' }}</strong>
+    </div>
+  }
 
   @if (erro()) {
     <p class="alerta-status alerta-status--erro" role="alert">
@@ -93,10 +152,10 @@
 </div>
 
 <div class="orcamento-footer">
-  <app-flow-button variant="secondary" type="button" (click)="fechar()">Fechar</app-flow-button>
+  <app-flow-button variant="secondary" type="button" [class.full-width]="celular" (click)="fechar()">Fechar</app-flow-button>
   @if (!modoLeitura()) {
-    <app-flow-button type="button" (click)="salvar()" [disabled]="salvando()">
-      <app-icon class="btn-icon" name="save"></app-icon> {{ salvando() ? 'Enviando…' : 'Salvar orçamento' }}
+    <app-flow-button type="button" [class.full-width]="celular" (click)="salvar()" [disabled]="salvando()">
+      <app-icon class="btn-icon" name="save"></app-icon> {{ salvando() ? 'Enviando…' : 'Enviar orçamento para aprovação' }}
     </app-flow-button>
   }
 </div>

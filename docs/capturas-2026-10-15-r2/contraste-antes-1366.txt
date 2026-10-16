@@ -1,0 +1,87 @@
+## carla /dashboard 1366 escuro: corpo 14px, rolagem 0, ruins 3, <12px 0
+    {"t":"Urgente","r":4.1,"px":12,"cor":"rgb(255, 77, 79)","op":1,"cls":"prioridade-badge prioridade-badge--dange","imagem":false}
+    {"t":"CD","r":1.9,"px":12,"cor":"rgb(238, 244, 245)","op":1,"cls":"avatar avatar--primary-500","imagem":false}
+    {"t":"EN","r":1.84,"px":12,"cor":"rgb(238, 244, 245)","op":1,"cls":"avatar avatar--warning-500","imagem":false}
+## carla /ordens-servico 1366 escuro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## carla /painel-gerencial 1366 escuro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## carla /painel-saldo 1366 escuro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## carla /contratos 1366 escuro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## carla /unidades 1366 escuro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## carla /equipamentos 1366 escuro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## carla /qrcodes 1366 escuro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## carla /usuarios 1366 escuro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## carla /preventiva 1366 escuro: corpo 14px, rolagem 0, ruins 1, <12px 0
+    {"t":"Atrasado 2 dias","r":4.1,"px":12,"cor":"rgb(255, 77, 79)","op":1,"cls":"badge-situacao badge-situacao--atrasado","imagem":false}
+## carla /logs 1366 escuro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## carla /contratadas 1366 escuro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## carla /minha-conta 1366 escuro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## ana /meus-pedidos 1366 escuro: corpo 14px, rolagem 0, ruins 2, <12px 0
+    {"t":"Pedir um conserto","r":2.11,"px":18,"cor":"rgb(255, 255, 255)","op":1,"cls":"","imagem":false}
+    {"t":"Conte o que quebrou e onde fica","r":1.93,"px":14,"cor":"rgb(255, 255, 255)","op":0.88,"cls":"","imagem":false}
+## ana /chamados/novo 1366 escuro: corpo 14px, rolagem 0, ruins 1, <12px 1
+    {"t":"Senai Santa Maria","r":2.2,"px":15,"cor":"rgb(82, 100, 106)","op":1,"cls":"mat-mdc-select-min-line","imagem":false}
+   P {"t":"Ajuda o técnico a ver o problema antes d","px":11.6667,"cls":""}
+## diego /ordens-servico 1366 escuro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## eduardo /ordens-servico 1366 escuro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## carla /dashboard 1366 claro: corpo 14px, rolagem 0, ruins 11, <12px 0
+    {"t":"Novo","r":3.98,"px":12,"cor":"rgb(26, 111, 207)","op":1,"cls":"mat-mdc-tooltip-trigger badge badge--abe","imagem":false}
+    {"t":"Urgente","r":2.65,"px":12,"cor":"rgb(255, 77, 79)","op":1,"cls":"prioridade-badge prioridade-badge--dange","imagem":false}
+    {"t":"Prazo: até 22/07 · atrasado","r":2.98,"px":12,"cor":"rgb(255, 77, 79)","op":1,"cls":"task-prazo task-prazo--atrasado","imagem":false}
+    {"t":"Ver contrato","r":4.39,"px":12,"cor":"rgb(31, 126, 129)","op":1,"cls":"link-contrato","imagem":false}
+    {"t":"Aguardando orçamento","r":2.07,"px":12,"cor":"rgb(227, 146, 44)","op":1,"cls":"mat-mdc-tooltip-trigger badge badge--vis","imagem":false}
+    {"t":"Atrapalha","r":2.07,"px":12,"cor":"rgb(227, 146, 44)","op":1,"cls":"prioridade-badge prioridade-badge--warni","imagem":false}
+    {"t":"Prazo: até 12/08 · atrasado","r":2.98,"px":12,"cor":"rgb(255, 77, 79)","op":1,"cls":"task-prazo task-prazo--atrasado","imagem":false}
+    {"t":"CD","r":2.84,"px":12,"cor":"rgb(16, 25, 28)","op":1,"cls":"avatar avatar--primary-500","imagem":false}
+    {"t":"Aguardando aprovação","r":2.07,"px":12,"cor":"rgb(227, 146, 44)","op":1,"cls":"mat-mdc-tooltip-trigger badge badge--vis","imagem":false}
+    {"t":"Aprovado","r":2.84,"px":12,"cor":"rgb(30, 158, 79)","op":1,"cls":"mat-mdc-tooltip-trigger badge badge--apr","imagem":false}
+    {"t":"Serviço feito","r":3.92,"px":12,"cor":"rgb(31, 126, 129)","op":1,"cls":"mat-mdc-tooltip-trigger badge badge--exe","imagem":false}
+## carla /ordens-servico 1366 claro: corpo 14px, rolagem 0, ruins 5, <12px 0
+    {"t":"Aprovado","r":2.84,"px":12,"cor":"rgb(30, 158, 79)","op":1,"cls":"badge badge--aprovada","imagem":false}
+    {"t":"Aguardando aprovação","r":2.07,"px":12,"cor":"rgb(227, 146, 44)","op":1,"cls":"badge badge--vistoria","imagem":false}
+    {"t":"A aprovar","r":2.07,"px":12,"cor":"rgb(227, 146, 44)","op":1,"cls":"badge badge--vistoria","imagem":false}
+    {"t":"Aguardando orçamento","r":2.07,"px":12,"cor":"rgb(227, 146, 44)","op":1,"cls":"badge badge--vistoria","imagem":false}
+    {"t":"Serviço feito","r":3.92,"px":12,"cor":"rgb(31, 126, 129)","op":1,"cls":"badge badge--executada","imagem":false}
+## carla /painel-gerencial 1366 claro: corpo 14px, rolagem 0, ruins 2, <12px 0
+    {"t":"38 a mais","r":2.98,"px":12,"cor":"rgb(255, 77, 79)","op":1,"cls":"resumo-delta resumo-delta--ruim","imagem":false}
+    {"t":"41 pontos a menos","r":2.98,"px":12,"cor":"rgb(255, 77, 79)","op":1,"cls":"resumo-delta resumo-delta--ruim","imagem":false}
+## carla /painel-saldo 1366 claro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## carla /contratos 1366 claro: corpo 14px, rolagem 0, ruins 1, <12px 0
+    {"t":"Ativo","r":2.84,"px":12,"cor":"rgb(30, 158, 79)","op":1,"cls":"badge badge--ativo","imagem":false}
+## carla /unidades 1366 claro: corpo 14px, rolagem 0, ruins 4, <12px 0
+    {"t":"SAM","r":4.39,"px":14,"cor":"rgb(31, 126, 129)","op":1,"cls":"no-sigla","imagem":false}
+    {"t":"TAG","r":4.39,"px":14,"cor":"rgb(31, 126, 129)","op":1,"cls":"no-sigla","imagem":false}
+    {"t":"GAM","r":4.39,"px":14,"cor":"rgb(31, 126, 129)","op":1,"cls":"no-sigla","imagem":false}
+    {"t":"SOB","r":4.39,"px":14,"cor":"rgb(31, 126, 129)","op":1,"cls":"no-sigla","imagem":false}
+## carla /equipamentos 1366 claro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## carla /qrcodes 1366 claro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## carla /usuarios 1366 claro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## carla /preventiva 1366 claro: corpo 14px, rolagem 0, ruins 4, <12px 0
+    {"t":"Atrasado 2 dias","r":2.65,"px":12,"cor":"rgb(255, 77, 79)","op":1,"cls":"badge-situacao badge-situacao--atrasado","imagem":false}
+    {"t":"Em 4 dias","r":2.07,"px":12,"cor":"rgb(227, 146, 44)","op":1,"cls":"badge-situacao badge-situacao--proximo","imagem":false}
+    {"t":"Em 15 dias","r":2.84,"px":12,"cor":"rgb(30, 158, 79)","op":1,"cls":"badge-situacao badge-situacao--em-dia","imagem":false}
+    {"t":"Em 38 dias","r":2.84,"px":12,"cor":"rgb(30, 158, 79)","op":1,"cls":"badge-situacao badge-situacao--em-dia","imagem":false}
+## carla /logs 1366 claro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## carla /contratadas 1366 claro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## carla /minha-conta 1366 claro: corpo 14px, rolagem 0, ruins 0, <12px 0
+## ana /meus-pedidos 1366 claro: corpo 14px, rolagem 0, ruins 6, <12px 0
+    {"t":"Novo","r":3.98,"px":12,"cor":"rgb(26, 111, 207)","op":1,"cls":"badge badge--aberta","imagem":false}
+    {"t":"Ver detalhes","r":4.39,"px":12,"cor":"rgb(31, 126, 129)","op":1,"cls":"pedido-ver","imagem":false}
+    {"t":"Aprovado","r":2.84,"px":12,"cor":"rgb(30, 158, 79)","op":1,"cls":"badge badge--aprovada","imagem":false}
+    {"t":"Serviço feito","r":3.92,"px":12,"cor":"rgb(31, 126, 129)","op":1,"cls":"badge badge--executada","imagem":false}
+    {"t":"Aguardando orçamento","r":2.07,"px":12,"cor":"rgb(227, 146, 44)","op":1,"cls":"badge badge--vistoria","imagem":false}
+    {"t":"Prazo: até 22/07 · atrasado","r":2.98,"px":12,"cor":"rgb(255, 77, 79)","op":1,"cls":"pedido-atrasado","imagem":false}
+## ana /chamados/novo 1366 claro: corpo 14px, rolagem 0, ruins 1, <12px 1
+    {"t":"Senai Santa Maria","r":1.63,"px":15,"cor":"rgb(174, 187, 191)","op":1,"cls":"mat-mdc-select-min-line","imagem":false}
+   P {"t":"Ajuda o técnico a ver o problema antes d","px":11.6667,"cls":""}
+## diego /ordens-servico 1366 claro: corpo 14px, rolagem 0, ruins 5, <12px 0
+    {"t":"Aguardando orçamento","r":2.07,"px":12,"cor":"rgb(227, 146, 44)","op":1,"cls":"badge badge--vistoria","imagem":false}
+    {"t":"Aguardando aprovação","r":2.07,"px":12,"cor":"rgb(227, 146, 44)","op":1,"cls":"badge badge--vistoria","imagem":false}
+    {"t":"A aprovar","r":2.07,"px":12,"cor":"rgb(227, 146, 44)","op":1,"cls":"badge badge--vistoria","imagem":false}
+    {"t":"Aprovado","r":2.84,"px":12,"cor":"rgb(30, 158, 79)","op":1,"cls":"badge badge--aprovada","imagem":false}
+    {"t":"Serviço feito","r":3.92,"px":12,"cor":"rgb(31, 126, 129)","op":1,"cls":"badge badge--executada","imagem":false}
+## eduardo /ordens-servico 1366 claro: corpo 14px, rolagem 0, ruins 5, <12px 0
+    {"t":"Minhas OS para executar","r":4.29,"px":13,"cor":"rgb(31, 126, 129)","op":1,"cls":"","imagem":false}
+    {"t":"Aprovado","r":2.84,"px":12,"cor":"rgb(30, 158, 79)","op":1,"cls":"badge badge--aprovada","imagem":false}
+    {"t":"Aguardando orçamento","r":2.07,"px":12,"cor":"rgb(227, 146, 44)","op":1,"cls":"badge badge--vistoria","imagem":false}
+    {"t":"Aguardando aprovação","r":2.07,"px":12,"cor":"rgb(227, 146, 44)","op":1,"cls":"badge badge--vistoria","imagem":false}
+    {"t":"Serviço feito","r":3.92,"px":12,"cor":"rgb(31, 126, 129)","op":1,"cls":"badge badge--executada","imagem":false}

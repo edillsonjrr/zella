@@ -1,5 +1,5 @@
 <div class="quadro-container" cdkDropListGroup>
-  @for (coluna of colunas; track coluna.status) {
+  @for (coluna of colunas; track coluna.chave) {
     <div class="quadro-coluna">
       <div class="coluna-header">
         <div class="coluna-titulo">
@@ -7,19 +7,14 @@
           <span class="titulo-texto">{{ coluna.titulo }}</span>
           <span class="contador">{{ coluna.chamados.length }}</span>
         </div>
-        @if (coluna.status === 'Aberto') {
-          <button mat-icon-button (click)="onAbrirNovoChamado()" aria-label="Adicionar chamado">
+        @if (podeCriar && coluna.chave === 'novo') {
+          <button mat-icon-button (click)="onAbrirNovoChamado()" aria-label="Novo chamado" matTooltip="Novo chamado">
             <app-icon name="add"></app-icon>
           </button>
         }
       </div>
+      <p class="coluna-agora">{{ coluna.agora }}</p>
 
-      @if (coluna.status === 'Aberto') {
-        <button type="button" class="criacao-inline" (click)="onAbrirNovoChamado()">
-          <app-icon name="add"></app-icon>
-          <span>Adicionar chamado...</span>
-        </button>
-      }
 
       <div
         class="coluna-cards"
@@ -54,7 +49,7 @@
                 }
               </div>
               <div class="chamado-equipamento">{{ chamado.equipamento }}</div>
-              <div class="chamado-unidade">{{ chamado.unidadeSigla }}</div>
+              <div class="chamado-unidade" [title]="chamado.unidadeDica">{{ chamado.unidadeNome }}</div>
               <div class="chamado-meta">
                 <span class="responsavel">
                   <span class="avatar">{{ chamado.responsavelIniciais }}</span>

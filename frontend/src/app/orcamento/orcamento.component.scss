@@ -200,3 +200,99 @@
   padding: 16px 20px 20px;
   border-top: 1px solid var(--border-default);
 }
+
+@media (max-width: 480px) {
+  .orcamento-footer { flex-direction: column-reverse; }
+}
+
+/* Itens fora do contrato (Z3.5): borda e selo em âmbar, para não se
+   confundirem com os itens do contrato. */
+.fora-secao {
+  margin-top: 18px;
+
+  .section-title app-icon { color: var(--warning-500); }
+}
+
+.fora-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px 8px;
+  margin-bottom: 10px;
+  border: 1px dashed var(--warning-500);
+  border-radius: var(--card-radius);
+  background: var(--warning-50, var(--bg-secondary));
+
+  mat-form-field { width: 100%; }
+}
+
+.fora-topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+}
+
+.selo-fora {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--warning-500);
+  color: #1b1300;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.fora-decisao {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--success-500);
+}
+
+.fora-decisao--recusado { color: var(--danger-500); }
+
+.fora-remover { margin-left: auto; }
+
+.fora-numeros {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.4fr;
+  gap: 8px;
+}
+
+.fora-subtotal {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.fora-acrescentar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  border: 1px dashed var(--warning-500);
+  border-radius: var(--button-radius);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover { background: var(--warning-50, var(--bg-elevated)); }
+  &:focus-visible { outline: 2px solid var(--warning-500); outline-offset: 2px; }
+}
+
+.orcamento-total--fora {
+  margin-top: 6px;
+  border: 1px dashed var(--warning-500);
+
+  strong { color: var(--text-primary); }
+}
+
+@media (max-width: 480px) {
+  .fora-numeros { grid-template-columns: 1fr 1fr; }
+  .fora-numeros mat-form-field:last-child { grid-column: 1 / -1; }
+}

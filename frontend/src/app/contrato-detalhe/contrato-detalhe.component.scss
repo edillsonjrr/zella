@@ -80,7 +80,7 @@
   }
 
   .campo-label {
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.4px;
@@ -216,12 +216,44 @@
 
   app-icon { grid-area: icone; color: var(--text-tertiary); }
   .lista-os-numero { grid-area: numero; font-weight: 600; font-size: 0.8rem; }
-  .lista-os-data { grid-area: data; font-size: 0.7rem; color: var(--text-tertiary); }
-  .lista-os-situacao { grid-area: situacao; font-size: 0.7rem; color: var(--text-secondary); }
+  .lista-os-data { grid-area: data; font-size: 0.75rem; color: var(--text-tertiary); }
+  .lista-os-situacao { grid-area: situacao; font-size: 0.75rem; color: var(--text-secondary); }
 }
 
 .campo-aviso {
   margin-top: 4px;
   font-size: 0.75rem;
+  color: var(--danger-500);
+}
+
+.campo-label--dica {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: help;
+
+  app-icon {
+    font-size: 12px;
+  }
+}
+
+.campo-formula {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.conta-nao-fecha {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  white-space: normal;
+  color: var(--danger-500);
+}
+
+.campo-valor.critico {
+  color: var(--danger-500) !important;
+}
+
+td.critico {
   color: var(--danger-500);
 }

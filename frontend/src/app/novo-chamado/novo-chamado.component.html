@@ -1,35 +1,49 @@
 @if (!isDialog) {
-  <div class="page-header animate-fade-in">
-    <h1>Novo Chamado</h1>
+  <div class="page-header pagina-estreita animate-fade-in">
+    <div class="page-header-textos">
+      <h1>{{ ehSolicitante() || ehConvidado() ? 'Pedir um conserto' : 'Novo chamado' }}</h1>
+      <p>Conte o que precisa de conserto e onde fica.</p>
+    </div>
   </div>
 }
 
 <mat-card class="app-card animate-fade-in-up standalone-card" [class.modal-card]="isDialog">
   <mat-card-content>
     <form (ngSubmit)="salvar(chamadoForm)" #chamadoForm="ngForm" class="modal-form" novalidate>
+      <!-- Na página, o título já está no cabeçalho: o do cartão só aparece no diálogo. -->
+      @if (isDialog) {
       <div class="modal-scrollable-header">
         <div class="modal-title">
           <div class="modal-icon">
             <app-icon name="support_agent" aria-hidden="true"></app-icon>
           </div>
           <div>
-            <h2>Novo Chamado</h2>
-            <span class="modal-subtitle">Abra um novo chamado de manutenção</span>
+            <h2>{{ ehSolicitante() || ehConvidado() ? 'Pedir um conserto' : 'Novo chamado' }}</h2>
+            <span class="modal-subtitle">Conte o que precisa de conserto e onde fica.</span>
           </div>
         </div>
-        @if (isDialog) {
-          <button mat-icon-button type="button" class="modal-close" (click)="cancelar()" aria-label="Fechar">
-            <app-icon name="close" aria-hidden="true"></app-icon>
-          </button>
-        }
+        <button mat-icon-button type="button" class="modal-close" (click)="cancelar()" aria-label="Fechar">
+          <app-icon name="close" aria-hidden="true"></app-icon>
+        </button>
       </div>
+      }
 
       <div class="modal-scrollable-body">
         @if (chamadoEnviado(); as numero) {
           <div class="qr-status qr-status--sucesso" role="status">
             <app-icon name="check_circle" aria-hidden="true"></app-icon>
-            <h3>Chamado {{ numero }} registrado</h3>
-            <p>Recebemos sua solicitação. A equipe de manutenção vai acompanhar a partir daqui.</p>
+            @if (ehConvidado()) {
+              <h3>Chamado {{ numero }} registrado</h3>
+              <p>Recebemos sua solicitação. A equipe de manutenção vai acompanhar a partir daqui.</p>
+            } @else {
+              <h3>Pedido {{ numero }} enviado</h3>
+              @if (ehSolicitante()) {
+                <p>Você vai receber um aviso no sino a cada etapa: quando for encaminhado, aprovado, feito e concluído.</p>
+                <p>Acompanhe em "Meus pedidos".</p>
+              } @else {
+                <p>O chamado já está na lista, e a gestão recebeu o aviso.</p>
+              }
+            }
           </div>
         } @else if (validandoQrToken()) {
           <div class="qr-status" role="status">
@@ -43,7 +57,7 @@
             <p>Esse QR Code só vale por 3 minutos depois de escaneado. Peça para escanear o código novamente.</p>
           </div>
         } @else {
-          @if (erroEnvioQrCode(); as erro) {
+          @if (erroEnvio(); as erro) {
             <div class="qr-inline-erro" role="alert">
               <app-icon name="warning" aria-hidden="true"></app-icon>
               <span>{{ erro }}</span>
@@ -52,21 +66,14 @@
         <section class="form-section">
           <div class="section-title">
             <app-icon name="handyman" aria-hidden="true"></app-icon>
-            <h3>Informações do equipamento</h3>
+            <h3>O que precisa de conserto</h3>
           </div>
           <div class="form-grid">
-            <div class="full-width li-field">
-              <app-label-input label="Equipamento" #equipamentoCtrl="ngModel" [(ngModel)]="equipamento" name="equipamento" autocomplete="off" placeholder="Ex: Ar Split - Sala 101…" required></app-label-input>
-              @if (equipamentoCtrl.invalid && equipamentoCtrl.touched) {
-                <span class="li-error">Informe o equipamento</span>
-              }
-            </div>
-
             @if (ehConvidado()) {
               <!-- O convidado não escolhe a unidade: ela vem travada pelo QR
                    Code e é o backend que a resolve pelo token. Aqui é só
                    leitura, pra ele conferir onde o chamado vai cair. -->
-              <div class="qr-unidade" aria-live="polite">
+              <div class="qr-unidade full-width" aria-live="polite">
                 <app-icon name="location_on" aria-hidden="true"></app-icon>
                 <div>
                   <span class="qr-unidade-rotulo">Unidade</span>
@@ -74,9 +81,9 @@
                 </div>
               </div>
             } @else {
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" [class.full-width]="ehSolicitante()">
                 <mat-label>Unidade</mat-label>
-                <mat-select #unidadeCtrl="ngModel" [(ngModel)]="unidadeId" name="unidadeId" [disabled]="usuarioLogado().perfil === 'cliente' || unidadeViaQrCode" required>
+                <mat-select #unidadeCtrl="ngModel" [ngModel]="unidadeId()" (ngModelChange)="aoTrocarUnidade($event)" name="unidadeId" [disabled]="ehSolicitante() || unidadeViaQrCode" required>
                   @for (u of unidades(); track u.id) {
                     <mat-option [value]="u.id">{{ u.nome }}</mat-option>
                   }
@@ -86,18 +93,125 @@
                 }
               </mat-form-field>
 
-              <div class="li-field">
-                <app-label-input label="Número de série" [(ngModel)]="numeroSerie" name="numeroSerie" autocomplete="off" [spellcheckOn]="false" placeholder="Ex: SN123456…"></app-label-input>
+              @if (!ehSolicitante()) {
+                <div class="li-field">
+                  <app-label-input label="Número de série (opcional)" [(ngModel)]="numeroSerie" name="numeroSerie" autocomplete="off" [spellcheckOn]="false" placeholder="Ex: SN123456…"></app-label-input>
+                </div>
+              }
+            }
+
+            @if (usarLista()) {
+              <!-- Equipamento do cadastro, com busca. "Outro" volta ao texto livre. -->
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="full-width campo-equipamento">
+                <mat-label>Equipamento</mat-label>
+                <app-icon matPrefix name="search" class="campo-equipamento-icone" aria-hidden="true"></app-icon>
+                <input
+                  matInput
+                  #buscaCtrl="ngModel"
+                  [ngModel]="buscaEquipamento()"
+                  (ngModelChange)="aoDigitarEquipamento($event)"
+                  name="equipamentoBusca"
+                  [matAutocomplete]="listaEquipamentos"
+                  autocomplete="off"
+                  [placeholder]="exemploBusca()"
+                  required
+                />
+                <mat-autocomplete #listaEquipamentos="matAutocomplete" [displayWith]="mostrarEquipamento" (optionSelected)="escolherEquipamento($event)">
+                  @for (o of equipamentosFiltrados(); track o.equipamento.id) {
+                    <mat-option [value]="o.equipamento.id" class="opcao-equipamento">
+                      <span class="opcao-equipamento-nome">{{ o.equipamento.nome }}</span>
+                      @if (o.detalhe) {
+                        <span class="opcao-equipamento-detalhe">{{ o.detalhe }}</span>
+                      }
+                    </mat-option>
+                  }
+                  <mat-option [value]="OUTRO" class="opcao-equipamento opcao-equipamento--outro">
+                    <span class="opcao-equipamento-nome">Outro (descrever)</span>
+                    <span class="opcao-equipamento-detalhe">Não está na lista</span>
+                  </mat-option>
+                </mat-autocomplete>
+                @if (equipamentoId()) {
+                  <mat-hint>Equipamento do cadastro</mat-hint>
+                } @else if (buscaSemResultado()) {
+                  <mat-hint>Nenhum equipamento com "{{ buscaEquipamento() }}" no cadastro desta unidade. Escolha "Outro (descrever)".</mat-hint>
+                } @else {
+                  <mat-hint>Escolha da lista ou "Outro (descrever)"</mat-hint>
+                }
+                @if (buscaCtrl.invalid && buscaCtrl.touched) {
+                  <mat-error>Escolha o equipamento ou "Outro (descrever)"</mat-error>
+                }
+              </mat-form-field>
+            } @else {
+              <div class="full-width li-field">
+                <app-label-input
+                  [label]="equipamentoOutro() ? 'Descreva o equipamento' : 'Equipamento'"
+                  #equipamentoCtrl="ngModel"
+                  [(ngModel)]="equipamento"
+                  name="equipamento"
+                  autocomplete="off"
+                  placeholder="Ex: ar-condicionado, tomada, porta do banheiro…"
+                  required
+                ></app-label-input>
+                @if (equipamentoCtrl.invalid && equipamentoCtrl.touched) {
+                  <span class="li-error">Diga o que precisa de conserto</span>
+                }
+                @if (equipamentoOutro()) {
+                  <button type="button" class="link-voltar-lista" (click)="voltarParaLista()">Escolher da lista de equipamentos</button>
+                }
               </div>
             }
 
-            <div class="li-field">
-              <app-label-input [label]="ehConvidado() ? 'Seu nome' : 'Solicitante'" #solicitanteCtrl="ngModel" [(ngModel)]="solicitante" name="solicitante" autocomplete="name" required></app-label-input>
-              @if (solicitanteCtrl.invalid && solicitanteCtrl.touched) {
-                <span class="li-error">Informe seu nome</span>
+            <div class="full-width li-field">
+              <app-label-input
+                label="Onde fica (bloco/sala) — opcional"
+                #localCtrl="ngModel"
+                [(ngModel)]="local"
+                name="local"
+                autocomplete="off"
+                [maxlength]="120"
+                placeholder="Ex: Bloco B, sala 12"
+              ></app-label-input>
+              @if (localCtrl.errors?.['maxlength']) {
+                <span class="li-error">Use até 120 letras</span>
               }
             </div>
+
+            @if (ehSolicitante()) {
+              <!-- A solicitante já entrou: o pedido sai no nome dela, sem pedir de novo. -->
+              <p class="full-width pedido-em-nome">
+                <app-icon name="person" aria-hidden="true"></app-icon>
+                <span>Pedido em nome de <strong>{{ solicitante }}</strong> (você)</span>
+              </p>
+            } @else {
+              <div class="li-field full-width">
+                <app-label-input [label]="ehConvidado() ? 'Seu nome' : 'Quem está pedindo'" #solicitanteCtrl="ngModel" [(ngModel)]="solicitante" name="solicitante" autocomplete="name" required></app-label-input>
+                @if (solicitanteCtrl.invalid && solicitanteCtrl.touched) {
+                  <span class="li-error">Informe o nome de quem está pedindo</span>
+                }
+              </div>
+            }
           </div>
+        </section>
+
+        <mat-divider class="section-divider"></mat-divider>
+
+        <section class="form-section">
+          <fieldset class="urgencia">
+            <legend class="section-title">
+              <app-icon name="priority_high" aria-hidden="true"></app-icon>
+              <h3>Urgência <span class="opcional">(opcional)</span></h3>
+            </legend>
+            <p class="urgencia-nota">Mostra à gestão o que atender primeiro. A urgência não muda o prazo do pedido.</p>
+            <div class="urgencia-opcoes">
+              @for (o of opcoesUrgencia; track o.valor) {
+                <label class="urgencia-opcao" [class.urgencia-opcao--marcada]="urgencia === o.valor" [class.urgencia-opcao--alta]="o.valor === 'alta'">
+                  <input type="radio" name="urgencia" [value]="o.valor" [(ngModel)]="urgencia" class="sr-only" [attr.aria-label]="o.rotulo + ': ' + o.ajuda" />
+                  <strong>{{ o.rotulo }}</strong>
+                  <span>{{ o.ajuda }}</span>
+                </label>
+              }
+            </div>
+          </fieldset>
         </section>
 
         <mat-divider class="section-divider"></mat-divider>
@@ -105,11 +219,11 @@
         <section class="form-section">
           <div class="section-title">
             <app-icon name="report_problem" aria-hidden="true"></app-icon>
-            <h3>Problema relatado</h3>
+            <h3>O que está acontecendo</h3>
           </div>
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="full-width">
             <mat-label>Descrição do problema</mat-label>
-            <textarea matInput #descricaoCtrl="ngModel" rows="3" [(ngModel)]="descricao" name="descricao" placeholder="Descreva o defeito, sintomas e localização…" required></textarea>
+            <textarea matInput #descricaoCtrl="ngModel" rows="3" [(ngModel)]="descricao" name="descricao" placeholder="Ex: o ar não liga desde ontem e a sala fica muito quente." required></textarea>
             @if (descricaoCtrl.invalid && descricaoCtrl.touched) {
               <mat-error>Descreva o problema</mat-error>
             }
@@ -121,26 +235,42 @@
         <section class="form-section">
           <div class="section-title">
             <app-icon name="photo_camera" aria-hidden="true"></app-icon>
-            <h3>Foto de evidência</h3>
+            <h3>Foto <span class="opcional">(opcional)</span></h3>
           </div>
           @if (!fotoPreview) {
             <div class="upload-area">
               <input type="file" accept="image/*" id="foto" (change)="onFotoSelecionada($event)" class="sr-only" />
               <label for="foto" class="upload-label">
                 <app-icon name="cloud_upload" aria-hidden="true"></app-icon>
-                <span>Clique para adicionar uma foto</span>
-                <small>JPEG, PNG ou WEBP</small>
+                <span>Tirar ou escolher uma foto</span>
+                <small>Ajuda o técnico a ver o problema antes de ir.</small>
               </label>
             </div>
           } @else {
             <div class="foto-preview">
-              <img [src]="fotoPreview" alt="Pré-visualização da foto de evidência" />
+              <img [src]="fotoPreview" alt="Pré-visualização da foto" />
               <button mat-stroked-button type="button" color="warn" (click)="removerFoto()">
                 <app-icon name="delete" aria-hidden="true"></app-icon> Remover foto
               </button>
             </div>
           }
         </section>
+
+        @if (pedidoParecido(); as parecido) {
+          <div class="aviso-repetido" role="alert">
+            <p class="aviso-repetido-titulo">
+              <app-icon name="warning" aria-hidden="true"></app-icon>
+              <span>Já existe um pedido em andamento para este equipamento</span>
+            </p>
+            <p>{{ parecido.numero }}: {{ parecido.equipamento }}, aberto em {{ parecido.dataCriacao | date:'dd/MM' }}. Se for o mesmo defeito, não precisa pedir de novo.</p>
+            <mat-checkbox [checked]="confirmouRepetido()" (change)="marcarRepetido($event.checked, parecido)">
+              É outro defeito: enviar mesmo assim
+            </mat-checkbox>
+            @if (pediuConfirmacaoRepetido()) {
+              <p class="aviso-repetido-pedido">Marque a confirmação acima para enviar o pedido.</p>
+            }
+          </div>
+        }
         }
       </div>
 
@@ -150,11 +280,11 @@
         } @else {
           <app-flow-button variant="secondary" type="button" (click)="cancelar()">Cancelar</app-flow-button>
           @if (!validandoQrToken() && !qrTokenExpirado()) {
-            <app-flow-button type="submit" [disabled]="enviandoQrCode()">
-              @if (enviandoQrCode()) {
+            <app-flow-button type="submit" [disabled]="enviando()">
+              @if (enviando()) {
                 <app-spinner size="sm" label="Enviando"></app-spinner> Enviando…
               } @else {
-                <app-icon class="btn-icon" name="save" aria-hidden="true"></app-icon> Salvar chamado
+                <app-icon class="btn-icon" name="arrow_forward" aria-hidden="true"></app-icon> Enviar pedido
               }
             </app-flow-button>
           }

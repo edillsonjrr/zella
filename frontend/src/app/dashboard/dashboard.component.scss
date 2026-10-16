@@ -10,15 +10,16 @@
 
 .page-title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 16px;
-  min-height: 40px;
+  gap: var(--its-e-4);
+  margin-bottom: var(--its-cabecalho-conteudo);
+  min-height: 44px;
 
   .title-left {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    gap: var(--its-e-1);
 
     .workspace-badge {
       width: 32px;
@@ -207,6 +208,30 @@
     }
   }
 
+  /* Aviso do recorte que veio do Painel gerencial (não é botão). */
+  .filtro-painel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    background-color: var(--primary-50);
+    color: var(--primary-400);
+    font-size: 0.8125rem;
+    font-weight: 600;
+
+    app-icon {
+      flex-shrink: 0;
+      font-size: var(--icon-sm);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--primary-500);
+      outline-offset: 2px;
+    }
+  }
+
   .toolbar-btn {
     display: inline-flex;
     align-items: center;
@@ -257,10 +282,17 @@
 }
 
 .chamados-table {
+  // Altura do cabeçalho de grupo. Vive aqui porque o cabeçalho de coluna
+  // precisa dela para se encaixar logo abaixo quando os dois prendem.
+  --altura-cabecalho-grupo: 40px;
+
   border: 1px solid var(--border-default);
   border-radius: var(--card-radius);
   background-color: var(--bg-tertiary);
-  overflow: hidden;
+  // `hidden` cria um contexto de rolagem e desativa o `position: sticky` dos
+  // cabeçalhos de dentro — é o motivo clássico de "o sticky não gruda".
+  // `clip` recorta o mesmo canto arredondado sem criar scroll container.
+  overflow: clip;
 }
 
 .grupo {
@@ -269,7 +301,24 @@
   }
 }
 
+// A lista chega a nove telas de rolagem dentro do `.content`. Sem prender os
+// dois cabeçalhos, no meio da rolagem some tanto o status do grupo que se está
+// lendo ("Aberto", "Concluído") quanto o nome das colunas — e as linhas viram
+// seis campos sem rótulo. Eles prendem empilhados: o grupo primeiro, o
+// cabeçalho de coluna encostado embaixo dele.
+/* Quem age nas chamadas do grupo, logo abaixo do título. */
+.grupo-agora {
+  margin: 0;
+  padding: 0 16px 8px 44px;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--text-tertiary);
+}
+
 .grupo-header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -324,27 +373,25 @@
 .table-header,
 .table-row {
   display: grid;
-  grid-template-columns: 1fr 140px 70px 100px 100px 110px;
+  grid-template-columns: minmax(0, 1fr) 150px 140px 184px 92px 104px;
+  column-gap: var(--its-e-3);
   align-items: center;
-  padding: 0 12px;
-  min-height: 40px;
+  padding: 0 var(--its-e-4);
+  min-height: 44px;
 }
 
 .table-header {
+  position: sticky;
+  top: var(--altura-cabecalho-grupo);
+  z-index: 2;
   background-color: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-default);
 
+  /* Cabeçalho de tabela do guia: legenda em 600, sem caixa alta. */
   .col {
-    font-size: 0.6875rem;
+    font-size: var(--its-t-legenda);
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
     color: var(--text-tertiary);
-  }
-
-  .col-unidade,
-  .col-os {
-    text-align: center;
   }
 }
 
@@ -365,7 +412,7 @@
   }
 
   .col {
-    font-size: 0.8125rem;
+    font-size: var(--its-t-corpo);
     color: var(--text-secondary);
   }
 
@@ -439,69 +486,47 @@
     }
   }
 
+  /* Nome da unidade (não a sigla), numa linha; a dica traz nome e sigla. */
   .col-unidade {
-    text-align: center;
-    font-weight: 600;
-    color: var(--text-tertiary);
+    min-width: 0;
+    color: var(--text-secondary);
+
+    .unidade-nome {
+      display: block;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
   }
 
+  .task-unidade {
+    display: none;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Situação: a pílula numa linha só e o número da OS embaixo. */
   .col-os {
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--its-e-1);
     min-width: 0;
 
-    .os-status-badge,
-    .os-status-vazio {
-      max-width: 100%;
-    }
-
-    .os-status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 3px 10px;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      background-color: var(--primary-50);
-      color: var(--primary-400);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-
-      app-icon {
-        font-size: var(--icon-xs);
-        width: var(--icon-xs);
-        height: var(--icon-xs);
-        flex-shrink: 0;
-      }
-    }
-
-    .os-status-vazio {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
+    .os-numero {
+      font-size: var(--its-t-legenda);
       color: var(--text-tertiary);
-      font-size: 0.75rem;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-
-      app-icon {
-        font-size: var(--icon-xs);
-        width: var(--icon-xs);
-        height: var(--icon-xs);
-        flex-shrink: 0;
-      }
+      font-variant-numeric: tabular-nums;
     }
   }
 
   .col-data {
-    font-weight: 500;
     min-width: 0;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -513,13 +538,13 @@
   align-items: center;
   justify-content: center;
   color: var(--text-primary);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
 
   &--small {
     width: 24px;
     height: 24px;
-    font-size: 0.625rem;
+    font-size: var(--its-t-legenda);
   }
 
   &--more {
@@ -532,11 +557,13 @@
 .prioridade-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
+  gap: var(--its-e-1);
+  height: 24px;
+  padding: 0 var(--its-e-2);
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: var(--its-t-legenda);
   font-weight: 600;
+  white-space: nowrap;
 
   app-icon {
     font-size: var(--icon-xs);
@@ -604,6 +631,13 @@
   &--warning-500 { background-color: var(--warning-500); }
   &--danger-500 { background-color: var(--danger-500); }
 
+  /* Iniciais sobre a cor cheia: no escuro a cor é clara e a letra escura; no
+     claro, o contrário (--bg-primary troca com o tema). Antes a letra clara
+     sobre o teal claro dava 1,9:1. */
+  &--primary-500, &--primary-600, &--success-500, &--info-500, &--warning-500, &--danger-500 {
+    color: var(--bg-primary);
+  }
+
   &--neutral {
     background-color: var(--bg-elevated);
     color: var(--text-tertiary);
@@ -622,42 +656,51 @@
     color: var(--warning-500);
   }
 
+  /* Média, baixa e "Não informada": só texto, sem pílula. A cor forte
+     fica para o que pede pressa. */
   &--neutral {
-    background-color: var(--bg-elevated);
+    padding: 0;
+    background: none;
     color: var(--text-tertiary);
+    font-weight: 500;
   }
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
   .table-header,
   .table-row {
-    grid-template-columns: 1fr 110px 60px 90px 90px 90px;
+    grid-template-columns: minmax(0, 1fr) 130px 120px 184px 92px;
+  }
+
+  .col-prioridade {
+    display: none !important;
   }
 }
 
 @media (max-width: 960px) {
   .page-title-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: var(--its-e-3);
   }
 
+  /* Um fluxo só: agrupar, busca na largura toda, e Situação e Data lado a
+     lado, em vez de um controle por linha. */
   .toolbar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--its-e-2);
 
-  .table-header,
-  .table-row {
-    grid-template-columns: 1fr 40px 64px 60px;
-    column-gap: 6px;
-    min-height: 44px;
-  }
+    .toolbar-left,
+    .toolbar-right {
+      display: contents;
+    }
 
-  .col-responsavel,
-  .col-prioridade {
-    display: none !important;
+    .busca-wrapper {
+      flex: 1 1 100%;
+      width: 100%;
+    }
   }
 
   .segmented-btn,
@@ -667,6 +710,7 @@
 
   .busca-input {
     height: 44px;
+    font-size: 16px;
   }
 
   .grupo-toggle {
@@ -677,6 +721,69 @@
   .busca-limpar {
     width: 44px;
     height: 44px;
+  }
+}
+
+/* Celular e tablet estreito: cada chamado vira um cartão. Nome inteiro (até
+   duas linhas), unidade e prazo embaixo, e uma linha com a situação e a
+   urgência. Sem cabeçalho de colunas. */
+@media (max-width: 767px) {
+  .table-header {
+    display: none;
+  }
+
+  .table-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'nome nome'
+      'situacao urgencia';
+    row-gap: var(--its-e-2);
+    padding: var(--its-e-3) var(--its-e-4);
+
+    .col-nome {
+      grid-area: nome;
+      align-items: flex-start;
+
+      .task-icon {
+        display: none;
+      }
+
+      .task-name {
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        overflow-wrap: anywhere;
+      }
+    }
+
+    .task-unidade {
+      display: block;
+    }
+
+    .col-os {
+      grid-area: situacao;
+      flex-direction: row;
+      align-items: center;
+      gap: var(--its-e-2);
+    }
+
+    .col-prioridade {
+      grid-area: urgencia;
+      display: flex !important;
+      justify-content: flex-end;
+    }
+
+    .col-responsavel,
+    .col-unidade,
+    .col-data {
+      display: none !important;
+    }
+  }
+
+  .add-task-inline {
+    display: none;
   }
 }
 
@@ -692,7 +799,7 @@
 }
 
 .resumo-grupo-titulo {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -806,4 +913,32 @@
       color: var(--info-500);
     }
   }
+}
+
+/* Prazo do chamado embaixo do nome, em todas as larguras (Z2.6). */
+.task-prazo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+
+  app-icon {
+    font-size: 12px;
+  }
+
+  &--atrasado {
+    color: var(--danger-500);
+    font-weight: 600;
+  }
+}
+
+/* Quantos chamados a lista mostra e por que alguns ficam fora (cancelados):
+   o número bate com o Painel gerencial. */
+.lista-resumo {
+  margin: 0 0 12px;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
 }

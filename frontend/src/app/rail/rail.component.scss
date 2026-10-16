@@ -1,119 +1,133 @@
-/* Rail de navegação (menu lateral).
+/* Menu lateral (mesmo padrão do ChatBuddy, referência Linear).
  *
- * Os itens são <a>/<button> próprios, não mat-icon-button: o botão de ícone
- * do Material fixa largura (48px, cortava "Contratos" e "Preventiva"), cor
- * (!important global em styles.scss, que apagava o estado ativo) e um ripple
- * circular que não combina com o item retangular.
+ * Seções com cabeçalho recolhível, linhas de 32px e item ativo com a linha
+ * inteira no tom da marca (--primary-50) e o ícone em --primary-500 — sem
+ * barrinha lateral. Recolhido vira faixa de ícones com tooltip. No celular
+ * o menu some e entra a barra inferior (.bn).
  *
- * Hierarquia: ícone e rótulo na mesma cor (secundária), hover sobe para a
- * primária, ativo usa o teal da marca sobre o fundo --primary-50 — mesmo
- * tratamento do item ativo do menu flutuante (.rail-menu-ativo).
+ * Os itens são <a>/<button> próprios, não mat-icon-button: o botão do
+ * Material fixa largura, cor (!important global em styles.scss) e ripple.
  */
 
 :host {
   display: flex;
   flex-direction: column;
   height: 100%;
+  flex-shrink: 0;
 }
 
-.rail {
+.sb {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  width: 72px;
+  width: 232px;
   height: 100%;
   min-height: 0;
+  padding: 12px 10px 10px;
   background-color: var(--bg-secondary);
   border-right: 1px solid var(--border-default);
-  padding: 12px 6px 10px;
-  flex-shrink: 0;
+  overflow: hidden;
+  transition: width 180ms var(--ease-standard);
 }
 
-.rail-top,
-.rail-bottom {
+:host(.recolhido) .sb {
+  width: 64px;
+  padding-inline: 8px;
+}
+
+/* ---------- topo ---------- */
+
+.sb-topo {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
+  justify-content: space-between;
+  gap: 4px;
+  height: 36px;
+  margin-bottom: 12px;
+  padding-left: 6px;
+  flex: none;
 }
 
-/* O topo pode encolher; se ainda assim a lista não couber, ela rola
-   sozinha em vez de empurrar o rodapé para fora da tela. */
-.rail-top {
+:host(.recolhido) .sb-topo {
+  flex-direction: column;
+  height: auto;
+  padding-left: 0;
+  gap: 8px;
+}
+
+.sb-logo {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  margin-right: auto;
+  color: var(--text-primary);
+  text-decoration: none;
+  border-radius: 6px;
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 3px;
+  }
+}
+
+.sb-recolher {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--text-primary);
+    background: var(--rail-hover-bg);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
+  }
+}
+
+/* ---------- lista ---------- */
+
+.sb-lista {
   flex: 1 1 auto;
-  min-height: 0;
-}
-
-.rail-scroll {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  width: 100%;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
   scrollbar-width: none;
 
-  &::-webkit-scrollbar { display: none; }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-.rail-bottom {
-  padding-top: 6px;
-
-  .rail-divider { margin-bottom: 4px; }
-}
-
-.rail-logo {
+.sb-cabecalho {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  color: inherit;
-  text-decoration: none;
-  transition: transform 0.15s var(--ease-standard);
-
-  &:hover { transform: scale(1.05); }
-  &:focus-visible { outline: 2px solid var(--primary-500); outline-offset: 3px; }
-}
-
-.rail-divider {
-  width: 28px;
-  height: 1px;
-  background-color: var(--border-default);
-  margin-bottom: 10px;
-}
-
-.rail-item {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   gap: 4px;
-  width: 60px;
-  min-height: 56px;
-  padding: 6px 0 5px;
+  width: 100%;
+  height: 28px;
+  margin-top: 12px;
+  padding: 0 10px;
   border: 0;
-  border-radius: 10px;
-  background: none;
-  color: var(--text-secondary);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-tertiary);
   font: inherit;
+  font-size: var(--its-t-legenda);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-align: left;
   cursor: pointer;
-  text-decoration: none;
-  -webkit-tap-highlight-color: transparent;
-  transition: background-color 0.15s var(--ease-standard), color 0.15s var(--ease-standard);
 
   &:hover {
-    background-color: var(--rail-hover-bg);
     color: var(--text-primary);
-
-    .rail-item-inner app-icon { transform: scale(1.06); }
   }
 
   &:focus-visible {
@@ -121,130 +135,329 @@
     outline-offset: -2px;
   }
 
-  &.active {
-    background-color: var(--primary-50);
-    color: var(--primary-500);
+  svg {
+    transform: rotate(90deg);
+    transition: transform 150ms var(--ease-standard);
+  }
+}
+
+.sb-secao.fechada .sb-cabecalho svg {
+  transform: rotate(0deg);
+}
+
+/* Altura anima via grid 1fr → 0fr; visibility tira os links do Tab. */
+.sb-itens {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 180ms var(--ease-standard);
+}
+
+.sb-secao.fechada .sb-itens {
+  grid-template-rows: 0fr;
+}
+
+.sb-itens-interno {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sb-secao.fechada .sb-itens-interno {
+  visibility: hidden;
+  transition: visibility 0s 180ms;
+}
+
+.sb-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: var(--its-t-corpo);
+  text-decoration: none;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 120ms ease, color 120ms ease;
+
+  app-icon {
+    flex: none;
+    font-size: 18px;
+    color: inherit;
   }
 
-  &--upgrade {
-    color: var(--warning-500);
+  &:hover {
+    background-color: var(--rail-hover-bg);
+    color: var(--text-primary);
+  }
 
-    &:hover {
-      background-color: var(--warning-50);
-      color: var(--warning-500);
+  &:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: -2px;
+  }
+
+  &.ativo {
+    background-color: var(--primary-50);
+    color: var(--text-primary);
+    font-weight: 600;
+
+    app-icon {
+      color: var(--primary-500);
     }
   }
 }
 
-.rail-item-inner {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-
-  app-icon {
-    font-size: 22px;
-    color: inherit;
-    transition: transform 0.2s var(--ease-emphasized);
-  }
-}
-
-.rail-label {
-  max-width: 100%;
-  padding: 0 2px;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-  text-align: center;
-  white-space: nowrap;
+.sb-rotulo {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: inherit;
 }
 
-.rail-badge {
-  position: absolute;
-  top: -5px;
-  right: -7px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 999px;
-  border: 2px solid var(--bg-secondary);
-  background-color: var(--danger-500);
-  color: #ffffff;
-  font-size: 9px;
-  font-weight: 800;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Recolhido: sem cabeçalhos, todas as seções abertas e um fio entre elas. */
+:host(.recolhido) {
+  .sb-cabecalho,
+  .sb-rotulo,
+  .sb-conta-texto {
+    display: none;
+  }
 
-  &--dot {
-    width: 10px;
-    min-width: 10px;
-    height: 10px;
+  .sb-secao .sb-itens {
+    grid-template-rows: 1fr;
+  }
+
+  .sb-secao .sb-itens-interno {
+    visibility: visible;
+  }
+
+  .sb-secao + .sb-secao {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-default);
+  }
+
+  .sb-item {
+    justify-content: center;
     padding: 0;
-    top: -2px;
-    right: -3px;
+    height: 36px;
+  }
+
+  .sb-conta {
+    flex-direction: column;
+    padding-left: 0;
+  }
+
+  .sb-logo {
+    margin-right: 0;
+  }
+
+  .sb-conta-link {
+    justify-content: center;
+    padding: 4px 0;
   }
 }
 
-/* Telas baixas (notebook com barra de tarefas): itens mais compactos. */
-@media (max-height: 760px) {
-  .rail { padding: 8px 6px; }
-  .rail-logo { margin-bottom: 6px; }
-  .rail-divider { margin-bottom: 6px; }
-  .rail-item { min-height: 50px; padding: 4px 0; gap: 3px; }
-  .rail-item-inner app-icon { font-size: 20px; }
+/* ---------- conta ---------- */
+
+.sb-conta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-default);
+  flex: none;
 }
 
-/* Celular: o rail vira barra de navegação inferior. Logo e divisórias
-   somem; os sete destinos dividem a largura por igual e "Admin" fica no
-   fim. */
+.sb-conta-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 6px;
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+
+  &:is(a):hover,
+  &.ativo {
+    background-color: var(--rail-hover-bg);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: -2px;
+  }
+}
+
+.sb-avatar {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--primary-500);
+  color: var(--primary-contrast);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.sb-conta-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+
+  strong,
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  strong {
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+  }
+
+  span {
+    color: var(--text-tertiary);
+    font-size: var(--its-t-legenda);
+  }
+}
+
+.sb-sair {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  app-icon {
+    font-size: 18px;
+  }
+
+  &:hover {
+    background-color: var(--rail-hover-bg);
+    color: var(--text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb,
+  .sb-itens,
+  .sb-cabecalho svg {
+    transition: none;
+  }
+}
+
+/* ---------- celular: barra inferior ---------- */
+
+.bn {
+  display: none;
+}
+
 @media (max-width: 760px) {
   :host {
-    flex-direction: row;
     height: auto;
     width: 100%;
     order: 2;
   }
 
-  .rail {
-    flex-direction: row;
+  .sb {
+    display: none;
+  }
+
+  /* Barra de vidro flutuante (só no celular): pílula solta da borda, com o
+     conteúdo rolando por baixo. Sem backdrop-filter ou com transparência
+     reduzida, vira fundo opaco. O layout reserva o espaço no fim da página. */
+  .bn {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    z-index: 20;
+    display: flex;
     align-items: stretch;
-    width: 100%;
-    height: calc(60px + env(safe-area-inset-bottom, 0px));
-    padding: 4px 4px env(safe-area-inset-bottom, 0px);
-    border-right: none;
-    border-top: 1px solid var(--border-default);
     gap: 2px;
+    max-width: 480px;
+    height: calc(var(--its-barra-baixo) + 8px);
+    margin-inline: auto;
+    padding: 4px;
+    border: 1px solid color-mix(in srgb, var(--border-default) 70%, transparent);
+    border-radius: 999px;
+    background-color: color-mix(in srgb, var(--bg-secondary) 72%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
   }
 
-  .rail-top,
-  .rail-scroll,
-  .rail-bottom { display: contents; }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .bn {
+      background-color: var(--bg-secondary);
+    }
+  }
 
-  .rail-logo,
-  .rail-divider { display: none; }
+  @media (prefers-reduced-transparency: reduce) {
+    .bn {
+      background-color: var(--bg-secondary);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
 
-  .rail-item {
+  .bn-item {
     flex: 1 1 0;
-    width: auto;
     min-width: 0;
-    min-height: 52px;
-    padding: 4px 1px;
-    gap: 3px;
-    border-radius: 8px;
-  }
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 44px;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: var(--its-t-legenda);
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 
-  .rail-item-inner app-icon { font-size: 21px; }
+    app-icon {
+      font-size: 20px;
+    }
 
-  .rail-label {
-    font-size: 0.5625rem;
-    letter-spacing: -0.1px;
+    span {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &.ativo {
+      background-color: var(--primary-50);
+      color: var(--text-primary);
+
+      app-icon {
+        color: var(--primary-500);
+      }
+    }
   }
 }

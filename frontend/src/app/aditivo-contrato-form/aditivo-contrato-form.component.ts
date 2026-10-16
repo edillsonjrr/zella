@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { IconComponent } from '../shared/icon/icon.component';
 import { FlowButtonComponent } from '../shared/flow-button/flow-button.component';
+import { LegendaSaldoComponent } from '../shared/legenda-saldo/legenda-saldo.component';
 import { DataService } from '../shared/data.service';
 import type { Contrato } from '../shared/models';
 
@@ -45,7 +46,8 @@ interface LinhaItem {
     MatButtonModule,
     MatDialogModule,
     IconComponent,
-    FlowButtonComponent
+    FlowButtonComponent,
+    LegendaSaldoComponent
   ],
   templateUrl: './aditivo-contrato-form.component.html',
   styleUrl: './aditivo-contrato-form.component.scss'

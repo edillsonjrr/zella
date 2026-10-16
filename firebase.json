@@ -1,25 +1,43 @@
 {
-  "hosting": {
-    "public": "frontend/dist/frontend/browser",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "/api/qr",
-        "function": {
-          "functionId": "abrirChamadoQr",
-          "region": "southamerica-east1"
+  "hosting": [
+    {
+      "public": "frontend/dist/frontend/browser",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "/api/qr",
+          "function": {
+            "functionId": "abrirChamadoQr",
+            "region": "southamerica-east1"
+          }
+        },
+        {
+          "source": "**",
+          "destination": "/index.html"
         }
-      },
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
-  },
+      ],
+      "target": "sistema"
+    },
+    {
+      "target": "chamado",
+      "public": "chamado/dist",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    }
+  ],
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"

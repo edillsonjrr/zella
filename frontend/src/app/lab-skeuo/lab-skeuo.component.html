@@ -1,0 +1,67 @@
+<main class="lab">
+  <header class="lab-topo">
+    <div>
+      <span class="lab-selo">Tela de teste</span>
+      <h1>Skeuomorfismo no Zella</h1>
+      <p>
+        Onde o sistema já fala de um objeto físico da manutenção, a interface pode imitar esse objeto. Quatro
+        candidatos, cada um no card da tela em que entraria. Todos funcionam: mexa neles.
+      </p>
+    </div>
+    <app-theme-toggle />
+  </header>
+
+  <div class="lab-grade">
+    <section class="card" aria-labelledby="c1">
+      <header class="card-topo">
+        <span class="card-num">01</span>
+        <div>
+          <h2 id="c1">Plaqueta de patrimônio</h2>
+          <p class="onde">Entraria em <b>QR Codes</b> <code>/qrcodes</code> e na janela do QR Code</p>
+        </div>
+      </header>
+      <p class="porque">O QR existe para virar adesivo colado no equipamento. Mostrar a placa de alumínio que vai para a parede deixa claro o que se está baixando e identifica o equipamento numa folha cheia de códigos.</p>
+      <div class="demo"><app-plaqueta /></div>
+      <p class="dica">Passe o ponteiro sobre a placa.</p>
+    </section>
+
+    <section class="card" aria-labelledby="c2">
+      <header class="card-topo">
+        <span class="card-num">02</span>
+        <div>
+          <h2 id="c2">OS em vias com carimbo</h2>
+          <p class="onde">Entraria no <b>Detalhe da OS</b>, painel lateral de <code>/ordens-servico</code></p>
+        </div>
+      </header>
+      <p class="porque">A ordem de serviço é, historicamente, o talão carbonado. Aprovar ou rejeitar o orçamento vira o carimbo batido na folha, e as vias mostram quem fica com qual cópia: gestor, contratada e arquivo.</p>
+      <div class="demo"><app-via-os /></div>
+      <p class="dica">Aprove ou rejeite e troque de via.</p>
+    </section>
+
+    <section class="card" aria-labelledby="c3">
+      <header class="card-topo">
+        <span class="card-num">03</span>
+        <div>
+          <h2 id="c3">Manômetro de saldo</h2>
+          <p class="onde">Entraria no <b>Painel de Saldo</b> <code>/painel-saldo</code>, no detalhe de cada item</p>
+        </div>
+      </header>
+      <p class="porque">O saldo do contrato se consome como pressão num painel de máquina. O ponteiro vermelho é o usado (serviço feito), o âmbar soma o que está separado em orçamentos aprovados e o contador de tambor mostra o que ainda está livre.</p>
+      <div class="demo"><app-manometro /></div>
+      <p class="dica">Troque o item e arraste os controles.</p>
+    </section>
+
+    <section class="card" aria-labelledby="c4">
+      <header class="card-topo">
+        <span class="card-num">04</span>
+        <div>
+          <h2 id="c4">Etiqueta de inspeção</h2>
+          <p class="onde">Entraria em <b>Manutenção preventiva</b> <code>/preventiva</code>, um cartão por plano</p>
+        </div>
+      </header>
+      <p class="porque">Todo técnico conhece a etiqueta de papelão pendurada no equipamento com os meses furados. Cada execução fura um mês. Mês vencido sem furo recebe o carimbo de atrasada, e a próxima data fica em destaque.</p>
+      <div class="demo"><app-etiqueta-preventiva /></div>
+      <p class="dica">Julho ficou sem execução: fure julho para tirar o atraso.</p>
+    </section>
+  </div>
+</main>

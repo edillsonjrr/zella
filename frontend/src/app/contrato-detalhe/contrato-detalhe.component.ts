@@ -6,22 +6,26 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
-import { DatePipe } from '@angular/common';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { DataService } from '../shared/data.service';
 import { DialogoService } from '../shared/dialogo/dialogo.service';
 import { UiFeedbackService } from '../shared/ui-feedback.service';
 import { AuthService } from '../shared/auth.service';
-import { situacaoContrato } from '../shared/contrato-status';
+import { EXPLICACAO_SALDO_BAIXO, itemComSaldoBaixo, situacaoContrato } from '../shared/contrato-status';
+import { FORMULA_UTILIZACAO_CONTRATO, avisoContaNaoFecha, contaSaldo, utilizacaoEmValor } from '../shared/saldo';
 import { OsDetalheComponent } from '../os-detalhe/os-detalhe.component';
 import { ItemContratoFormComponent } from '../item-contrato-form/item-contrato-form.component';
 import { AditivoContratoFormComponent } from '../aditivo-contrato-form/aditivo-contrato-form.component';
 import { HistoricoRegistroComponent } from '../shared/historico-registro/historico-registro.component';
+import { LegendaSaldoComponent } from '../shared/legenda-saldo/legenda-saldo.component';
+import { situacaoDaOS as situacaoDaOSServico } from '../shared/situacao-servico';
 import type { Contrato, ItemContrato, OrdemServico } from '../shared/models';
 
 @Component({
   selector: 'app-contrato-detalhe',
-  imports: [
+  imports: [DecimalPipe, 
     MatCardModule,
     MatButtonModule,
     IconComponent,
@@ -29,8 +33,10 @@ import type { Contrato, ItemContrato, OrdemServico } from '../shared/models';
     MatDividerModule,
     MatProgressBarModule,
     MatTableModule,
+    MatTooltipModule,
     DatePipe,
-    HistoricoRegistroComponent
+    HistoricoRegistroComponent,
+    LegendaSaldoComponent
   ],
   templateUrl: './contrato-detalhe.component.html',
   styleUrl: './contrato-detalhe.component.scss'
@@ -46,6 +52,8 @@ export class ContratoDetalheComponent {
   // contratada abre este painel só pra consultar (as rules negam a escrita
   // de qualquer forma; aqui é pra não mostrar botão que vai falhar).
   podeEditar = this.auth.isGestor();
+  // O histórico de ações (log) é só da gestão (firestore.rules).
+  ehGestor = this.auth.isGestor();
 
   displayedColumns: string[] = this.podeEditar
     ? ['item', 'unidade', 'contratado', 'disponivel', 'preco', 'acoes']
@@ -61,12 +69,22 @@ export class ContratoDetalheComponent {
 
   situacao = computed(() => situacaoContrato(this.contratoAtual()));
 
-  totalContratado = computed(() => this.contratoAtual().itens.reduce((sum, i) => sum + i.quantidadeContratada, 0));
-  totalDisponivel = computed(() => this.contratoAtual().itens.reduce((sum, i) => sum + i.quantidadeDisponivel, 0));
-  totalReservado = computed(() => this.contratoAtual().itens.reduce((sum, i) => sum + i.quantidadeReservada, 0));
-  totalConsumido = computed(() => this.contratoAtual().itens.reduce((sum, i) => sum + i.quantidadeConsumida, 0));
+  // Quantidades de itens diferentes (un, kg, h) não se somam: o contrato
+  // mostra quantos itens estão com saldo baixo e a utilização em reais.
+  itensSaldoBaixo = computed(() => this.contratoAtual().itens.filter(itemComSaldoBaixo).length);
+  readonly explicacaoSaldoBaixo = EXPLICACAO_SALDO_BAIXO;
+  readonly formulaUtilizacao = FORMULA_UTILIZACAO_CONTRATO;
+  utilizacaoValor = computed(() => utilizacaoEmValor(this.contratoAtual().itens));
+  readonly contaSaldo = contaSaldo;
+  readonly avisoContaNaoFecha = avisoContaNaoFecha;
+  readonly saldoBaixo = itemComSaldoBaixo;
 
   ordensDoContrato = computed(() => this.dataService.ordensServico().filter(os => os.contratoId === this.contrato.id));
+
+  // Situação da OS no vocabulário único do chamado e da OS (Z0.3).
+  situacaoDaOS(os: OrdemServico): string {
+    return situacaoDaOSServico(this.dataService, os).rotulo;
+  }
   temOS = computed(() => this.ordensDoContrato().length > 0);
 
   constructor(
@@ -124,7 +142,7 @@ export class ContratoDetalheComponent {
   async encerrarContrato(): Promise<void> {
     const c = this.contratoAtual();
     const motivo = await this.dialogo.perguntar(`Encerrar o contrato ${c.numero}?`, 'Motivo', {
-      mensagem: 'O saldo disponível restante é zerado e OS ainda em orçamento são canceladas (os chamados voltam a Aberto). OS aprovadas precisam ser executadas ou canceladas antes.',
+      mensagem: 'O saldo livre restante é zerado e OS ainda em orçamento são canceladas (os chamados voltam a Aberto). OS aprovadas precisam ser executadas ou canceladas antes.',
       confirmar: 'Encerrar contrato',
       perigo: true
     });
@@ -149,14 +167,7 @@ export class ContratoDetalheComponent {
   }
 
   percentualUtilizado(): number {
-    const contratado = this.totalContratado();
-    if (!contratado) return 0;
-    return Math.round(((contratado - this.totalDisponivel()) / contratado) * 100);
-  }
-
-  percentualItem(item: ItemContrato): number {
-    if (!item.quantidadeContratada) return 0;
-    return Math.round(((item.quantidadeContratada - item.quantidadeDisponivel) / item.quantidadeContratada) * 100);
+    return this.utilizacaoValor() ?? 0;
   }
 
   formatarMoeda(valor: number): string {

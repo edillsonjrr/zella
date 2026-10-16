@@ -1,0 +1,19 @@
+{
+  "name": "zella-chamado",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tela publica de abertura de chamado por QR Code. Vive fora do sistema: quem escaneia nao tem login e nao deve baixar o Zella inteiro.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "firebase": "^11.0.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.8.2",
+    "vite": "^6.0.0"
+  }
+}

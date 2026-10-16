@@ -1,0 +1,53 @@
+<div class="palco">
+  <svg class="barbante" viewBox="0 0 120 70" aria-hidden="true">
+    <path d="M60 2 C 40 20, 30 40, 58 66" />
+    <path d="M60 2 C 78 22, 88 42, 62 66" />
+  </svg>
+
+  <div class="pendurada">
+  <div class="etiqueta">
+    <span class="ilhos" aria-hidden="true"></span>
+
+    <header>
+      <span class="tipo">Manutenção preventiva</span>
+      <h3>Limpeza de filtros · Split</h3>
+      <dl>
+        <div><dt>Local</dt><dd>Bloco B · Sala 204</dd></div>
+        <div><dt>Periodicidade</dt><dd>Mensal</dd></div>
+      </dl>
+    </header>
+
+    <div class="grade" role="group" aria-label="Execuções de 2026: toque num mês para furar ou desfazer">
+      @for (m of meses; track m; let i = $index) {
+        <button type="button" class="mes"
+                [class.mes--furado]="furados().has(i)"
+                [class.mes--novo]="ultimoFuro() === i"
+                [class.mes--atual]="i === mesAtual"
+                [class.mes--atrasado]="atrasados().includes(i)"
+                [disabled]="i > mesAtual"
+                [attr.aria-pressed]="furados().has(i)"
+                [attr.aria-label]="m + (furados().has(i) ? ': executada' : i > mesAtual ? ': ainda não chegou' : ': pendente')"
+                (click)="alternar(i)">
+          <span class="rotulo">{{ m }}</span>
+          <span class="furo" aria-hidden="true"></span>
+        </button>
+      }
+    </div>
+
+    <footer>
+      <div class="rubrica">
+        <span class="assinatura">R. Souza</span>
+        <span class="linha">Técnico</span>
+      </div>
+      <div class="proxima">
+        <span>Próxima</span>
+        <b>{{ proximo() }}</b>
+      </div>
+    </footer>
+
+    @if (atrasados().length) {
+      <div class="carimbo" role="status">Atrasada</div>
+    }
+  </div>
+  </div>
+</div>

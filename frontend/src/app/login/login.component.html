@@ -4,71 +4,136 @@
   <section class="auth-panel">
     <div class="auth-brand">
       <app-logo [size]="36" [wordmark]="true"></app-logo>
-      <p class="auth-tagline">Gestão de ativos, chamados e contratos de manutenção</p>
+      <p class="auth-tagline">Gestão de equipamentos, chamados e contratos de manutenção</p>
     </div>
 
-    <form class="auth-form" (submit)="$event.preventDefault(); login()">
-      <label>
-        E-mail
-        <input type="email" [(ngModel)]="email" name="email" autocomplete="email" placeholder="voce@empresa.com" required>
-      </label>
+    <!-- Demonstração: escolha de quem entrar, sem senha (shared/modo.ts). -->
+    @if (entradaSemSenha) {
+      <ng-container *ngComponentOutlet="entradaSemSenha" />
+    } @else if (etapa() === 'entrar') {
+      <form class="auth-form" (submit)="$event.preventDefault(); login()">
+        <label>
+          E-mail
+          <input type="email" [(ngModel)]="email" name="email" autocomplete="email" placeholder="voce@empresa.com" required [disabled]="carregando()">
+        </label>
 
-      <label>
-        Senha
-        <input type="password" [(ngModel)]="senha" name="senha" autocomplete="current-password" placeholder="Sua senha" required>
-      </label>
+        <label>
+          Senha
+          <input type="password" [(ngModel)]="senha" name="senha" autocomplete="current-password" placeholder="Sua senha" required [disabled]="carregando()">
+        </label>
 
-      @if (erro()) {
-        <div class="auth-error" role="alert">
-          <span class="auth-error-icon">⚠️</span>
-          <div>
-            <strong>Não foi possível entrar</strong>
-            <p>{{ erro() }}</p>
+        @if (erro()) {
+          <div class="auth-error" role="alert">
+            <app-icon class="auth-error-icon" name="warning" aria-hidden="true"></app-icon>
+            <div>
+              <strong>{{ tituloErro() }}</strong>
+              <p>{{ erro() }}</p>
+              @if (erroDoSistema() && (contato.emailLink || contato.whatsappLink)) {
+                <p class="auth-contato">
+                  @if (contato.emailLink) {
+                    <a [href]="contato.emailLink">{{ contato.email }}</a>
+                  }
+                  @if (contato.emailLink && contato.whatsappLink) { · }
+                  @if (contato.whatsappLink) {
+                    <a [href]="contato.whatsappLink" target="_blank" rel="noopener">WhatsApp {{ contato.whatsappTexto }}</a>
+                  }
+                </p>
+              }
+            </div>
           </div>
-        </div>
-      }
+        }
 
-      @if (aviso()) {
-        <div class="auth-success" role="status">
-          <span class="auth-error-icon">✉️</span>
-          <div>
-            <strong>E-mail enviado</strong>
-            <p>{{ aviso() }}</p>
+        <app-flow-button class="full-width" size="lg" type="submit" [disabled]="carregando()">
+          @if (carregando()) { <app-spinner size="sm" label="Entrando"></app-spinner> }
+          {{ carregando() ? (demorando() ? 'Conferindo seu cadastro...' : 'Entrando...') : 'Entrar' }}
+        </app-flow-button>
+
+        <!-- Espera longa: diz o que está acontecendo e dá uma saída. -->
+        @if (demorando()) {
+          <div class="auth-espera" role="status">
+            <p>A senha foi aceita. O sistema está conferindo seu cadastro, e às vezes isso demora alguns segundos.</p>
+            <button type="button" class="auth-link" (click)="cancelarEntrada()">Cancelar</button>
           </div>
+        }
+
+        <div class="auth-divider"><span>ou</span></div>
+
+        <button
+          type="button"
+          class="button google full"
+          [disabled]="carregando()"
+          (click)="loginComGoogle()"
+          aria-describedby="google-ajuda"
+        >
+          <svg class="google-icon" viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">
+            <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.61z"/>
+            <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.83.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18z"/>
+            <path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.03l2.99-2.33z"/>
+            <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z"/>
+          </svg>
+          Entrar com Google
+        </button>
+        <p id="google-ajuda" class="auth-ajuda">Use só se o gestor cadastrou seu e-mail do Google.</p>
+
+        <button type="button" class="auth-link" [disabled]="carregando()" (click)="abrirLink()">
+          Primeiro acesso ou esqueceu a senha?
+        </button>
+      </form>
+    } @else {
+      <!-- Primeiro acesso ou senha esquecida: etapa própria, com o texto à
+           vista e uma confirmação antes de mandar o e-mail. -->
+      <form class="auth-form" (submit)="$event.preventDefault(); etapa() === 'link' ? pedirConfirmacao() : enviarLink()">
+        <div class="auth-etapa">
+          <h2>Criar ou trocar a senha</h2>
+          <p>
+            Vamos mandar um link para o seu e-mail. Pelo link você cria uma senha nova. Serve para o primeiro acesso
+            e para quem esqueceu a senha. Use o e-mail que o gestor cadastrou no Zella.
+          </p>
         </div>
-      }
 
-      <app-flow-button class="full-width" size="lg" type="submit" [disabled]="carregando()">
-        @if (carregando()) { <app-spinner size="sm" label="Entrando"></app-spinner> }
-        {{ carregando() ? 'Entrando...' : 'Entrar' }}
-      </app-flow-button>
+        @if (etapa() === 'link') {
+          <label>
+            E-mail
+            <input type="email" [(ngModel)]="email" name="emailLink" autocomplete="email" placeholder="voce@empresa.com" required>
+          </label>
+        } @else {
+          <div class="auth-confirmar" role="group" aria-labelledby="pergunta-link">
+            <p id="pergunta-link">Enviar o link para <strong>{{ emailDoLink }}</strong>?</p>
+          </div>
+        }
 
-      <div class="auth-divider"><span>ou</span></div>
+        @if (erro()) {
+          <div class="auth-error" role="alert">
+            <app-icon class="auth-error-icon" name="warning" aria-hidden="true"></app-icon>
+            <div>
+              <strong>{{ tituloErro() }}</strong>
+              <p>{{ erro() }}</p>
+            </div>
+          </div>
+        }
 
-      <button
-        type="button"
-        class="button google full"
-        [disabled]="carregando()"
-        (click)="loginComGoogle()"
-      >
-        <svg class="google-icon" viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">
-          <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.61z"/>
-          <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.83.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18z"/>
-          <path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.03l2.99-2.33z"/>
-          <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z"/>
-        </svg>
-        Entrar com Google
-      </button>
+        @if (aviso()) {
+          <div class="auth-success" role="status">
+            <app-icon class="auth-error-icon" name="email" aria-hidden="true"></app-icon>
+            <div>
+              <strong>E-mail enviado</strong>
+              <p>{{ aviso() }}</p>
+            </div>
+          </div>
+        }
 
-      <button
-        type="button"
-        class="auth-link"
-        [disabled]="carregando()"
-        (click)="definirSenha()"
-        title="Digite o e-mail cadastrado pelo gestor e receba o link para criar ou trocar a senha"
-      >
-        Primeiro acesso ou esqueceu a senha?
-      </button>
-    </form>
+        @if (etapa() === 'link') {
+          <app-flow-button class="full-width" size="lg" type="submit">Enviar link</app-flow-button>
+        } @else {
+          <app-flow-button class="full-width" size="lg" type="submit" [disabled]="carregando()">
+            @if (carregando()) { <app-spinner size="sm" label="Enviando link"></app-spinner> }
+            {{ carregando() ? 'Enviando link...' : 'Sim, enviar' }}
+          </app-flow-button>
+          <button type="button" class="auth-link" [disabled]="carregando()" (click)="etapa.set('link')">Corrigir o e-mail</button>
+        }
+
+        <button type="button" class="auth-link" [disabled]="carregando()" (click)="voltarParaEntrar()">Voltar para entrar</button>
+      </form>
+    }
   </section>
 </main>

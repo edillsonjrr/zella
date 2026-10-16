@@ -1,69 +1,131 @@
-<nav class="rail" aria-label="Navegação principal">
-  <div class="rail-top">
-    <a class="rail-logo" routerLink="/" aria-label="Zella — início">
-      <app-logo [size]="32" [wordmark]="false"></app-logo>
+<nav class="sb" aria-label="Navegação principal">
+  <div class="sb-topo">
+    <a class="sb-logo" routerLink="/" aria-label="Zella — início">
+      <app-logo [size]="26" [wordmark]="!recolhido()"></app-logo>
     </a>
-
-    <div class="rail-divider"></div>
-
-    <div class="rail-scroll">
-      @for (item of itensPrincipais; track item.route) {
-        <a
-          [routerLink]="item.route"
-          routerLinkActive="active"
-          ariaCurrentWhenActive="page"
-          class="rail-item"
-        >
-          <span class="rail-item-inner">
-            <app-icon [name]="item.icon"></app-icon>
-            @if (item.badge) {
-              <span
-                class="rail-badge"
-                [class.rail-badge--dot]="item.badge.type === 'dot'"
-                [matTooltip]="item.badge.type === 'number' ? 'Há ' + item.badge.value + ' itens no planejador de hoje' : 'Notificação pendente'"
-                matTooltipPosition="right"
-              >
-                {{ item.badge.type === 'number' ? item.badge.value : '' }}
-              </span>
-            }
-          </span>
-          <span class="rail-label">{{ item.label }}</span>
-        </a>
-      }
-    </div>
+    <!-- Computador: o sino mora aqui, e não numa barra de topo vazia. -->
+    @if (usuario().empresaId) {
+      <app-notificacoes class="sb-sino"></app-notificacoes>
+    }
+    <button
+      type="button"
+      class="sb-recolher"
+      (click)="alternarRecolhido()"
+      [attr.aria-label]="recolhido() ? 'Expandir menu' : 'Recolher menu'"
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path [attr.d]="recolhido() ? 'M9 6l6 6-6 6' : 'M15 6l-6 6 6 6'" />
+      </svg>
+    </button>
   </div>
 
-  @if (gruposAdministracao.length > 0) {
-    <div class="rail-bottom">
-      <div class="rail-divider"></div>
-      <button
-        type="button"
-        class="rail-item"
-        [class.active]="administracaoAtiva"
-        [matMenuTriggerFor]="menuAdministracao"
-        aria-label="Cadastros e ferramentas"
-        aria-haspopup="menu"
-      >
-        <span class="rail-item-inner">
-          <app-icon name="settings"></app-icon>
-        </span>
-        <span class="rail-label">Admin</span>
-      </button>
-
-      <mat-menu #menuAdministracao="matMenu" class="rail-menu" xPosition="after" yPosition="above">
-        @for (grupo of gruposAdministracao; track grupo.titulo; let primeiro = $first) {
-          @if (!primeiro) {
-            <mat-divider></mat-divider>
-          }
-          <div class="rail-menu-titulo">{{ grupo.titulo }}</div>
-          @for (item of grupo.itens; track item.route) {
-            <a mat-menu-item [routerLink]="item.route" routerLinkActive="rail-menu-ativo">
-              <app-icon [name]="item.icon"></app-icon>
-              <span>{{ item.label }}</span>
-            </a>
-          }
+  <div class="sb-lista">
+    @for (secao of secoesVisiveis; track secao.id) {
+      <section class="sb-secao" [class.fechada]="!!secao.titulo && secaoFechada(secao.id)">
+        @if (secao.titulo) {
+          <button
+            type="button"
+            class="sb-cabecalho"
+            (click)="alternarSecao(secao.id)"
+            [attr.aria-expanded]="!secaoFechada(secao.id)"
+            [attr.aria-controls]="'sb-secao-' + secao.id"
+          >
+            <span>{{ secao.titulo }}</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </button>
         }
-      </mat-menu>
-    </div>
+        <div class="sb-itens" [id]="'sb-secao-' + secao.id">
+          <div class="sb-itens-interno">
+            @for (item of secao.itens; track item.route) {
+              <a
+                class="sb-item"
+                [routerLink]="item.route"
+                routerLinkActive="ativo"
+                [routerLinkActiveOptions]="{ exact: item.route === '/contratos' }"
+                ariaCurrentWhenActive="page"
+                [attr.aria-label]="item.label"
+                [matTooltip]="item.label"
+                matTooltipPosition="right"
+                [matTooltipDisabled]="!recolhido()"
+              >
+                <app-icon [name]="item.icon" aria-hidden="true"></app-icon>
+                <span class="sb-rotulo">{{ item.label }}</span>
+              </a>
+            }
+          </div>
+        </div>
+      </section>
+    }
+  </div>
+
+  <div class="sb-conta">
+    @if (usuario().empresaId) {
+      <a
+        class="sb-conta-link"
+        routerLink="/minha-conta"
+        routerLinkActive="ativo"
+        [matTooltip]="usuario().nome"
+        matTooltipPosition="right"
+        [matTooltipDisabled]="!recolhido()"
+        aria-label="Minha conta"
+      >
+        <span class="sb-avatar" aria-hidden="true">{{ iniciais }}</span>
+        <span class="sb-conta-texto">
+          <strong>{{ usuario().nome }}</strong>
+          <span>{{ usuario().empresaNome || rotuloPerfil[usuario().perfil] }}</span>
+        </span>
+      </a>
+    } @else {
+      <span class="sb-conta-link">
+        <span class="sb-avatar" aria-hidden="true">{{ iniciais }}</span>
+        <span class="sb-conta-texto">
+          <strong>{{ usuario().nome }}</strong>
+          <span>{{ rotuloPerfil[usuario().perfil] }}</span>
+        </span>
+      </span>
+    }
+    <app-theme-toggle class="sb-tema"></app-theme-toggle>
+    <button type="button" class="sb-sair" (click)="sair()" aria-label="Sair" matTooltip="Sair" matTooltipPosition="right">
+      <app-icon name="logout" aria-hidden="true"></app-icon>
+    </button>
+  </div>
+</nav>
+
+<!-- Celular: barra inferior com os destinos principais e "Mais". Com um
+     destino só, não aparece. -->
+@if (itensBarra.length > 0) {
+<nav class="bn" aria-label="Navegação principal">
+  @for (item of itensBarra; track item.route) {
+    <a
+      class="bn-item"
+      [routerLink]="item.route"
+      routerLinkActive="ativo"
+      [routerLinkActiveOptions]="{ exact: item.route === '/contratos' }"
+      ariaCurrentWhenActive="page"
+    >
+      <app-icon [name]="item.icon" aria-hidden="true"></app-icon>
+      <span>{{ item.curto ?? item.label }}</span>
+    </a>
+  }
+  @if (itensMais.length > 0) {
+    <button type="button" class="bn-item" [matMenuTriggerFor]="menuMais" aria-haspopup="menu">
+      <app-icon name="more_horiz" aria-hidden="true"></app-icon>
+      <span>Mais</span>
+    </button>
+    <!-- Mesmos tópicos do menu lateral, com o título de cada um. -->
+    <mat-menu #menuMais="matMenu" class="rail-menu" xPosition="before" yPosition="above">
+      @for (secao of secoesMais; track secao.id) {
+        <div class="rail-menu-titulo" role="presentation">{{ secao.titulo }}</div>
+        @for (item of secao.itens; track item.route) {
+          <a mat-menu-item [routerLink]="item.route" routerLinkActive="rail-menu-ativo">
+            <app-icon [name]="item.icon"></app-icon>
+            <span>{{ item.label }}</span>
+          </a>
+        }
+      }
+    </mat-menu>
   }
 </nav>
+}

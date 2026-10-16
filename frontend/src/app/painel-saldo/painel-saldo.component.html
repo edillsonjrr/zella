@@ -1,5 +1,5 @@
 <div class="page-header animate-fade-in">
-  <h1>Painel de Saldo</h1>
+  <h1>Saldo dos contratos</h1>
 </div>
 
 <div class="saldo-toolbar">
@@ -14,11 +14,13 @@
       </mat-select>
     </mat-form-field>
   </div>
-  <div class="toolbar-right">
-    <button mat-stroked-button routerLink="/contratos/importar">
-      <app-icon name="upload_file"></app-icon> Importar
-    </button>
-  </div>
+  @if (podeImportar) {
+    <div class="toolbar-right">
+      <button mat-stroked-button routerLink="/contratos/importar" title="Traz contratos e itens de uma planilha (CSV)">
+        <app-icon name="upload_file" aria-hidden="true"></app-icon> Importar contratos por planilha
+      </button>
+    </div>
+  }
 </div>
 
 <mat-card class="app-card animate-fade-in-up">
@@ -35,48 +37,67 @@
   <mat-card-content>
     @if (contratoSelecionado(); as c) {
       @if (itensFiltrados().length > 0) {
+        <app-legenda-saldo class="saldo-legenda"></app-legenda-saldo>
+        @if (totaisEmReais(); as t) {
+          <dl class="saldo-reais" aria-label="Saldo do contrato em reais">
+            <div><dt>Contratado</dt><dd>{{ t.contratado | currency:'BRL' }}</dd></div>
+            <div><dt>Usado</dt><dd>{{ t.usado | currency:'BRL' }}</dd></div>
+            <div><dt>Separado</dt><dd>{{ t.separado | currency:'BRL' }}</dd></div>
+            <div><dt>Livre</dt><dd>{{ t.livre | currency:'BRL' }}</dd></div>
+          </dl>
+        }
         <table mat-table [dataSource]="itensFiltrados()" class="app-table full-width">
           <ng-container matColumnDef="item">
             <th mat-header-cell *matHeaderCellDef>Item</th>
-            <td mat-cell *matCellDef="let i"><strong>{{ i.item }}</strong></td>
-          </ng-container>
-
-          <ng-container matColumnDef="contratado">
-            <th mat-header-cell *matHeaderCellDef>Contratado</th>
-            <td mat-cell *matCellDef="let i">{{ i.contratado }} {{ i.unidadeMedida }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="consumido">
-            <th mat-header-cell *matHeaderCellDef>Consumido</th>
-            <td mat-cell *matCellDef="let i">{{ i.consumido }} {{ i.unidadeMedida }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="reservado">
-            <th mat-header-cell *matHeaderCellDef>Reservado</th>
-            <td mat-cell *matCellDef="let i">{{ i.reservado }} {{ i.unidadeMedida }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="disponivel">
-            <th mat-header-cell *matHeaderCellDef>Disponível</th>
-            <td mat-cell *matCellDef="let i" [class.critico]="i.disponivel === 0 || percentual(i) > 90">
-              <strong>{{ i.disponivel }} {{ i.unidadeMedida }}</strong>
-              @if (i.disponivel === 0) {
-                <app-icon class="alerta-icon" name="warning"></app-icon>
+            <td mat-cell *matCellDef="let i">
+              <strong class="item-nome" [title]="i.item">{{ i.item }}</strong>
+              <span class="item-conta">{{ i.conta }}</span>
+              <span class="item-conta">Preço: {{ i.precoUnitario | currency:'BRL' }} por {{ i.unidadeMedida }}</span>
+              @if (i.avisoConta) {
+                <span class="item-conta item-conta--erro">{{ i.avisoConta }}</span>
               }
             </td>
           </ng-container>
 
+          <ng-container matColumnDef="contratado">
+            <th mat-header-cell *matHeaderCellDef>Contratado</th>
+            <td mat-cell *matCellDef="let i">{{ i.contratado | number:'1.0-2' }} {{ i.unidadeMedida }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="consumido">
+            <th mat-header-cell *matHeaderCellDef>Usado</th>
+            <td mat-cell *matCellDef="let i"><span [appCountUp]="i.consumido"></span> {{ i.unidadeMedida }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="reservado">
+            <th mat-header-cell *matHeaderCellDef>Separado</th>
+            <td mat-cell *matCellDef="let i"><span [appCountUp]="i.reservado"></span> {{ i.unidadeMedida }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="disponivel">
+            <th mat-header-cell *matHeaderCellDef>Livre</th>
+            <td mat-cell *matCellDef="let i" [class.critico]="i.disponivel === 0 || percentual(i) > 90">
+              <strong><span [appCountUp]="i.disponivel"></span> {{ i.unidadeMedida }}</strong>
+              @if (i.disponivel === 0) {
+                <app-icon class="alerta-icon" name="warning"></app-icon>
+              }
+              <span class="item-conta">{{ i.disponivel * i.precoUnitario | currency:'BRL' }}</span>
+            </td>
+          </ng-container>
+
           <ng-container matColumnDef="alerta">
-            <th mat-header-cell *matHeaderCellDef>Utilização</th>
+            <th mat-header-cell *matHeaderCellDef>
+              <span class="cabecalho-dica" [matTooltip]="formulaUtilizacao" tabindex="0">Utilização (usado + separado) <app-icon name="info" aria-hidden="true"></app-icon></span>
+            </th>
             <td mat-cell *matCellDef="let i">
               <div class="progresso">
+                <app-mini-manometro [consumido]="i.consumido" [reservado]="i.reservado" [contratado]="i.contratado" />
                 <span class="progresso-valor" [class.critico]="percentual(i) > 90">{{ percentual(i) }}%</span>
-                <mat-progress-bar mode="determinate" [value]="percentual(i)" [color]="percentual(i) > 90 ? 'warn' : 'primary'"></mat-progress-bar>
               </div>
             </td>
           </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="abrirDetalhe(row)" class="linha-clicavel"></tr>
         </table>
       } @else {

@@ -116,6 +116,19 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // Preferências de cada pessoa (hoje, só quando ela fechou a tela "O que
+      // você faz aqui"). Cada um lê e grava o próprio documento, com forma
+      // fechada; ninguém mais, nem o gestor, lê ou escreve.
+      match /preferencias/{id} {
+        allow read: if usuario() && request.auth.token.usuarioId == id;
+        allow create, update: if usuario()
+          && request.auth.token.usuarioId == id
+          && request.resource.data.keys().hasOnly(['boasVindasEm'])
+          && (!('boasVindasEm' in request.resource.data)
+              || (request.resource.data.boasVindasEm is string && request.resource.data.boasVindasEm.size() <= 40));
+        allow delete: if false;
+      }
+
       // Empresas prestadoras de serviço do cliente. Cadastro simples do
       // gestor; usuários contratados e contratos apontam pra cá.
       match /empresasContratadas/{id} {
@@ -151,8 +164,17 @@ service cloud.firestore {
         return usuario() && perfil() in ['gestor_contratado', 'tecnico'] && daMinhaContratada();
       }
 
+      // Chamado: o gestor lê todos; o cliente, os da própria unidade; a
+      // contratada (gestor contratado e técnico), só os chamados que viraram
+      // OS num contrato dela. O `empresaContratadaId` do chamado é gravado
+      // por criarOS e apagado quando o chamado volta a "Aberto"; chamado sem
+      // OS não é de contratada nenhuma.
       match /chamados/{id} {
-        allow read: if usuario() && (perfil() != 'cliente' || daMinhaUnidade());
+        allow read: if usuario() && (
+          perfil() == 'gestor'
+          || (perfil() == 'cliente' && daMinhaUnidade())
+          || (perfil() in ['gestor_contratado', 'tecnico'] && daMinhaContratada())
+        );
       }
 
       match /ordensServico/{id} {

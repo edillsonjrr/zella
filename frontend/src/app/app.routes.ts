@@ -11,11 +11,16 @@ export const routes: Routes = [
   // Site institucional (primeiro acesso). Logado cai direto na tela inicial.
   { path: '', pathMatch: 'full', canActivate: [landingGuard], loadComponent: () => import('./landing/landing.component').then(m => m.LandingComponent) },
   { path: 'login', loadComponent: () => import('./login/login.component').then(m => m.LoginComponent) },
+  // "Para compras e licitação" (Z3.4): pública, linkada da apresentação.
+  { path: 'compras', loadComponent: () => import('./compras/compras.component').then(m => m.ComprasComponent) },
+  // Tela de teste de skeuomorfismo: fora do menu e sem login, só para avaliar as peças.
+  { path: 'lab/skeuomorfismo', loadComponent: () => import('./lab-skeuo/lab-skeuo.component').then(m => m.LabSkeuoComponent) },
   {
     path: '',
     loadComponent: () => import('./layout/layout.component').then(m => m.LayoutComponent),
     children: [
       { path: 'dashboard', canActivate: [acessoGuard], loadComponent: () => import('./dashboard/dashboard.component').then(m => m.DashboardComponent) },
+      { path: 'meus-pedidos', canActivate: [acessoGuard], loadComponent: () => import('./meus-pedidos/meus-pedidos.component').then(m => m.MeusPedidosComponent) },
       { path: 'contratos', canActivate: [acessoGuard], loadComponent: () => import('./contratos/contratos.component').then(m => m.ContratosComponent) },
       { path: 'contratos/importar', canActivate: [acessoGuard], loadComponent: () => import('./importar-contratos/importar-contratos.component').then(m => m.ImportarContratosComponent) },
       { path: 'chamados/novo', canActivate: [acessoGuard], loadComponent: () => import('./novo-chamado/novo-chamado.component').then(m => m.NovoChamadoComponent) },
@@ -24,6 +29,7 @@ export const routes: Routes = [
       { path: 'painel-saldo', canActivate: [acessoGuard], loadComponent: () => import('./painel-saldo/painel-saldo.component').then(m => m.PainelSaldoComponent) },
       { path: 'painel-gerencial', canActivate: [acessoGuard], loadComponent: () => import('./painel-gerencial/painel-gerencial.component').then(m => m.PainelGerencialComponent) },
       { path: 'unidades', canActivate: [acessoGuard], loadComponent: () => import('./unidades/unidades.component').then(m => m.UnidadesComponent) },
+      { path: 'equipamentos', canActivate: [acessoGuard], loadComponent: () => import('./equipamentos/equipamentos.component').then(m => m.EquipamentosComponent) },
       { path: 'qrcodes', canActivate: [acessoGuard], loadComponent: () => import('./qrcodes/qrcodes.component').then(m => m.QrcodesComponent) },
       { path: 'usuarios', canActivate: [acessoGuard], loadComponent: () => import('./usuarios/usuarios.component').then(m => m.UsuariosComponent) },
       { path: 'preventiva', canActivate: [acessoGuard], loadComponent: () => import('./preventiva/preventiva.component').then(m => m.PreventivaComponent) },

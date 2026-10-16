@@ -53,6 +53,12 @@ export const acessoGuard: CanActivateFn = async (route) => {
   if (podeAcessar(perfil, caminho, adminPlataforma)) {
     return true;
   }
+  // O QR Code colado no equipamento serve a qualquer pessoa: o técnico ou a
+  // contratada logados que escaneiam também abrem o chamado por ele (a
+  // callable aceita pelo token). O que eles não têm é o "Novo chamado" solto.
+  if (caminho === 'chamados/novo' && route.queryParamMap.get('qrToken')) {
+    return true;
+  }
 
   return router.parseUrl(rotaInicial(perfil));
 };

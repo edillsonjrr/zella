@@ -1,21 +1,18 @@
 <div class="page-header animate-fade-in">
-  <h1>Importar Contratos</h1>
+  <h1>Importar contratos</h1>
 </div>
 
 <mat-card class="app-card animate-fade-in-up" [attr.aria-busy]="importando">
   <mat-card-header>
     <app-icon class="section-icon" color="primary" name="upload_file"></app-icon>
-    <mat-card-title>Carga de contratos por planilha</mat-card-title>
+    <mat-card-title>Trazer contratos de uma planilha</mat-card-title>
   </mat-card-header>
 
   <mat-card-content>
     <div class="instrucoes">
       <p>
-        Arquivo CSV separado por ponto e vírgula, com as colunas
-        <code>contrato;fornecedor;vigencia_inicio;vigencia_fim;item;quantidade</code>
-        e, opcionalmente, <code>;unidade;preco_unitario</code>. Datas em dd/mm/aaaa.
-        Fornecedor com o mesmo nome de uma empresa contratada cadastrada já sai vinculado.
-        Antes de gravar, o sistema valida cada linha e mostra os erros.
+        Baixe o modelo, preencha no Excel e salve como CSV (separado por ponto e vírgula).
+        Antes de gravar, o Zella confere cada linha e mostra o que precisa ser corrigido.
       </p>
       <button mat-stroked-button type="button" (click)="baixarModelo()">
         <app-icon name="download"></app-icon> Baixar modelo
@@ -25,12 +22,12 @@
     <mat-divider class="section-divider"></mat-divider>
 
     <div class="upload-area">
-      <input type="file" accept=".csv,text/csv" id="planilha" (change)="onArquivoSelecionado($event)" class="sr-only" />
+      <input type="file" accept=".csv,.pdf,text/csv,application/pdf" id="planilha" (change)="onArquivoSelecionado($event)" class="sr-only" />
       <label for="planilha" class="upload-label">
         <app-icon name="cloud_upload"></app-icon>
         @if (!arquivoNome) {
           <span>Clique para selecionar a planilha</span>
-          <small>Arquivo CSV (;)</small>
+          <small>Planilha salva como CSV</small>
         } @else {
           <span>{{ arquivoNome }}</span>
           <small>Clique para trocar o arquivo</small>
@@ -43,6 +40,97 @@
         <span>{{ previewVisible ? 'Gravando contratos...' : 'Validando planilha...' }}</span>
         <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
       </div>
+    }
+
+    @if (lendoPdf) {
+      <p class="pdf-lendo">Lendo o PDF…</p>
+    }
+
+    <!--
+      Contrato lido do PDF. O que o leitor achou fica editável: se o documento
+      vier num layout diferente e algum campo sair errado, a pessoa corrige
+      aqui e a prévia se refaz — ninguém fica preso a uma leitura que falhou.
+    -->
+    @if (origem === 'pdf' && leitura && !importacaoConcluida) {
+      <section class="pdf-lido">
+        <header class="pdf-lido__topo">
+          <h3>Contrato lido do PDF</h3>
+          @if (leitura.cabecalho.ehProrrogacao) {
+            <span class="pdf-lido__chip">Prorrogação de vigência</span>
+          }
+        </header>
+
+        @if (leitura.cabecalho.objeto) {
+          <p class="pdf-lido__objeto">{{ leitura.cabecalho.objeto }}</p>
+        }
+
+        <div class="pdf-lido__campos">
+          <label>
+            <span>Número</span>
+            <input type="text" name="pdfNumero" [(ngModel)]="cab.numero" (change)="aplicarCabecalho()" />
+          </label>
+          <label>
+            <span>Fornecedor</span>
+            <input type="text" name="pdfFornecedor" [(ngModel)]="cab.fornecedor" (change)="aplicarCabecalho()" />
+          </label>
+          <label>
+            <span>Início da vigência</span>
+            <input type="date" name="pdfInicio" [(ngModel)]="cab.vigenciaInicio" (change)="aplicarCabecalho()" />
+          </label>
+          <label>
+            <span>Fim da vigência</span>
+            <input type="date" name="pdfFim" [(ngModel)]="cab.vigenciaFim" (change)="aplicarCabecalho()" />
+          </label>
+        </div>
+
+        <!--
+          A conferência que importa: o PDF imprime o total de cada tabela. Se a
+          soma dos itens lidos bate com ele, nenhuma quantidade nem preço se
+          perdeu na leitura.
+        -->
+        <p class="pdf-lido__conferencia" [class.pdf-lido__conferencia--erro]="!leitura.confere">
+          @if (leitura.confere) {
+            {{ leitura.itens.length }} itens lidos, somando
+            {{ somaLida | currency:'BRL':'symbol':'1.2-2' }} — igual ao total impresso no documento.
+          } @else {
+            {{ leitura.itens.length }} itens lidos, somando
+            {{ somaLida | currency:'BRL':'symbol':'1.2-2' }}. Confira antes de importar.
+          }
+        </p>
+
+        @if (leitura.avisos.length) {
+          <ul class="pdf-lido__avisos">
+            @for (a of leitura.avisos; track a) {
+              <li>{{ a }}</li>
+            }
+          </ul>
+        }
+
+        <!--
+          Prorrogação de contrato que já existe: importar duplicaria. O próprio
+          documento diz que os quantitativos são renovados como estão, então o
+          aditivo leva só a vigência nova.
+        -->
+        @if (ehProrrogacaoDeExistente) {
+          <div class="pdf-lido__aditivo">
+            <p>
+              Este contrato já está no Zella. Como o documento é uma prorrogação, o caminho
+              certo é registrar um aditivo estendendo a vigência até
+              <strong>{{ cab.vigenciaFim | date:'dd/MM/yyyy' }}</strong>, mantendo quantidades e preços.
+            </p>
+            <button type="button" class="cb-btn" [disabled]="aditivando || !cab.vigenciaFim" (click)="registrarAditivo()">
+              {{ aditivando ? 'Registrando…' : 'Registrar aditivo de vigência' }}
+            </button>
+          </div>
+        }
+      </section>
+    }
+
+    @if (aditivoNumero) {
+      <p class="pdf-lido__ok">
+        Aditivo nº {{ aditivoNumero }} registrado: vigência estendida até
+        {{ cab.vigenciaFim | date:'dd/MM/yyyy' }}.
+      </p>
     }
 
     @if (previewVisible) {
@@ -139,7 +227,7 @@
       <div class="sucesso-area" role="status" aria-live="polite">
         <app-icon color="primary" name="check_circle"></app-icon>
         <h3>Importação concluída</h3>
-        <p>{{ resultado.contratosCriados }} contrato(s) e {{ resultado.itensCriados }} item(ns) importados.</p>
+        <p>{{ plural(resultado.contratosCriados, 'contrato', 'contratos') }} e {{ plural(resultado.itensCriados, 'item', 'itens') }} importados.</p>
         <app-flow-button routerLink="/contratos">
           Ver contratos
         </app-flow-button>

@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { db, colecao, exigirPerfil } from './admin';
 import { resolverAutor } from './logs';
+import { plural } from '../../shared/historico';
 
 // Layout esperado (CSV, ; como separador):
 //   contrato;fornecedor;vigencia_inicio;vigencia_fim;item;quantidade
@@ -46,7 +47,7 @@ export function validarLinhas(csv: string): { linhas: LinhaValidada[]; erros: Er
     .filter(Boolean);
 
   if (!registros.length) {
-    return { linhas, erros: [{ linha: 0, mensagem: 'Arquivo vazio.' }] };
+    return { linhas, erros: [{ linha: 0, mensagem: 'o arquivo está vazio. Baixe o modelo, preencha no Excel e salve como CSV.' }] };
   }
 
   const cabecalho = registros[0].toLowerCase();
@@ -57,30 +58,33 @@ export function validarLinhas(csv: string): { linhas: LinhaValidada[]; erros: Er
     const numeroLinha = i + (temCabecalho ? 2 : 1);
     const campos = linha.split(';').map((c) => c.trim());
     if (campos.length !== 6 && campos.length !== 8) {
-      erros.push({ linha: numeroLinha, mensagem: `esperado 6 ou 8 campos, encontrado ${campos.length}.` });
+      erros.push({
+        linha: numeroLinha,
+        mensagem: `a linha tem ${campos.length} ${campos.length === 1 ? 'coluna' : 'colunas'}, e o modelo tem 6 (ou 8, com unidade e preço). Confira se o arquivo foi salvo como CSV separado por ponto e vírgula.`
+      });
       return;
     }
     const [contrato, fornecedor, vigIniBr, vigFimBr, item, qtdStr, unidade, precoStr] = campos;
 
     if (!contrato || !fornecedor || !item) {
-      erros.push({ linha: numeroLinha, mensagem: 'contrato, fornecedor e item são obrigatórios.' });
+      erros.push({ linha: numeroLinha, mensagem: 'faltou o número do contrato, a empresa contratada (fornecedor) ou o item.' });
       return;
     }
 
     const vigenciaInicio = paraIso(vigIniBr);
     const vigenciaFim = paraIso(vigFimBr);
     if (!vigenciaInicio || !vigenciaFim) {
-      erros.push({ linha: numeroLinha, mensagem: 'data inválida (use dd/mm/aaaa).' });
+      erros.push({ linha: numeroLinha, mensagem: 'a data de início ou de fim não está no formato dia/mês/ano, como 01/03/2026.' });
       return;
     }
     if (vigenciaInicio >= vigenciaFim) {
-      erros.push({ linha: numeroLinha, mensagem: 'vigência início deve ser antes da vigência fim.' });
+      erros.push({ linha: numeroLinha, mensagem: 'o contrato termina antes de começar. Confira as datas de início e de fim.' });
       return;
     }
 
     const quantidade = numero(qtdStr);
     if (!Number.isFinite(quantidade) || quantidade <= 0) {
-      erros.push({ linha: numeroLinha, mensagem: 'quantidade deve ser um número maior que zero.' });
+      erros.push({ linha: numeroLinha, mensagem: 'a quantidade contratada precisa ser um número maior que zero.' });
       return;
     }
 
@@ -88,7 +92,7 @@ export function validarLinhas(csv: string): { linhas: LinhaValidada[]; erros: Er
     if (precoStr !== undefined && precoStr !== '') {
       precoUnitario = numero(precoStr);
       if (!Number.isFinite(precoUnitario) || precoUnitario < 0) {
-        erros.push({ linha: numeroLinha, mensagem: 'preço unitário inválido.' });
+        erros.push({ linha: numeroLinha, mensagem: 'o preço por unidade precisa ser um número, como 18,50.' });
         return;
       }
     }
@@ -116,7 +120,10 @@ export function validarLinhas(csv: string): { linhas: LinhaValidada[]; erros: Er
       continue;
     }
     if (primeira.fornecedor !== l.fornecedor || primeira.vigenciaInicio !== l.vigenciaInicio || primeira.vigenciaFim !== l.vigenciaFim) {
-      erros.push({ linha: l.linha, mensagem: `contrato ${l.contrato} aparece com fornecedor ou vigência diferentes da linha ${primeira.linha}.` });
+      erros.push({
+        linha: l.linha,
+        mensagem: `o contrato ${l.contrato} está com fornecedor ou datas diferentes da linha ${primeira.linha}. Repita os mesmos dados do contrato em todas as linhas dele.`
+      });
     }
   }
 
@@ -180,19 +187,22 @@ export const importarContratos = onCall<{ csv: string }>(async (request) => {
 
   const { linhas, erros } = validarLinhas(request.data?.csv);
   if (erros.length) {
-    throw new HttpsError('invalid-argument', `Importação recusada: ${erros.map((e) => `linha ${e.linha}: ${e.mensagem}`).join(' | ')}`);
+    throw new HttpsError('invalid-argument', `Nada foi importado. Corrija a planilha: ${erros.map((e) => (e.linha ? `linha ${e.linha}: ${e.mensagem}` : e.mensagem)).join(' ')}`);
   }
   if (!linhas.length) {
-    throw new HttpsError('invalid-argument', 'A planilha não tem linhas de dados.');
+    throw new HttpsError('invalid-argument', 'A planilha não tem nenhum contrato abaixo do cabeçalho.');
   }
   if (linhas.length > 400) {
-    throw new HttpsError('invalid-argument', 'Máximo de 400 linhas por importação.');
+    throw new HttpsError('invalid-argument', 'Cada importação aceita até 400 linhas. Divida a planilha em partes menores.');
   }
 
   const numerosUnicos = [...new Set(linhas.map((l) => l.contrato))];
   const jaExiste = await contratosExistentes(empresaId, numerosUnicos);
   if (jaExiste.length) {
-    throw new HttpsError('invalid-argument', `Contratos já existentes: ${jaExiste.join(', ')}`);
+    throw new HttpsError(
+      'invalid-argument',
+      `${jaExiste.length === 1 ? 'Este contrato já está cadastrado' : 'Estes contratos já estão cadastrados'}: ${jaExiste.join(', ')}. Tire essas linhas da planilha; para mudar um contrato que já existe, use um aditivo.`
+    );
   }
 
   const contratadas = await contratadasPorNome(empresaId);
@@ -251,7 +261,7 @@ export const importarContratos = onCall<{ csv: string }>(async (request) => {
       acao: 'contrato.importar',
       alvo: 'contrato',
       operacao: 'importar',
-      descricao: `Importou o contrato ${c.numero} por planilha (${porContrato.get(c.numero)!.length} item(ns))`,
+      descricao: `Importou o contrato ${c.numero} por planilha (${plural(porContrato.get(c.numero)!.length, 'item', 'itens')})`,
       data: agora,
       usuarioUid: autor.uid,
       usuarioNome: autor.nome,

@@ -20,13 +20,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@800&display=swap" rel="stylesheet">
 </head>
 <body class="mat-typography">
-  <!-- Aplica o tema salvo antes de o Angular subir. Sem isto o body fica
+  <!-- Aplica o tema salvo (ou o padrão do aparelho) antes de o Angular subir. Sem isto o body fica
        escuro até o botão de tema (dentro do layout) ser criado, e o skeleton
        da primeira navegação e a tela de login saem sempre pretos no tema
        claro. A chave é a mesma do ThemeToggleComponent. -->
   <script>
     try {
-      if (localStorage.getItem('gm-theme') === 'light') {
+      // Sem escolha salva, o celular abre no tema claro e o computador no
+      // escuro (mesma regra do ThemeToggleComponent).
+      var tema = localStorage.getItem('gm-theme');
+      if (tema === 'light' || (!tema && window.matchMedia('(max-width: 760px)').matches)) {
         document.body.classList.add('light-mode');
         var m = document.querySelector('meta[name="theme-color"]');
         if (m) m.setAttribute('content', '#ffffff');

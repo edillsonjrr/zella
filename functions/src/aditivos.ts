@@ -80,6 +80,7 @@ export const aditivarContrato = onCall<AditivarContratoInput>(async (request) =>
 
     // Valida tudo antes de escrever qualquer coisa.
     const mudancasItens: AditivoContrato['itens'] = [];
+    const novosLivres = new Map<string, number>();
     itemSnaps.forEach((snap, i) => {
       const pedido = pedidos[i];
       if (!snap.exists) {
@@ -90,15 +91,18 @@ export const aditivarContrato = onCall<AditivarContratoInput>(async (request) =>
       const nova = pedido.novaQuantidadeContratada;
       if (nova === atual) return;
 
-      const delta = nova - atual;
-      const disponivel = Number(item.quantidadeDisponivel) || 0;
-      if (disponivel + delta < 0) {
-        const comprometido = (Number(item.quantidadeReservada) || 0) + (Number(item.quantidadeConsumida) || 0);
+      // O mínimo é o que já está separado ou usado. O livre novo sai da
+      // conta (contratado - separado - usado), e não de "livre + diferença":
+      // assim o aditivo sempre deixa o item fechando, mesmo que ele viesse
+      // com a soma errada de antes.
+      const comprometido = (Number(item.quantidadeReservada) || 0) + (Number(item.quantidadeConsumida) || 0);
+      if (nova < comprometido) {
         throw new HttpsError(
           'failed-precondition',
-          `"${item.nome}": não dá pra reduzir para ${nova}. Já há ${comprometido} reservado(s) ou consumido(s); o mínimo é ${comprometido}.`
+          `"${item.nome}": não dá para reduzir para ${nova}. Já há ${comprometido} ${comprometido === 1 ? 'separado ou usado' : 'separados ou usados'}; o mínimo é ${comprometido}.`
         );
       }
+      novosLivres.set(pedido.itemContratoId, nova - comprometido);
       mudancasItens.push({
         itemContratoId: pedido.itemContratoId,
         nome: item.nome as string,
@@ -124,10 +128,9 @@ export const aditivarContrato = onCall<AditivarContratoInput>(async (request) =>
     // Escreve.
     mudancasItens.forEach((m) => {
       const ref = contratoRef.collection('itens').doc(m.itemContratoId);
-      const delta = m.quantidadeContratada.para - m.quantidadeContratada.de;
       tx.update(ref, {
         quantidadeContratada: m.quantidadeContratada.para,
-        quantidadeDisponivel: FieldValue.increment(delta)
+        quantidadeDisponivel: novosLivres.get(m.itemContratoId)!
       });
     });
 
@@ -218,7 +221,7 @@ export const encerrarContrato = onCall<{ contratoId: string; motivo: string }>(a
       const numeros = comReserva.map((s) => s.data()!.numero).join(', ');
       throw new HttpsError(
         'failed-precondition',
-        `Há ${comReserva.length} OS aprovada(s) com saldo reservado neste contrato (${numeros}). Execute ou cancele os chamados antes de encerrar.`
+        `Há ${comReserva.length} ${comReserva.length === 1 ? 'OS aprovada' : 'OS aprovadas'} com saldo separado neste contrato (${numeros}). Registre o serviço ou cancele os chamados antes de encerrar.`
       );
     }
 
@@ -227,17 +230,20 @@ export const encerrarContrato = onCall<{ contratoId: string; motivo: string }>(a
     const itemSnaps = await Promise.all(itensSnap.docs.map((d) => tx.get(d.ref)));
 
     // Escritas.
+    // O livre restante sai do contratado: contratado - livre = separado +
+    // usado, e a conta do item continua fechando depois do encerramento.
     let disponivelZerado = 0;
-    const itensEncerrados: { itemContratoId: string; nome: string; disponivelZerado: number }[] = [];
+    const itensEncerrados: { itemContratoId: string; nome: string; disponivelZerado: number; contratadaAntes: number }[] = [];
     itemSnaps.forEach((snap) => {
       if (!snap.exists) return;
       const d = snap.data()!;
       const disp = Number(d.quantidadeDisponivel) || 0;
+      const contratadaAntes = Number(d.quantidadeContratada) || 0;
       if (disp > 0) {
-        tx.update(snap.ref, { quantidadeDisponivel: 0, quantidadeContratada: (Number(d.quantidadeContratada) || 0) - disp });
+        tx.update(snap.ref, { quantidadeDisponivel: 0, quantidadeContratada: contratadaAntes - disp });
         disponivelZerado += disp;
       }
-      itensEncerrados.push({ itemContratoId: snap.id, nome: d.nome as string, disponivelZerado: disp });
+      itensEncerrados.push({ itemContratoId: snap.id, nome: d.nome as string, disponivelZerado: disp, contratadaAntes });
     });
 
     const osCanceladas: string[] = [];
@@ -246,7 +252,7 @@ export const encerrarContrato = onCall<{ contratoId: string; motivo: string }>(a
       osCanceladas.push(s.data()!.numero as string);
       const ch = chamadoSnaps[i];
       if (ch.exists) {
-        tx.update(ch.ref, { status: 'Aberto', ordemServicoId: FieldValue.delete() });
+        tx.update(ch.ref, { status: 'Aberto', ordemServicoId: FieldValue.delete(), empresaContratadaId: FieldValue.delete() });
       }
     });
 
@@ -259,7 +265,16 @@ export const encerrarContrato = onCall<{ contratoId: string; motivo: string }>(a
       data: new Date().toISOString(),
       motivo: `Encerramento: ${motivo}`,
       encerramento: true,
-      itens: itensEncerrados.map((i) => ({ itemContratoId: i.itemContratoId, nome: i.nome, quantidadeContratada: { de: i.disponivelZerado, para: 0 } })),
+      // de/para é a quantidade contratada antes e depois, como num aditivo
+      // comum. Antes gravava { de: livre zerado, para: 0 }, e o aditivo de
+      // encerramento parecia dizer que o contrato tinha ido a zero.
+      itens: itensEncerrados
+        .filter((i) => i.disponivelZerado > 0)
+        .map((i) => ({
+          itemContratoId: i.itemContratoId,
+          nome: i.nome,
+          quantidadeContratada: { de: i.contratadaAntes, para: i.contratadaAntes - i.disponivelZerado }
+        })),
       autorUid: autor.uid,
       autorNome: autor.nome
     });

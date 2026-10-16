@@ -48,7 +48,7 @@ import { Component, Input } from '@angular/core';
     </span>
   `,
   styles: [`
-    :host { display: inline-flex; line-height: 0; }
+    :host { display: inline-flex; line-height: 0; } /* its-ok: contêiner do SVG do logo, sem texto */
 
     .logo {
       display: inline-flex;
@@ -69,10 +69,10 @@ import { Component, Input } from '@angular/core';
     .logo-no { fill: var(--warning-500); }
 
     .logo-word {
-      font-family: var(--font-brand);
-      font-weight: 800;
+      font-family: var(--font-brand); /* its-ok: wordmark do logotipo */
+      font-weight: 800; /* its-ok: peso do wordmark do logotipo */
       font-size: calc(var(--logo-size) * 0.7);
-      letter-spacing: -0.035em;
+      letter-spacing: -0.035em; /* its-ok: wordmark da marca (Manrope 800), desenho do logotipo */
       line-height: 1;
       color: inherit;
     }

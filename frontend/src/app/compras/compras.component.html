@@ -1,0 +1,144 @@
+<div class="cp">
+  <header class="cp-nav">
+    <div class="cp-container cp-nav-inner">
+      <a routerLink="/" class="cp-marca" aria-label="Zella, voltar à apresentação">
+        <app-logo [size]="28" [wordmark]="true"></app-logo>
+      </a>
+      <div class="cp-nav-acoes">
+        <a routerLink="/" class="cp-voltar">Apresentação</a>
+        <app-theme-toggle></app-theme-toggle>
+        <app-flow-button routerLink="/login" size="default">Entrar</app-flow-button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    <section class="cp-topo">
+      <div class="cp-container">
+        <span class="cp-selo">Para compras e licitação</span>
+        <h1>Tudo o que o setor de compras precisa para cotar o Zella.</h1>
+        <p class="cp-lead">O que é, os planos com preço mensal e anual, o que vem em cada um e como pedir a proposta.</p>
+
+        <div class="cp-proposta">
+          <label class="cp-campo">
+            <span>Nome da instituição (opcional, sai na proposta)</span>
+            <input type="text" [(ngModel)]="paraQuem" name="paraQuem" maxlength="120" placeholder="Ex: Escola Estadual Centro" autocomplete="organization" />
+          </label>
+          <app-flow-button size="lg" (click)="baixarProposta()" [disabled]="gerando()">
+            <app-icon class="btn-icon" name="download" aria-hidden="true"></app-icon>
+            {{ gerando() ? 'Gerando a proposta...' : 'Baixar proposta em PDF' }}
+          </app-flow-button>
+        </div>
+      </div>
+    </section>
+
+    <section class="cp-secao" aria-labelledby="cp-oque">
+      <div class="cp-container cp-duas">
+        <h2 id="cp-oque">O que é o Zella</h2>
+        <ul class="cp-lista">
+          @for (frase of oQueE; track frase) {
+            <li>{{ frase }}</li>
+          }
+        </ul>
+      </div>
+    </section>
+
+    <section class="cp-secao cp-secao--alt" aria-labelledby="cp-planos">
+      <div class="cp-container">
+        <h2 id="cp-planos">Planos e valores</h2>
+        <p class="cp-ajuda">Valores por empresa, por mês. Quem pede conserto e quem abre chamado pelo QR Code não paga.</p>
+        <div class="cp-planos">
+          @for (p of planos; track p.nome) {
+            <article class="cp-plano" [class.cp-plano--destaque]="p.destaque">
+              <h3>{{ p.nome }}</h3>
+              <p class="cp-plano-resumo">{{ p.resumo }}</p>
+              <p class="cp-preco"><strong>{{ preco(p.mensal) }}</strong><span>/mês</span></p>
+              <p class="cp-anual">No anual: {{ preco(p.anualPorMes) }}/mês ({{ totalAnual(p.anualPorMes) }} em 12 meses)</p>
+              <ul class="cp-inclui">
+                @for (item of p.inclui; track item) {
+                  <li><app-icon name="check_circle" aria-hidden="true"></app-icon><span>{{ item }}</span></li>
+                }
+              </ul>
+            </article>
+          }
+        </div>
+        @if (adicionais.length) {
+          <p class="cp-ajuda cp-adicionais">
+            Adicionais:
+            @for (a of adicionais; track a.nome; let ultimo = $last) {
+              {{ a.nome.toLowerCase() }}, {{ preco(a.mensal) }}/mês{{ ultimo ? '.' : ';' }}
+            }
+          </p>
+        }
+      </div>
+    </section>
+
+    <section class="cp-secao" aria-labelledby="cp-compra">
+      <div class="cp-container cp-duas">
+        <h2 id="cp-compra">Para o processo de compra</h2>
+        <div>
+          <ul class="cp-lista">
+            <li>Proposta em PDF com os planos e valores, pronta para a cotação e a aprovação interna.</li>
+            <li>O gestor exporta todos os dados em planilhas (CSV) quando quiser, pela tela Minha conta.</li>
+            <li>Funciona no navegador, sem instalação. O técnico usa no celular.</li>
+            @if (dados.emitimosNotaFiscal) {
+              <li>Emitimos nota fiscal.</li>
+            }
+          </ul>
+          @if (temEmpresa) {
+            <dl class="cp-empresa">
+              @if (dados.razaoSocial) {
+                <div><dt>Razão social</dt><dd>{{ dados.razaoSocial }}</dd></div>
+              }
+              @if (dados.cnpj) {
+                <div><dt>CNPJ</dt><dd>{{ dados.cnpj }}</dd></div>
+              }
+            </dl>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="cp-secao cp-secao--alt" aria-labelledby="cp-pedir">
+      <div class="cp-container cp-duas">
+        <h2 id="cp-pedir">Como pedir a proposta</h2>
+        <div>
+          <ol class="cp-passos">
+            <li>Baixe a proposta em PDF no topo desta página.</li>
+            <li>Escolha o plano e o período: mensal ou anual.</li>
+            @if (temContato) {
+              <li>Fale com a gente, com o nome da instituição e o plano escolhido.</li>
+            }
+          </ol>
+          @if (temContato) {
+            <div class="cp-contatos">
+              @if (linkEmail) {
+                <a class="cp-contato" [href]="linkEmail">
+                  <app-icon name="email" aria-hidden="true"></app-icon>
+                  <span>{{ dados.emailComercial }}</span>
+                </a>
+              }
+              @if (linkWhatsapp) {
+                <a class="cp-contato" [href]="linkWhatsapp" target="_blank" rel="noopener">
+                  <app-icon name="support_agent" aria-hidden="true"></app-icon>
+                  <span>WhatsApp {{ whatsapp }}</span>
+                </a>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="cp-rodape">
+    <div class="cp-container cp-rodape-inner">
+      <app-logo [size]="22" [wordmark]="true"></app-logo>
+      @if (dados.razaoSocial || dados.cnpj) {
+        <span>{{ dados.razaoSocial }}{{ dados.razaoSocial && dados.cnpj ? ' · ' : '' }}{{ dados.cnpj ? 'CNPJ ' + dados.cnpj : '' }}</span>
+      }
+      <a routerLink="/">Apresentação</a>
+      <a routerLink="/login">Entrar</a>
+    </div>
+  </footer>
+</div>

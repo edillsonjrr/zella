@@ -1,0 +1,27 @@
+:host {
+  display: inline-block;
+  flex: none;
+  width: var(--tamanho, 36px);
+  height: var(--tamanho, 36px);
+  vertical-align: middle;
+}
+
+svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.35));
+}
+
+/* ponteiro com mola: passa um pouco do ponto e volta, como agulha de verdade */
+.ponteiro {
+  transform-origin: 50px 50px;
+  transform-box: view-box;
+  transition: transform 900ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.reserva { transition-duration: 1200ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ponteiro { transition: none; }
+}

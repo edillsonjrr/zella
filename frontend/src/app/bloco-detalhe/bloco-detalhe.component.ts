@@ -100,7 +100,7 @@ export class BlocoDetalheComponent {
         tipo: 'sala',
         id: sala.id,
         titulo: sala.nome,
-        subtitulo: `${this.unidade?.sigla ?? ''} · ${sala.nome}`
+        subtitulo: `${this.unidade?.nome ?? ''} · ${sala.nome}`
       },
       position: { right: '0', top: '0' },
       height: '100vh',

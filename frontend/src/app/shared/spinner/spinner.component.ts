@@ -53,7 +53,7 @@ export type SpinnerSize = 'sm' | 'md' | 'lg';
     </span>
   `,
   styles: [`
-    :host { display: inline-flex; line-height: 0; vertical-align: middle; }
+    :host { display: inline-flex; line-height: 0; vertical-align: middle; } /* its-ok: contêiner do SVG do spinner, sem texto */
 
     .spinner {
       display: inline-flex;

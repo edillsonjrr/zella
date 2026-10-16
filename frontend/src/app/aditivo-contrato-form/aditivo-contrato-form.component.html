@@ -54,7 +54,8 @@
             <app-icon name="format_list_bulleted" aria-hidden="true"></app-icon>
             <h3>Quantidades contratadas</h3>
           </div>
-          <p class="section-hint">Altere só o que o aditivo muda. O saldo disponível acompanha a diferença.</p>
+          <p class="section-hint">Altere só o que o aditivo muda. O saldo livre acompanha a diferença.</p>
+          <app-legenda-saldo class="aditivo-legenda"></app-legenda-saldo>
 
           @if (!linhas.length) {
             <p class="aviso-saldo">
@@ -71,7 +72,7 @@
                   <span class="linha-meta">
                     Atual: {{ linha.atual }} {{ linha.unidadeMedida }}
                     @if (linha.minimo > 0) {
-                      · mínimo {{ linha.minimo }} (reservado + consumido)
+                      · mínimo {{ linha.minimo }} (separado + usado)
                     }
                   </span>
                 </div>

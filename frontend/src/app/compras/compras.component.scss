@@ -1,0 +1,335 @@
+:host {
+  display: block;
+}
+
+.cp {
+  min-height: 100dvh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  overflow-x: clip;
+
+  h1, h2, h3 { text-wrap: balance; }
+  p, li { text-wrap: pretty; }
+}
+
+.cp-container {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Navegação ---------------------------------------------------------------- */
+
+.cp-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.cp-nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 64px;
+}
+
+.cp-marca {
+  display: inline-flex;
+  color: inherit;
+  text-decoration: none;
+}
+
+.cp-nav-acoes {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cp-voltar {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover { color: var(--text-primary); }
+}
+
+/* Topo ------------------------------------------------------------------- */
+
+.cp-topo {
+  padding: 56px 0 40px;
+  border-bottom: 1px solid var(--border-default);
+
+  h1 {
+    max-width: 22ch;
+    margin: 12px 0 12px;
+    font-family: var(--font-brand); // its-ok: título da página pública de vendas (o guia permite a fonte de marca fora do app)
+    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em; // its-ok: título da página pública de vendas (o guia permite a fonte de marca fora do app)
+  }
+}
+
+.cp-selo {
+  display: inline-block;
+  padding: 4px 10px;
+  border: 1px solid var(--primary-500);
+  border-radius: 999px;
+  color: var(--primary-400);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cp-lead {
+  max-width: 60ch;
+  margin: 0 0 28px;
+  color: var(--text-secondary);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+
+.cp-proposta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.cp-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 0 1 360px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+
+  input {
+    min-height: 46px;
+    padding: 0 14px;
+    border: 1px solid var(--border-input);
+    border-radius: var(--button-radius);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.9375rem;
+
+    &:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+  }
+}
+
+/* Seções ----------------------------------------------------------------- */
+
+.cp-secao {
+  padding: 48px 0;
+
+  h2 {
+    margin: 0 0 12px;
+    font-family: var(--font-brand); // its-ok: título da página pública de vendas (o guia permite a fonte de marca fora do app)
+    font-size: clamp(1.35rem, 2.6vw, 1.75rem);
+    line-height: 1.2;
+  }
+}
+
+.cp-secao--alt {
+  background: var(--bg-secondary);
+  border-block: 1px solid var(--border-default);
+}
+
+.cp-duas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 24px 48px;
+}
+
+.cp-ajuda {
+  margin: 0 0 20px;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+}
+
+.cp-lista,
+.cp-passos {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* Planos ----------------------------------------------------------------- */
+
+.cp-planos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.cp-plano {
+  display: flex;
+  flex-direction: column;
+  padding: 22px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--card-radius);
+  background: var(--bg-primary);
+
+  h3 {
+    margin: 0;
+    font-size: 1.125rem;
+  }
+}
+
+.cp-plano--destaque {
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 1px var(--primary-500);
+}
+
+.cp-plano-resumo {
+  margin: 6px 0 14px;
+  min-height: 2.8em;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.cp-preco {
+  margin: 0;
+
+  strong {
+    font-family: var(--font-brand); // its-ok: título da página pública de vendas (o guia permite a fonte de marca fora do app)
+    font-size: 2rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  span {
+    margin-left: 2px;
+    color: var(--text-secondary);
+  }
+}
+
+.cp-anual {
+  margin: 4px 0 16px;
+  color: var(--primary-400);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.cp-inclui {
+  list-style: none;
+  margin: 0;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.875rem;
+
+  li {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  app-icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--primary-500);
+  }
+}
+
+.cp-adicionais {
+  margin: 16px 0 0;
+  font-size: 0.875rem;
+}
+
+/* Compra e contato -------------------------------------------------------- */
+
+.cp-empresa {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+  margin: 20px 0 0;
+
+  dt {
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-weight: 600;
+  }
+}
+
+.cp-contatos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.cp-contato {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--button-radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+
+  &:hover { border-color: var(--primary-500); }
+  &:focus-visible { outline: 2px solid var(--primary-500); outline-offset: 2px; }
+}
+
+/* Rodapé ------------------------------------------------------------------ */
+
+.cp-rodape {
+  padding: 28px 0;
+  border-top: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.cp-rodape-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+
+  a {
+    color: var(--text-secondary);
+    font-weight: 600;
+
+    &:hover { color: var(--text-primary); }
+  }
+}
+
+@media (max-width: 860px) {
+  .cp-planos { grid-template-columns: 1fr; }
+  .cp-plano-resumo { min-height: 0; }
+  .cp-duas { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .cp-container { padding: 0 16px; }
+  .cp-voltar { display: none; }
+  .cp-topo { padding: 36px 0 28px; }
+  .cp-proposta app-flow-button { width: 100%; }
+  .cp-campo { flex: 1 1 100%; }
+}

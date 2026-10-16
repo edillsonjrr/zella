@@ -149,7 +149,7 @@ export class UnidadeDetalheComponent {
       tipo: 'bloco',
       id: bloco.id,
       titulo: bloco.nome,
-      subtitulo: `${this.unidade.sigla} · ${bloco.nome}`
+      subtitulo: `${this.unidade.nome} · ${bloco.nome}`
     });
   }
 
@@ -158,7 +158,7 @@ export class UnidadeDetalheComponent {
       tipo: 'sala',
       id: sala.id,
       titulo: sala.nome,
-      subtitulo: `${this.unidade.sigla} · ${sala.nome}`
+      subtitulo: `${this.unidade.nome} · ${sala.nome}`
     });
   }
 

@@ -1,0 +1,22 @@
+<div class="palco" (pointermove)="mover($event)" (pointerleave)="soltar()">
+  <div class="placa"
+       [style.--bx]="brilhoX() + '%'" [style.--by]="brilhoY() + '%'"
+       [style.--rx]="incX() + 'deg'" [style.--ry]="incY() + 'deg'"
+       role="img" [attr.aria-label]="'Plaqueta: ' + codigoTexto() + ', ' + titulo() + ', ' + local()">
+    <i class="rebite r1"></i><i class="rebite r2"></i><i class="rebite r3"></i><i class="rebite r4"></i>
+    <div class="faixa"><span>ZELLA</span><span>PATRIMÔNIO</span></div>
+    <div class="corpo">
+      <div class="qr">
+        @if (qr(); as src) { <img [src]="src" alt="" width="112" height="112" /> }
+      </div>
+      <div class="dados">
+        <span class="gravado rotulo">Equipamento</span>
+        <strong class="gravado">{{ titulo() }}</strong>
+        <span class="gravado rotulo">Local</span>
+        <span class="gravado">{{ local() }}</span>
+        <span class="codigo">{{ codigoTexto() }}</span>
+      </div>
+    </div>
+    <p class="gravado instrucao">Problema? Aponte a câmera e abra um chamado.</p>
+  </div>
+</div>

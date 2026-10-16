@@ -10,28 +10,18 @@
 
 .page-title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 16px;
-  min-height: 40px;
+  flex-wrap: wrap;
+  gap: var(--its-e-4);
+  margin-bottom: var(--its-cabecalho-conteudo);
+  min-height: 44px;
 
   .title-left {
     display: flex;
-    align-items: center;
-    gap: 8px;
-
-    .workspace-badge {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      background-color: var(--primary-500);
-      color: var(--primary-contrast);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75rem;
-      font-weight: 700;
-    }
+    flex-direction: column;
+    gap: var(--its-e-1);
+    min-width: 0;
 
     h1 {
       margin: 0;
@@ -41,7 +31,8 @@
   .title-right {
     display: flex;
     align-items: center;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: var(--its-e-2);
   }
 }
 
@@ -65,6 +56,7 @@
     color: var(--text-secondary);
     font-size: 0.8125rem;
     font-weight: 500;
+    white-space: nowrap;
     cursor: pointer;
     transition: background-color var(--transition-fast), color var(--transition-fast);
 
@@ -84,7 +76,7 @@
 
 .resumo-grupo {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin-bottom: 24px;
 
@@ -94,6 +86,25 @@
 
   @media (max-width: 600px) {
     grid-template-columns: 1fr;
+  }
+}
+
+/* O cartão inteiro é o link para a lista filtrada. */
+.resumo-link {
+  display: block;
+  min-width: 0;
+  border-radius: var(--card-radius);
+  color: inherit;
+  text-decoration: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
+  }
+
+  > .resumo-card {
+    height: 100%;
+    cursor: pointer;
   }
 }
 
@@ -107,56 +118,126 @@
     border-color: var(--border-hover);
   }
 
-  &--destaque {
-    .resumo-valor {
-      font-size: 2rem;
-    }
-
-    .resumo-label {
-      font-weight: 600;
-    }
-  }
-
   mat-card-content {
     display: flex;
-    align-items: center;
-    gap: 14px;
+    flex-direction: column;
+    gap: 6px;
     padding: 16px;
   }
 
-  .resumo-icone {
+  .resumo-topo {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    font-size: 22px;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .resumo-icone {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    font-size: 17px;
     background-color: var(--bg-elevated);
     color: var(--text-secondary);
     flex-shrink: 0;
   }
 
-  .resumo-conteudo {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-  }
-
-  .resumo-valor {
-    font-size: 1.625rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1.2;
-  }
-
   .resumo-label {
     font-size: 0.8125rem;
+    font-weight: 600;
     color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .resumo-linha {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 40px;
+  }
+
+  /* Número e, quando há, o complemento em letra menor que pode ir para a
+     linha de baixo ("em média", "dos chamados foram preventivos"). */
+  .resumo-numero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 6px;
+    min-width: 0;
+  }
+
+  .resumo-valor {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .resumo-sufixo {
+    min-width: 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text-secondary);
+  }
+
+  .resumo-spark {
+    width: 96px;
+    height: 30px;
+    flex-shrink: 0;
+    overflow: visible;
+
+    polyline {
+      fill: none;
+      stroke: var(--primary-500);
+      stroke-width: 1.75;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+  }
+
+  .resumo-rodape {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 6px;
+    min-height: 18px;
+    font-size: 0.75rem;
+  }
+
+  .resumo-delta {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    white-space: nowrap;
+    font-weight: 700;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+
+    span {
+      font-size: var(--its-t-legenda);
+    }
+
+    &--bom {
+      color: var(--success-500);
+    }
+
+    &--ruim {
+      color: var(--danger-500);
+    }
+  }
+
+  /* Pode quebrar linha: "eram 100% nos 180 dias anteriores" é a explicação
+     da variação e não pode sair cortado. */
+  .resumo-dica {
+    color: var(--text-tertiary);
   }
 
   &--perigo {
@@ -175,6 +256,85 @@
       background-color: var(--warning-50);
       color: var(--warning-500);
     }
+  }
+}
+
+.grafico-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.grafico-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
+  }
+
+  &--ligado {
+    color: var(--text-primary);
+    background-color: var(--primary-50);
+    border-color: transparent;
+  }
+}
+
+.legenda-tracejada {
+  width: 16px;
+  border-top: 2px dashed var(--text-tertiary);
+}
+
+.grafico-subtitulo {
+  margin: 2px 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-tertiary);
+}
+
+.tabela-volume {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 8px 12px;
+    text-align: right;
+    border-bottom: 1px solid var(--border-default);
+  }
+
+  th:first-child,
+  td:first-child {
+    text-align: left;
+  }
+
+  th {
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  td {
+    color: var(--text-primary);
   }
 }
 
@@ -260,4 +420,141 @@
     justify-content: center;
     height: 40px;
   }
+}
+
+/*
+  Seletor de periodo: a pilula desliza entre 30 / 90 / 180 em vez de saltar.
+  Mecanismo do beUI (MIT), "Tabs - indicador animado por spring",
+  reimplementado em CSS: o projeto nao tem biblioteca de animacao.
+
+  Os tres botoes passam a ter a mesma largura para a pilula poder andar em
+  tercos exatos, e a posicao e lida com `:has()` -- sem estado extra no
+  componente nem JavaScript.
+*/
+.segmented-control {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    left: 2px;
+    width: calc((100% - 4px) / 3);
+    border-radius: 9999px;
+    background-color: var(--bg-elevated);
+    box-shadow: var(--shadow-card);
+    /* Propriedades longas: `var()` dentro do atalho `transition` quebra o
+       parser em alguns navegadores. */
+    transition-property: transform;
+    transition-duration: 280ms;
+    transition-timing-function: cubic-bezier(0.34, 1.26, 0.64, 1);
+  }
+
+  &:has(.segmented-btn:nth-child(2).segmented-btn--active)::before { transform: translateX(100%); }
+  &:has(.segmented-btn:nth-child(3).segmented-btn--active)::before { transform: translateX(200%); }
+
+  .segmented-btn {
+    position: relative;
+    z-index: 1;
+    flex: 1 1 0;
+    justify-content: center;
+
+    /* A pilula de tras e que pinta o ativo agora. */
+    &--active {
+      background-color: transparent;
+      box-shadow: none;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion='full']) .segmented-control::before {
+    transition-duration: 0.01ms;
+  }
+}
+
+/*
+  Card resize (transitions.dev, referencia -- licenca nao declarada, entao
+  nada foi copiado): ao alternar entre grafico e tabela o card mudava de
+  altura de um quadro para o outro. Agora a altura interpola.
+
+  `interpolate-size` e o que permite animar ate `height: auto` sem medir nada
+  em JavaScript. Onde o navegador nao suporta, a troca acontece como antes --
+  instantanea, nunca quebrada.
+*/
+.troca-suave {
+  interpolate-size: allow-keywords;
+  display: block;
+  height: auto;
+  overflow: hidden;
+  transition-property: height;
+  transition-duration: 320ms;
+  transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.troca-suave > * {
+  animation-name: troca-entrada;
+  animation-duration: 260ms;
+  animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  animation-fill-mode: both;
+}
+
+@keyframes troca-entrada {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion='full']) {
+    .troca-suave { transition-duration: 0.01ms; }
+    .troca-suave > * { animation-name: none; }
+  }
+}
+
+/*
+  Action Swap (beUI, MIT): o rotulo do botao entra com desfoque e um passo
+  curto para cima, em vez de aparecer de um quadro para o outro. Reimplementado
+  em CSS -- o original e React com Motion.
+*/
+.rotulo-troca {
+  display: inline-block;
+  animation-name: rotulo-entra;
+  animation-duration: 220ms;
+  animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  animation-fill-mode: both;
+}
+
+@keyframes rotulo-entra {
+  from { opacity: 0; filter: blur(3px); transform: translateY(4px); }
+  to { opacity: 1; filter: blur(0); transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-motion='full']) .rotulo-troca { animation-name: none; }
+}
+
+/* "Relatório do mês" (Z3.2): mesmo desenho de pílula do seletor de período. */
+.relatorio-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 9999px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover { border-color: var(--primary-500); }
+  &:focus-visible { outline: 2px solid var(--primary-500); outline-offset: 2px; }
+}
+
+@media (max-width: 760px) {
+  .relatorio-btn { width: 100%; justify-content: center; height: 40px; }
+  .page-title-row .title-right { flex-wrap: wrap; }
 }

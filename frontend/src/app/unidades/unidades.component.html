@@ -1,7 +1,10 @@
 <div class="page-header animate-fade-in">
-  <h1>Unidades</h1>
+  <div class="page-header-textos">
+    <h1>Unidades</h1>
+    <p>Os prédios atendidos, com os blocos e as salas de cada um.</p>
+  </div>
   <app-flow-button size="lg" (click)="nova()">
-    <app-icon class="btn-icon" name="add"></app-icon> Nova unidade
+    <app-icon class="btn-icon" name="add" aria-hidden="true"></app-icon> Nova unidade
   </app-flow-button>
 </div>
 
@@ -42,15 +45,22 @@
           <span class="no-sigla">{{ u.sigla }}</span>
           <span class="no-nome">{{ u.nome }}</span>
           <span class="no-acoes" (click)="$event.stopPropagation()">
-            <button mat-icon-button (click)="gerenciarEstrutura(u)" aria-label="Gerenciar estrutura">
+            <button mat-icon-button (click)="gerenciarEstrutura(u)" [attr.aria-label]="'Blocos e salas de ' + u.nome" matTooltip="Blocos e salas">
               <app-icon name="account_tree"></app-icon>
             </button>
-            <button mat-icon-button (click)="editar(u)" aria-label="Editar">
-              <app-icon name="edit"></app-icon>
+            <button mat-icon-button [matMenuTriggerFor]="menuUnidade" [attr.aria-label]="'Mais ações para ' + u.nome" matTooltip="Mais ações">
+              <app-icon name="more_horiz"></app-icon>
             </button>
-            <button mat-icon-button color="warn" (click)="excluir(u)" aria-label="Excluir">
-              <app-icon name="delete"></app-icon>
-            </button>
+            <mat-menu #menuUnidade="matMenu" xPosition="before">
+              <button mat-menu-item (click)="editar(u)">
+                <app-icon name="edit" aria-hidden="true"></app-icon>
+                <span>Editar</span>
+              </button>
+              <button mat-menu-item class="menu-item-perigo" (click)="excluir(u)">
+                <app-icon name="delete" aria-hidden="true"></app-icon>
+                <span>Excluir</span>
+              </button>
+            </mat-menu>
           </span>
         </div>
 
@@ -114,6 +124,6 @@
       }
     </div>
 
-    <p class="tabela-hint">Clique na seta para ver blocos e salas. Use <app-icon name="account_tree" size="14px"></app-icon> para gerenciar a estrutura.</p>
+    <p class="tabela-hint">Clique na seta para ver blocos e salas. Use <app-icon name="account_tree" size="14px"></app-icon> para cadastrar blocos e salas.</p>
   </mat-card-content>
 </mat-card>

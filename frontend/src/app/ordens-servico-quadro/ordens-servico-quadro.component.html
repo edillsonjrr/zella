@@ -1,21 +1,17 @@
 <div class="quadro-container">
-  @for (coluna of colunas; track coluna.status) {
+  @for (coluna of colunas; track coluna.chave) {
     <div class="quadro-coluna">
       <div class="coluna-header">
-        <div class="coluna-titulo">
+        <div class="coluna-titulo" [attr.title]="coluna.agora || null">
           <span class="status-dot" [class]="'status-dot--' + coluna.corClasse"></span>
           <span class="titulo-texto">{{ coluna.titulo }}</span>
           <span class="contador">{{ coluna.ordens.length }}</span>
         </div>
-        <button mat-icon-button (click)="onAbrirNovaOs()" [attr.aria-label]="'Adicionar OS em ' + coluna.titulo">
-          <app-icon name="add"></app-icon>
-        </button>
       </div>
+      @if (coluna.agora) {
+        <p class="coluna-agora">{{ coluna.agora }}</p>
+      }
 
-      <button type="button" class="criacao-inline" (click)="onAbrirNovaOs()">
-        <app-icon name="add"></app-icon>
-        <span>Adicionar OS...</span>
-      </button>
 
       <div class="coluna-cards">
         @for (ordem of ordensDaColuna(coluna); track ordem.numero) {
@@ -23,7 +19,7 @@
             class="os-card app-card"
             role="button"
             tabindex="0"
-            [attr.aria-label]="'Abrir OS ' + ordem.numero"
+            [attr.aria-label]="'Abrir ' + ordem.numero"
             (click)="onAbrirDetalhe(ordem)"
             (keydown.enter)="onAbrirDetalhe(ordem)"
             (keydown.space)="$event.preventDefault(); onAbrirDetalhe(ordem)"

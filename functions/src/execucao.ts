@@ -1,8 +1,10 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { db, colecao, exigirPerfil, exigirMesmaContratada, exigirTecnicoDesignado } from './admin';
 import { registrarLog, resolverAutor } from './logs';
-import { notificar } from './notificacoes';
+import { notificar, lerSolicitante, avisarSolicitante } from './notificacoes';
 import { salvarImagem } from './fotos';
+import { registrarExecucaoForaContrato } from './foraContrato';
+import { rotuloOS } from '../../shared/historico';
 import type { Orcamento, OrcamentoItem } from './types';
 
 function agregarPorItem(itens: OrcamentoItem[]): Map<string, number> {
@@ -19,6 +21,9 @@ export interface ExecutarOSInput {
   // aparece conta como executado por inteiro. O que sobrar da reserva volta
   // pro disponível do contrato.
   itens?: { itemContratoId: string; quantidadeExecutada: number }[];
+  // Itens fora do contrato aprovados (Z3.5): quanto foi usado de cada um.
+  // Quem não aparece conta como usado por inteiro. Não mexe em saldo.
+  foraContrato?: { id: string; quantidadeExecutada: number }[];
   observacao?: string;
   // Fotos da execução (data URL jpeg/png/webp, até 3, 4 MB cada). Sobem
   // pro Storage antes da transação; o caminho fica em `fotosExecucao`.
@@ -26,6 +31,10 @@ export interface ExecutarOSInput {
 }
 
 const MAX_FOTOS_EXECUCAO = 3;
+
+function unidadesDevolvidas(n: number): string {
+  return n === 1 ? '1 unidade voltou' : `${n} unidades voltaram`;
+}
 
 /**
  * Executa a OS: move o reservado do orçamento aprovado para consumido.
@@ -73,7 +82,7 @@ export const executarOS = onCall<ExecutarOSInput>(async (request) => {
   exigirMesmaContratada(ctx, previa as { empresaContratadaId?: string });
   exigirTecnicoDesignado(ctx, previa as { tecnicoId?: string });
   if (previa.situacao !== 'Aprovada') {
-    throw new HttpsError('failed-precondition', 'A OS precisa estar Aprovada para ser executada.');
+    throw new HttpsError('failed-precondition', 'O serviço só pode ser registrado depois que a gestão aprovar o orçamento.');
   }
   const fotosExecucao: string[] = [];
   for (const [i, foto] of fotos.entries()) {
@@ -89,17 +98,28 @@ export const executarOS = onCall<ExecutarOSInput>(async (request) => {
     exigirMesmaContratada(ctx, os as { empresaContratadaId?: string });
     exigirTecnicoDesignado(ctx, os as { tecnicoId?: string });
     if (os.situacao !== 'Aprovada') {
-      throw new HttpsError('failed-precondition', 'A OS precisa estar Aprovada para ser executada.');
+      throw new HttpsError('failed-precondition', 'O serviço só pode ser registrado depois que a gestão aprovar o orçamento.');
     }
 
     const chamadoRef = colecao(empresaId, 'chamados').doc(os.chamadoId);
+    const chamadoSnap = await tx.get(chamadoRef);
+    const solicitante = await lerSolicitante(tx, empresaId, chamadoSnap.data());
 
     let orcamento: Orcamento | undefined;
     if (os.orcamentoId) {
       const orcamentoSnap = await tx.get(colecao(empresaId, 'orcamentos').doc(os.orcamentoId));
       if (orcamentoSnap.exists) orcamento = orcamentoSnap.data() as Orcamento;
     }
+    // Z0.3: OS "Aprovada" sem orçamento aprovado (dado antigo) não registra
+    // serviço: não haveria o que tirar do separado, e a OS fecharia sem itens.
+    if (orcamento?.situacao !== 'Aprovado') {
+      throw new HttpsError(
+        'failed-precondition',
+        `A ${rotuloOS(os.numero)} não tem orçamento aprovado. Peça à empresa contratada um orçamento e à gestão a aprovação antes de registrar o serviço.`
+      );
+    }
 
+    const foraContrato = registrarExecucaoForaContrato(orcamento?.itensForaContrato, request.data?.foraContrato);
     const orcado = orcamento ? agregarPorItem(orcamento.itens) : new Map<string, number>();
     const executadoPorItem = new Map<string, number>(orcado);
     if (parciais) {
@@ -119,7 +139,11 @@ export const executarOS = onCall<ExecutarOSInput>(async (request) => {
     const itemSnaps = await Promise.all(itemRefs.map((ref) => tx.get(ref)));
 
     // Reservado -> consumido pelo executado; a sobra da reserva volta ao
-    // disponível. O total reservado+disponível+consumido não muda.
+    // disponível. A conta contratada = disponível + reservada + consumida
+    // não pode mudar: o que sai da reserva (`liberado`) é exatamente o que
+    // entra em consumido e disponível. Se o item tiver menos reservado que o
+    // orçado (dado antigo inconsistente), libera só o que existe, em vez de
+    // criar saldo do nada como fazia o Math.max de antes.
     let devolvido = 0;
     const resumo: { itemContratoId: string; nome: string; orcado: number; executado: number }[] = [];
     itemSnaps.forEach((snap, i) => {
@@ -127,14 +151,16 @@ export const executarOS = onCall<ExecutarOSInput>(async (request) => {
       const id = itemIds[i];
       const qtdOrcada = orcado.get(id)!;
       const qtdExecutada = executadoPorItem.get(id)!;
-      const sobra = qtdOrcada - qtdExecutada;
       const d = snap.data()!;
+      const reservada = Number(d.quantidadeReservada) || 0;
+      const liberado = Math.min(reservada, qtdOrcada);
+      const sobra = liberado - qtdExecutada;
       tx.update(itemRefs[i], {
-        quantidadeReservada: Math.max(0, (d.quantidadeReservada as number) - qtdOrcada),
-        quantidadeConsumida: (d.quantidadeConsumida as number) + qtdExecutada,
-        quantidadeDisponivel: (d.quantidadeDisponivel as number) + sobra
+        quantidadeReservada: reservada - liberado,
+        quantidadeConsumida: (Number(d.quantidadeConsumida) || 0) + qtdExecutada,
+        quantidadeDisponivel: (Number(d.quantidadeDisponivel) || 0) + sobra
       });
-      devolvido += sobra;
+      devolvido += Math.max(0, qtdOrcada - qtdExecutada);
       resumo.push({ itemContratoId: id, nome: d.nome as string, orcado: qtdOrcada, executado: qtdExecutada });
     });
 
@@ -143,6 +169,7 @@ export const executarOS = onCall<ExecutarOSInput>(async (request) => {
       dataExecucao: new Date().toISOString().split('T')[0],
       executadoPor: ctx.usuarioId,
       itensExecutados: resumo,
+      ...(foraContrato.length ? { itensForaContratoExecutados: foraContrato } : {}),
       ...(observacao ? { observacaoExecucao: observacao } : {}),
       ...(fotosExecucao.length ? { fotosExecucao } : {})
     });
@@ -151,26 +178,35 @@ export const executarOS = onCall<ExecutarOSInput>(async (request) => {
     registrarLog(tx, empresaId, autor, {
       alvo: 'ordemServico',
       operacao: 'transicao',
-      descricao: `Executou a OS ${os.numero}${devolvido ? ` (parcial: ${devolvido} unidade(s) devolvida(s) ao contrato)` : ''}${observacao ? ` — ${observacao}` : ''}`,
+      descricao: `Registrou o serviço da ${rotuloOS(os.numero)} como feito${devolvido ? ` (parcial: ${unidadesDevolvidas(devolvido)} ao contrato)` : ''}${observacao ? ` — ${observacao}` : ''}`,
       alvoId: osId,
       alvoRotulo: os.numero as string,
       detalhes: {
         situacao: { de: 'Aprovada', para: 'Executada' },
         chamado: { statusPara: 'Executado' },
         itens: resumo,
-        devolvidoAoContrato: devolvido
+        devolvidoAoContrato: devolvido,
+        ...(foraContrato.length ? { foraContrato } : {})
       }
     });
 
     notificar(tx, empresaId, {
       paraPerfil: 'gestor',
-      titulo: `OS ${os.numero} executada`,
+      titulo: `Serviço feito na ${rotuloOS(os.numero)}`,
       texto: devolvido
-        ? `Execução parcial: ${devolvido} unidade(s) voltaram ao saldo do contrato. O chamado está pronto para encerrar.`
-        : 'O chamado está pronto para encerrar.',
-      link: '/ordens-servico',
+        ? `Feito em parte: ${unidadesDevolvidas(devolvido)} ao saldo livre do contrato. Confira e encerre o chamado.`
+        : 'Confira o serviço e encerre o chamado.',
+      link: `/ordens-servico?os=${osId}`,
       alvo: { tipo: 'ordemServico', id: osId, numero: os.numero as string }
     });
+
+    const chamado = chamadoSnap.data();
+    if (chamado) {
+      avisarSolicitante(tx, empresaId, solicitante, ctx.usuarioId, { id: chamadoRef.id, numero: chamado['numero'] as string }, {
+        titulo: `Serviço feito no pedido ${chamado['numero']}`,
+        texto: `${autor.nome} registrou o serviço como feito. Falta a gestão encerrar o pedido.`
+      });
+    }
   });
 
   return { ok: true };
@@ -185,7 +221,7 @@ export const executarOS = onCall<ExecutarOSInput>(async (request) => {
  * que é o caminho que devolve a reserva.
  */
 export const encerrarChamado = onCall<{ chamadoId: string }>(async (request) => {
-  const { empresaId } = exigirPerfil(request, ['gestor']);
+  const { empresaId, usuarioId } = exigirPerfil(request, ['gestor']);
 
   const { chamadoId } = request.data;
   const chamadoRef = colecao(empresaId, 'chamados').doc(chamadoId);
@@ -200,9 +236,10 @@ export const encerrarChamado = onCall<{ chamadoId: string }>(async (request) => 
     if (chamado.status !== 'Executado') {
       throw new HttpsError(
         'failed-precondition',
-        `Chamado ${chamado.numero} está ${chamado.status}. Só um chamado Executado pode ser encerrado; se o serviço não vai acontecer, cancele-o.`
+        `O chamado ${chamado.numero} ainda não teve o serviço registrado como feito. Só dá para encerrar depois disso; se o serviço não vai acontecer, cancele o chamado.`
       );
     }
+    const solicitante = await lerSolicitante(tx, empresaId, chamado);
 
     tx.update(chamadoRef, {
       status: 'Encerrado',
@@ -224,6 +261,11 @@ export const encerrarChamado = onCall<{ chamadoId: string }>(async (request) => 
         status: { de: chamado.status, para: 'Encerrado' },
         osEncerradaJunto: chamado.ordemServicoId ?? null
       }
+    });
+
+    avisarSolicitante(tx, empresaId, solicitante, usuarioId, { id: chamadoId, numero: chamado.numero as string }, {
+      titulo: `Pedido ${chamado.numero} concluído`,
+      texto: 'A gestão conferiu e encerrou o pedido. Abra para ver o resumo do serviço.'
     });
   });
 

@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, Input, computed, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,12 +7,15 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { IconComponent } from '../icon/icon.component';
 import { DataService } from '../data.service';
 import { AuthService } from '../auth.service';
+import { destinoDaNotificacao } from '../destino-notificacao';
+import { limparTexto } from '../../../../../shared/historico';
 import type { Notificacao } from '../models';
 
 /**
  * Sino do topo: notificações internas endereçadas à pessoa ou ao perfil
- * dela (ver functions/src/notificacoes.ts). Clicar abre o link e marca
- * como lida. "Marcar todas" limpa o contador.
+ * dela (ver functions/src/notificacoes.ts). Clicar abre o item exato
+ * (chamado, OS, pedido ou contrato) e marca como lida. "Marcar todas" limpa
+ * o contador.
  */
 @Component({
   selector: 'app-notificacoes',
@@ -22,12 +25,16 @@ import type { Notificacao } from '../models';
       mat-icon-button
       [matMenuTriggerFor]="menu"
       class="sino"
+      [class.sino--rotulo]="rotulo"
       [matBadge]="naoLidas().length || null"
       matBadgeColor="warn"
       matBadgeSize="small"
       [attr.aria-label]="naoLidas().length ? naoLidas().length + ' notificações não lidas' : 'Notificações'"
     >
       <app-icon name="notifications"></app-icon>
+      @if (rotulo) {
+        <span class="sino-rotulo" aria-hidden="true">{{ rotulo }}</span>
+      }
     </button>
 
     <mat-menu #menu="matMenu" class="notificacoes-menu" xPosition="before">
@@ -44,8 +51,8 @@ import type { Notificacao } from '../models';
         <button mat-menu-item class="notificacao" [class.notificacao--nova]="!lida(n)" (click)="abrir(n)">
           <span class="notificacao-ponto" aria-hidden="true"></span>
           <span class="notificacao-corpo">
-            <span class="notificacao-titulo">{{ n.titulo }}</span>
-            <span class="notificacao-texto">{{ n.texto }}</span>
+            <span class="notificacao-titulo">{{ limpar(n.titulo) }}</span>
+            <span class="notificacao-texto">{{ limpar(n.texto) }}</span>
             <span class="notificacao-data">{{ n.data | date:'dd/MM HH:mm' }}</span>
           </span>
         </button>
@@ -54,7 +61,20 @@ import type { Notificacao } from '../models';
   `,
   styles: `
     :host { display: inline-flex; }
-    .sino { color: var(--text-secondary); }
+    .sino {
+      --mdc-icon-button-state-layer-size: 36px;
+      width: 36px; height: 36px; padding: 8px; color: var(--text-secondary);
+      font-size: 20px;
+    }
+    @media (max-width: 760px) {
+      .sino { --mdc-icon-button-state-layer-size: 44px; width: 44px; height: 44px; padding: 12px; }
+    }
+    /* Com nome embaixo do ícone (barra do topo no celular). */
+    .sino.sino--rotulo {
+      display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+      width: auto; min-width: 44px; height: 48px; padding: 0 6px; border-radius: 8px;
+    }
+    .sino-rotulo { font-size: 0.75rem; font-weight: 500; line-height: 1.2; }
     .notificacoes-cabecalho {
       display: flex; align-items: center; justify-content: space-between; gap: 12px;
       padding: 10px 16px 6px; font-size: 0.8rem;
@@ -74,10 +94,17 @@ import type { Notificacao } from '../models';
     .notificacao-titulo { font-weight: 600; font-size: 0.8rem; }
     .notificacao--nova .notificacao-titulo { color: var(--text-primary); }
     .notificacao-texto { font-size: 0.75rem; color: var(--text-secondary); }
-    .notificacao-data { font-size: 0.7rem; color: var(--text-tertiary); }
+    .notificacao-data { font-size: 0.75rem; color: var(--text-tertiary); }
   `
 })
 export class NotificacoesComponent {
+  // Nome curto à vista embaixo do sino ("Avisos"), na barra do topo do celular.
+  @Input() rotulo = '';
+
+  // Avisos antigos foram gravados com "OS OS-2026-..."; a tela tira o
+  // prefixo repetido sem mexer no que está gravado.
+  readonly limpar = limparTexto;
+
   private dataService = inject(DataService);
   private auth = inject(AuthService);
   private router = inject(Router);
@@ -96,7 +123,8 @@ export class NotificacoesComponent {
 
   abrir(n: Notificacao): void {
     if (!this.lida(n)) this.dataService.marcarNotificacaoLida(n.id);
-    if (n.link) this.router.navigateByUrl(n.link);
+    const destino = destinoDaNotificacao(n, this.auth.usuarioLogado().perfil, this.dataService);
+    if (destino) this.router.navigate([destino.rota], { queryParams: destino.params });
   }
 
   marcarTodas(): void {

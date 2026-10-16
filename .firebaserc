@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "gestao-manutencao-app"
+  },
+  "targets": {
+    "gestao-manutencao-app": {
+      "hosting": {
+        "sistema": [
+          "gestao-manutencao-app"
+        ],
+        "chamado": [
+          "zella-chamado"
+        ]
+      }
+    }
   }
 }

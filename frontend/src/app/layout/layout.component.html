@@ -6,34 +6,41 @@
   }
 
   <div class="main-area">
+    @for (peca of pecasDemo; track peca) {
+      <ng-container *ngComponentOutlet="peca" />
+    }
     @if (convidado()) {
       <header class="toolbar toolbar--convidado">
         <app-logo [size]="26" [wordmark]="true"></app-logo>
         <app-theme-toggle></app-theme-toggle>
       </header>
     } @else {
-    <mat-toolbar class="toolbar">
+    <!-- Só no celular. No computador a marca, o sino, o tema e a conta moram
+         no menu lateral, e a página começa direto no título. -->
+    <mat-toolbar class="toolbar toolbar--celular">
       <div class="toolbar-left">
         <a class="toolbar-brand" routerLink="/" aria-label="Zella — início">
-          <app-logo [size]="26" [mark]="false"></app-logo>
+          <app-logo [size]="26"></app-logo>
         </a>
       </div>
       <div class="toolbar-right">
-        <app-theme-toggle></app-theme-toggle>
+        <!-- Ícone com nome embaixo. O tema mora no menu da conta, como no
+             rodapé do menu lateral do computador. -->
         @if (usuarioLogado().empresaId) {
-          <app-notificacoes></app-notificacoes>
+          <app-notificacoes rotulo="Avisos"></app-notificacoes>
         }
 
-        <button mat-icon-button [matMenuTriggerFor]="menuUsuario" class="user-menu-trigger" aria-label="Perfil do usuário">
-          <div class="user-avatar">{{ usuarioLogado().nome.charAt(0) }}</div>
+        <button type="button" [matMenuTriggerFor]="menuUsuario" class="user-menu-trigger" aria-label="Conta: perfil do usuário">
+          <span class="user-avatar" aria-hidden="true">{{ usuarioLogado().nome.charAt(0) }}</span>
+          <span class="toolbar-rotulo" aria-hidden="true">Conta</span>
         </button>
 
         <mat-menu #menuUsuario="matMenu" class="usuario-menu" xPosition="before">
           <div class="usuario-menu-header">
             <span class="usuario-menu-nome">{{ usuarioLogado().nome }}</span>
-            <span class="usuario-menu-perfil">{{ usuarioLogado().perfil }}</span>
-            @if (usuarioLogado().empresaNome) {
-              <span class="usuario-menu-perfil">{{ usuarioLogado().empresaNome }}</span>
+            <span class="usuario-menu-perfil">{{ perfilRotulo() }}</span>
+            @if (empresaRotulo()) {
+              <span class="usuario-menu-perfil">{{ empresaRotulo() }}</span>
             }
           </div>
           <mat-divider></mat-divider>
@@ -43,6 +50,10 @@
               <span>Minha conta</span>
             </button>
           }
+          <button mat-menu-item (click)="alternarTema()">
+            <app-icon [name]="temaEscuro() ? 'light_mode' : 'dark_mode'"></app-icon>
+            <span>{{ temaEscuro() ? 'Usar tema claro' : 'Usar tema escuro' }}</span>
+          </button>
           <button mat-menu-item (click)="sair()">
             <app-icon name="logout"></app-icon>
             <span>Sair</span>

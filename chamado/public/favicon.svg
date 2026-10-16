@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Zella">
+  <rect width="32" height="32" rx="8" fill="#2CBBA6"/>
+  <path d="M10 10h12L10 22h12" fill="none" stroke="#06231F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

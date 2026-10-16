@@ -1,0 +1,213 @@
+<div class="page-header animate-fade-in">
+  <div class="page-header-textos">
+    <h1>Equipamentos</h1>
+    <p>O que pode quebrar e receber conserto. Cada equipamento fica numa sala e ganha um QR Code.</p>
+  </div>
+  <div class="cabecalho-acoes">
+    <app-flow-button variant="secondary" (click)="abrirImportacao()">
+      <app-icon class="btn-icon" name="upload_file" aria-hidden="true"></app-icon> Importar planilha
+    </app-flow-button>
+    <app-flow-button variant="secondary" (click)="abrirEtiquetas()" [disabled]="!equipamentos().length">
+      <app-icon class="btn-icon" name="print" aria-hidden="true"></app-icon> Imprimir etiquetas
+    </app-flow-button>
+  </div>
+</div>
+
+<div class="equipamentos-grid">
+  <mat-card class="app-card animate-fade-in-up">
+    <mat-card-content>
+      <form #equipamentoForm="ngForm" (ngSubmit)="salvar(equipamentoForm)" class="equipamento-form" novalidate>
+        <div class="equipamento-form-titulo">
+          <app-icon name="devices" aria-hidden="true"></app-icon>
+          <div>
+            <h2>{{ isEdicao ? 'Editar equipamento' : 'Novo equipamento' }}</h2>
+            <span>Escolha onde ele fica e dê um nome que todo mundo reconheça.</span>
+          </div>
+        </div>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Nome</mat-label>
+          <input matInput #nomeCtrl="ngModel" [(ngModel)]="nome" name="nome" placeholder="Ex: Ar-condicionado 12000 BTUs" maxlength="120" required />
+          @if (nomeCtrl.invalid && nomeCtrl.touched) {
+            <mat-error>Informe o nome</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Unidade</mat-label>
+          <mat-select #unidadeCtrl="ngModel" [ngModel]="unidadeId()" (ngModelChange)="aoTrocarUnidade($event)" name="unidadeId" required>
+            @for (u of unidades(); track u.id) {
+              <mat-option [value]="u.id">{{ u.nome }}</mat-option>
+            }
+          </mat-select>
+          @if (unidadeCtrl.invalid && unidadeCtrl.touched) {
+            <mat-error>Escolha a unidade</mat-error>
+          }
+        </mat-form-field>
+
+        @if (unidadeId()) {
+          @if (blocosDaUnidade().length) {
+            <mat-form-field appearance="outline">
+              <mat-label>Bloco (opcional)</mat-label>
+              <mat-select [ngModel]="blocoId()" (ngModelChange)="aoTrocarBloco($event)" name="blocoId">
+                <mat-option value="">Todos os blocos</mat-option>
+                @for (b of blocosDaUnidade(); track b.id) {
+                  <mat-option [value]="b.id">{{ b.nome }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+
+          @if (salasDisponiveis().length) {
+            <mat-form-field appearance="outline">
+              <mat-label>Sala</mat-label>
+              <mat-select #salaCtrl="ngModel" [(ngModel)]="salaId" name="salaId" required>
+                @for (s of salasDisponiveis(); track s.sala.id) {
+                  <mat-option [value]="s.sala.id">{{ s.rotulo }}</mat-option>
+                }
+              </mat-select>
+              @if (salaCtrl.invalid && salaCtrl.touched) {
+                <mat-error>Escolha a sala</mat-error>
+              }
+            </mat-form-field>
+          } @else {
+            <p class="equipamento-aviso">
+              <app-icon name="info" aria-hidden="true"></app-icon>
+              <span>Esta unidade{{ blocoId() ? ', neste bloco,' : '' }} ainda não tem sala. Cadastre a sala em <a routerLink="/unidades">Unidades</a> e volte aqui.</span>
+            </p>
+          }
+        }
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="campo-com-ajuda">
+          <mat-label>Patrimônio (opcional)</mat-label>
+          <input matInput [(ngModel)]="patrimonio" name="patrimonio" placeholder="Ex: PAT-0021" maxlength="40" />
+          <mat-hint>O número da etiqueta, se houver.</mat-hint>
+        </mat-form-field>
+
+        <div class="equipamento-form-dupla">
+          <mat-form-field appearance="outline">
+            <mat-label>Fabricante (opcional)</mat-label>
+            <input matInput [(ngModel)]="fabricante" name="fabricante" placeholder="Ex: LG" maxlength="60" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Modelo (opcional)</mat-label>
+            <input matInput [(ngModel)]="modelo" name="modelo" placeholder="Ex: S4-W12JA3AA" maxlength="60" />
+          </mat-form-field>
+        </div>
+
+        @if (erro()) {
+          <p class="equipamento-erro" role="alert">{{ erro() }}</p>
+        }
+
+        <div class="equipamento-form-acoes">
+          @if (isEdicao) {
+            <app-flow-button variant="secondary" type="button" (click)="limpar(equipamentoForm)">Cancelar</app-flow-button>
+          }
+          <app-flow-button type="submit">
+            <app-icon class="btn-icon" name="save" aria-hidden="true"></app-icon>
+            {{ isEdicao ? 'Salvar alterações' : 'Cadastrar equipamento' }}
+          </app-flow-button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="app-card animate-fade-in-up">
+    <mat-card-content>
+      <div class="lista-filtros">
+        <mat-form-field appearance="outline" class="lista-busca">
+          <mat-label>Buscar</mat-label>
+          <app-icon matPrefix name="search" class="lista-busca-icone" aria-hidden="true"></app-icon>
+          <input matInput [ngModel]="busca()" (ngModelChange)="busca.set($event)" name="busca" placeholder="Nome, sala ou patrimônio" autocomplete="off" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="lista-unidade">
+          <mat-label>Unidade</mat-label>
+          <mat-select [ngModel]="filtroUnidade()" (ngModelChange)="filtroUnidade.set($event)" name="filtroUnidade">
+            <mat-option value="">Todas as unidades</mat-option>
+            @for (u of unidades(); track u.id) {
+              <mat-option [value]="u.id">{{ u.nome }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <p class="lista-total" aria-live="polite">
+        {{ equipamentosFiltrados().length }} {{ equipamentosFiltrados().length === 1 ? 'equipamento' : 'equipamentos' }}
+        @if (equipamentosFiltrados().length !== equipamentos().length) {
+          de {{ equipamentos().length }}
+        }
+      </p>
+
+      @if (!equipamentos().length) {
+        <p class="lista-vazia">Nenhum equipamento cadastrado. Comece pelo formulário ao lado.</p>
+      } @else if (!equipamentosFiltrados().length) {
+        <p class="lista-vazia">Nenhum equipamento com esse filtro.</p>
+      } @else {
+        <table mat-table [dataSource]="equipamentosFiltrados()" class="app-table app-table--lista full-width">
+          <ng-container matColumnDef="nome">
+            <th mat-header-cell *matHeaderCellDef>Equipamento</th>
+            <td mat-cell *matCellDef="let v" class="celula-principal">
+              <strong>{{ v.equipamento.nome }}</strong>
+              @if (v.fabricanteModelo) {
+                <span class="celula-detalhe">{{ v.fabricanteModelo }}</span>
+              }
+              @if (v.planos) {
+                <span class="celula-detalhe">{{ v.planos === 1 ? '1 plano preventivo' : v.planos + ' planos preventivos' }}</span>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="unidade">
+            <th mat-header-cell *matHeaderCellDef>Unidade</th>
+            <td mat-cell *matCellDef="let v" [title]="v.unidadeDica" data-rotulo="Unidade">{{ v.unidade }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="local">
+            <th mat-header-cell *matHeaderCellDef>Onde fica</th>
+            <td mat-cell *matCellDef="let v" data-rotulo="Onde fica">{{ v.local }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="patrimonio">
+            <th mat-header-cell *matHeaderCellDef>Patrimônio</th>
+            <td mat-cell *matCellDef="let v" data-rotulo="Patrimônio">{{ v.patrimonio || '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="acoes">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let v" class="celula-acoes">
+              <!-- Até dois ícones à vista; o resto no "⋯", com a lixeira por último. -->
+              <div class="acoes">
+                <button mat-icon-button (click)="editar(v)" [attr.aria-label]="'Editar ' + v.equipamento.nome" matTooltip="Editar">
+                  <app-icon name="edit"></app-icon>
+                </button>
+                <button mat-icon-button [matMenuTriggerFor]="menuEquipamento" [matMenuTriggerData]="{ v: v }" [attr.aria-label]="'Mais ações para ' + v.equipamento.nome" matTooltip="Mais ações">
+                  <app-icon name="more_horiz"></app-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="colunas"></tr>
+          <tr mat-row *matRowDef="let row; columns: colunas;" [class.linha-editando]="row.equipamento.id === editandoId()"></tr>
+        </table>
+
+        <mat-menu #menuEquipamento="matMenu" xPosition="before">
+          <ng-template matMenuContent let-v="v">
+            <button mat-menu-item (click)="abrirQrCode(v)">
+              <app-icon name="qr_code" aria-hidden="true"></app-icon>
+              <span>QR Code</span>
+            </button>
+            <button mat-menu-item (click)="baixarHistorico(v)" [disabled]="gerandoHistorico() === v.equipamento.id">
+              <app-icon name="description" aria-hidden="true"></app-icon>
+              <span>Histórico de manutenção (PDF)</span>
+            </button>
+            <button mat-menu-item class="menu-item-perigo" (click)="excluir(v)">
+              <app-icon name="delete" aria-hidden="true"></app-icon>
+              <span>Excluir</span>
+            </button>
+          </ng-template>
+        </mat-menu>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

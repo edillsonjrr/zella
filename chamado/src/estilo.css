@@ -1,0 +1,158 @@
+/*
+  Tela unica, pensada para celular na mao de quem esta em pe na frente do
+  equipamento. Nada de menu, nada de rota, nada de marca grande: o objetivo e
+  a pessoa abrir, ler tres campos e enviar.
+
+  As cores sao as do Zella (teal de acao sobre fundo profundo), mas o arquivo
+  e autonomo: este app nao compartilha build com o sistema.
+*/
+:root {
+  --fundo: #0f1b1e;
+  --cartao: #16262a;
+  --linha: #24393e;
+  --texto: #e8f1f2;
+  --apagado: #9db3b7;
+  --acao: #2cbba6;
+  --acao-tinta: #06231f;
+  --erro: #f2837a;
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --fundo: #eef3f4;
+    --cartao: #ffffff;
+    --linha: #d8e2e4;
+    --texto: #14262a;
+    --apagado: #5c7176;
+    --acao: #0f7a6b;
+    --acao-tinta: #ffffff;
+    --erro: #a5322a;
+
+    color-scheme: light;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--texto);
+  font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.tela {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+}
+
+.carregando {
+  color: var(--apagado);
+  font-size: 0.9375rem;
+}
+
+.cartao {
+  width: 100%;
+  max-width: 26rem;
+  background: var(--cartao);
+  border: 1px solid var(--linha);
+  border-radius: 14px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cabecalho { display: flex; flex-direction: column; gap: 4px; }
+
+h1 { margin: 0; font-size: 1.375rem; font-weight: 650; letter-spacing: -0.01em; }
+
+.local { margin: 0; font-weight: 600; color: var(--acao); font-size: 0.9375rem; }
+.unidade { margin: 0; color: var(--apagado); font-size: 0.8125rem; }
+
+.campo { display: flex; flex-direction: column; gap: 6px; }
+.campo > span { font-size: 0.8125rem; font-weight: 600; }
+.campo em { font-style: normal; font-weight: 400; color: var(--apagado); }
+
+input,
+textarea {
+  width: 100%;
+  font: inherit;
+  color: var(--texto);
+  background: var(--fundo);
+  border: 1px solid var(--linha);
+  border-radius: 8px;
+  padding: 11px 12px;
+  /* 16px evita o zoom automatico do iOS ao focar o campo. */
+  font-size: 16px;
+  resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder { color: var(--apagado); opacity: 0.75; }
+
+input:focus-visible,
+textarea:focus-visible,
+.botao:focus-visible {
+  outline: 2px solid var(--acao);
+  outline-offset: 2px;
+}
+
+.prazo { margin: 0; font-size: 0.8125rem; color: var(--apagado); }
+.prazo strong { color: var(--texto); font-variant-numeric: tabular-nums; }
+.prazo strong.acabando { color: var(--erro); }
+
+.erro {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--erro);
+  border-left: 3px solid var(--erro);
+  padding-left: 10px;
+}
+
+.botao {
+  font: inherit;
+  font-weight: 650;
+  /* Alvo de toque confortavel para quem esta em pe, de luva, no corredor. */
+  min-height: 48px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--acao);
+  color: var(--acao-tinta);
+  cursor: pointer;
+}
+
+.botao:disabled { opacity: 0.6; cursor: default; }
+
+.cartao--aviso,
+.cartao--ok { text-align: center; align-items: center; }
+
+.cartao--aviso p,
+.cartao--ok p { margin: 0; color: var(--apagado); }
+
+.miudo { font-size: 0.8125rem; }
+
+.marca-ok {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--acao);
+  display: grid;
+  place-items: center;
+}
+
+.marca-ok svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: var(--acao-tinta);
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

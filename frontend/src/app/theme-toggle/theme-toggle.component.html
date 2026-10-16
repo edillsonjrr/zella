@@ -1,30 +1,9 @@
-<label class="theme-toggle" [class.is-dark]="isDarkMode()" [class.is-light]="!isDarkMode()" aria-label="Alternar tema">
-  <input type="checkbox" [checked]="isDarkMode()" (change)="toggleTheme()">
-  <span class="toggle-track">
-    <span class="stars">
-      <span class="star star-1"></span>
-      <span class="star star-2"></span>
-      <span class="star star-3"></span>
-      <span class="star star-4"></span>
-    </span>
-    <span class="clouds">
-      <span class="cloud cloud-1"></span>
-      <span class="cloud cloud-2"></span>
-    </span>
-    <span class="toggle-thumb">
-      <span class="face face-night">
-        <span class="eye eye-left"></span>
-        <span class="eye eye-right"></span>
-        <span class="mouth"></span>
-      </span>
-      <span class="face face-day">
-        <span class="eye eye-left"></span>
-        <span class="eye eye-right"></span>
-        <span class="mouth"></span>
-      </span>
-      <span class="crater crater-1"></span>
-      <span class="crater crater-2"></span>
-      <span class="crater crater-3"></span>
-    </span>
-  </span>
-</label>
+<!-- Botão discreto de tema: um ícone, sem ilustração. O nome diz o que o
+     clique faz ("Usar tema claro"), não o estado atual. -->
+<button type="button" class="tema" [class.tema--rotulo]="rotulo" (click)="toggleTheme()" [attr.aria-label]="acao()" [matTooltip]="acao()" [matTooltipDisabled]="!!rotulo">
+  <app-icon [name]="isDarkMode() ? 'light_mode' : 'dark_mode'" aria-hidden="true"></app-icon>
+  @if (rotulo) {
+    <!-- Nome curto à vista no topo do celular; o nome completo fica no aria-label. -->
+    <span class="tema-rotulo" aria-hidden="true">{{ rotulo }}</span>
+  }
+</button>

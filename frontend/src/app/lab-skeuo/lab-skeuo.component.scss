@@ -1,0 +1,83 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.lab {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+
+.lab-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+.lab-selo {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--warning-500);
+  background: var(--warning-50);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.lab-topo h1 { margin: 10px 0 6px; font: 800 1.9rem/1.15 var(--font-brand, sans-serif); letter-spacing: -0.01em; } // its-ok: laboratório de peças físicas (skeuomorfismo), fora do fluxo do app
+.lab-topo p { margin: 0; max-width: 62ch; color: var(--text-secondary); line-height: 1.55; }
+
+.lab-grade {
+  display: grid;
+  gap: 20px;
+}
+@media (min-width: 1000px) {
+  .lab-grade { grid-template-columns: 1fr 1fr; }
+}
+
+.card {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+}
+.card-topo { display: flex; gap: 12px; align-items: flex-start; }
+.card-num {
+  font: 800 0.85rem/1 var(--font-brand, sans-serif);
+  color: var(--primary-500);
+  background: var(--primary-50);
+  padding: 7px 8px;
+  border-radius: 8px;
+}
+.card h2 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+.onde { margin: 3px 0 0; font-size: 0.84rem; color: var(--text-secondary); }
+.onde b { color: var(--text-primary); font-weight: 600; }
+.onde code {
+  font: 500 0.76rem/1 ui-monospace, Consolas, monospace; // its-ok: laboratório de peças físicas (skeuomorfismo), fora do fluxo do app
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+.porque { margin: 0; font-size: 0.88rem; line-height: 1.55; color: var(--text-secondary); }
+
+/* palco de cada peça: um plano rebaixado, do mesmo tom que aparece pelos furos */
+.demo {
+  --fundo: var(--bg-tertiary);
+  align-self: stretch;
+  display: grid;
+  align-items: center;
+  border-radius: 10px;
+  background: var(--fundo);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
+.dica { margin: 0; font-size: 0.78rem; color: var(--text-tertiary); }

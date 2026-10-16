@@ -8,12 +8,15 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  updateProfile,
   type User
 } from 'firebase/auth';
+import { updateDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { auth, functions } from './firebase';
 import { DataService } from './data.service';
 import { rotaInicial } from './permissoes';
+import { DADOS_COMERCIAIS, whatsappFormatado } from './comercial.config';
 import type { PerfilUsuario, Usuario } from './models';
 
 // Sessão anônima de quem escaneou um QR Code. Não tem cadastro, não tem
@@ -39,6 +42,13 @@ export class AuthService {
   carregando = signal(false);
   erro = signal('');
   aviso = signal('');
+  // A falha foi do sistema (o cadastro não carregou), não da pessoa. A tela
+  // troca o título do aviso e mostra o contato de suporte (Z0.5).
+  erroDoSistema = signal(false);
+
+  // Cada tentativa de entrar ganha um número. "Cancelar" troca o número, e a
+  // resposta que chegar depois (de uma tentativa abandonada) é ignorada.
+  private tentativa = 0;
 
   // Cadastro de quem está logado, vindo do backend. Só existe depois que a
   // callable `carregarPerfil` achou o cadastro pelo e-mail e gravou o perfil
@@ -136,16 +146,62 @@ export class AuthService {
   async loginComEmailSenha(email: string, senha: string): Promise<void> {
     await this.login(
       () => signInWithEmailAndPassword(auth, email, senha),
-      'E-mail ou senha inválidos.'
+      'E-mail ou senha inválidos.',
+      'senha'
     );
   }
 
   async loginComGoogle(): Promise<void> {
     await this.login(
       () => signInWithPopup(auth, new GoogleAuthProvider()),
-      'Não foi possível entrar com o Google.'
+      'Não foi possível entrar com o Google.',
+      'google'
     );
   }
+
+  /**
+   * "Cancelar" da espera longa ("Conferindo seu cadastro..."): abandona a
+   * tentativa, sai da conta e devolve a tela de entrar. A resposta que ainda
+   * chegar é descartada pelo número da tentativa.
+   */
+  async cancelarEntrada(): Promise<void> {
+    this.tentativa++;
+    this.uidCarregado = null;
+    this.carregamento = Promise.resolve();
+    this.carregando.set(false);
+    this.erro.set('');
+    this.erroDoSistema.set(false);
+    try {
+      await signOut(auth);
+    } catch {
+      // Sem sessão para encerrar: nada a fazer.
+    }
+  }
+
+  /** Contato de suporte do arquivo comercial; vazio quando não há nenhum. */
+  contatoSuporte(): { email: string; whatsapp: string; whatsappTexto: string } {
+    const email = DADOS_COMERCIAIS.emailComercial.trim();
+    const whatsapp = DADOS_COMERCIAIS.whatsappComercial.replace(/\D/g, '');
+    return { email, whatsapp, whatsappTexto: whatsapp ? whatsappFormatado(whatsapp) : '' };
+  }
+
+  // A senha (ou a conta Google) foi aceita, mas o cadastro não carregou: a
+  // falha é do sistema. Sem contato no arquivo comercial, só "tente de novo".
+  private mensagemFalhaPerfil(metodo: 'senha' | 'google' | 'sessao'): string {
+    const inicio =
+      metodo === 'google'
+        ? 'O Google confirmou sua conta, mas o sistema não conseguiu carregar seu cadastro.'
+        : metodo === 'senha'
+          ? 'Sua senha está certa, mas o sistema não conseguiu carregar seu cadastro.'
+          : 'O sistema não conseguiu carregar seu cadastro.';
+    const { email, whatsappTexto } = this.contatoSuporte();
+    const contato = [email, whatsappTexto ? `WhatsApp ${whatsappTexto}` : ''].filter(Boolean).join(' ou ');
+    return contato
+      ? `${inicio} A falha é nossa, não sua. Tente de novo em alguns minutos; se continuar, fale com o suporte: ${contato}.`
+      : `${inicio} A falha é nossa, não sua. Tente de novo em alguns minutos.`;
+  }
+
+  private metodoAtual: 'senha' | 'google' | 'sessao' = 'sessao';
 
   /**
    * "Definir ou recuperar senha": serve tanto pra quem esqueceu quanto pra
@@ -157,6 +213,7 @@ export class AuthService {
   async enviarLinkDeSenha(email: string): Promise<void> {
     this.erro.set('');
     this.aviso.set('');
+    this.erroDoSistema.set(false);
     this.carregando.set(true);
     try {
       const preparar = httpsCallable<{ email: string }, { ok: true }>(functions, 'prepararAcessoPorSenha');
@@ -170,10 +227,30 @@ export class AuthService {
       }
       this.aviso.set(`Se ${email} estiver cadastrado, um e-mail com o link para definir a senha foi enviado. Confira também a caixa de spam.`);
     } catch {
-      this.erro.set('Não foi possível enviar o e-mail. Tente de novo em instantes.');
+      this.erro.set('O e-mail com o link não saiu. Confira a internet e tente de novo em alguns minutos.');
     } finally {
       this.carregando.set(false);
     }
+  }
+
+  /**
+   * Troca o nome da própria pessoa (Minha conta). A regra do Firestore
+   * deixa cada um mudar só o próprio nome; o do Auth vai junto.
+   */
+  async salvarMeuNome(nome: string): Promise<void> {
+    await updateDoc(this.dataService.docRef('usuarios', this.usuarioLogado().id), { nome });
+    if (auth.currentUser) await updateProfile(auth.currentUser, { displayName: nome });
+  }
+
+  /**
+   * E-mail de redefinição para a própria pessoa (Minha conta). Devolve o
+   * aviso para a tela: o texto depende de onde o app roda (a demonstração
+   * não manda e-mail).
+   */
+  async enviarEmailDeNovaSenha(): Promise<string> {
+    const email = this.usuarioLogado().email;
+    await sendPasswordResetEmail(auth, email);
+    return `Enviamos um e-mail para ${email} com o link para definir a nova senha.`;
   }
 
   async logout(): Promise<void> {
@@ -185,21 +262,57 @@ export class AuthService {
   // guard do dashboard rodaria com a sessão ainda vazia e devolveria pro
   // login. Se a conta não tem cadastro, `carregarPerfil` já encerrou a
   // sessão e deixou a mensagem em `erro`.
-  private async login(entrar: () => Promise<{ user: User }>, mensagemFalha: string): Promise<void> {
+  private async login(entrar: () => Promise<{ user: User }>, mensagemFalha: string, metodo: 'senha' | 'google'): Promise<void> {
+    const tentativa = ++this.tentativa;
     this.erro.set('');
     this.aviso.set('');
+    this.erroDoSistema.set(false);
     this.carregando.set(true);
+    this.metodoAtual = metodo;
     try {
       const credencial = await entrar();
+      if (tentativa !== this.tentativa) return;
       await this.atualizarSessao(credencial.user);
+      if (tentativa !== this.tentativa) return;
       const usuario = this.sessao();
       if (usuario) {
         this.router.navigate([rotaInicial(usuario.perfil)]);
       }
-    } catch {
-      this.erro.set(mensagemFalha);
+    } catch (e) {
+      if (tentativa === this.tentativa) this.erro.set(this.motivoDaFalha(e, mensagemFalha, metodo));
     } finally {
-      this.carregando.set(false);
+      if (tentativa === this.tentativa) this.carregando.set(false);
+      this.metodoAtual = 'sessao';
+    }
+  }
+
+  /**
+   * O motivo da recusa em palavras, pelo código do Firebase. "Não foi
+   * possível entrar com o Google" sozinho não dizia se a janela foi fechada,
+   * bloqueada pelo navegador ou se faltou internet.
+   */
+  private motivoDaFalha(e: unknown, padrao: string, metodo: 'senha' | 'google'): string {
+    const codigo = (e as { code?: string })?.code ?? '';
+    switch (codigo) {
+      case 'auth/popup-closed-by-user':
+      case 'auth/cancelled-popup-request':
+        return 'A janela do Google foi fechada antes de terminar. Tente de novo e escolha a sua conta.';
+      case 'auth/popup-blocked':
+        return 'O navegador bloqueou a janela do Google. Permita janelas (pop-ups) para este site e tente de novo.';
+      case 'auth/network-request-failed':
+        return 'Sem conexão com a internet. Confira a rede e tente de novo.';
+      case 'auth/unauthorized-domain':
+        return 'Este endereço não está liberado para entrar com o Google. Use o endereço oficial do Zella ou entre com e-mail e senha.';
+      case 'auth/account-exists-with-different-credential':
+        return 'Este e-mail já está cadastrado com senha. Entre com e-mail e senha.';
+      case 'auth/user-disabled':
+        return 'Esta conta foi desativada. Fale com a gestão da sua empresa.';
+      case 'auth/too-many-requests':
+        return 'Muitas tentativas seguidas. Espere alguns minutos e tente de novo, ou use "Definir ou recuperar senha".';
+      default:
+        if (metodo === 'google' && codigo) return `${padrao} O Google recusou a entrada (${codigo.replace('auth/', '')}). Tente de novo ou entre com e-mail e senha.`;
+        if (metodo === 'google') return `${padrao} Tente de novo ou entre com e-mail e senha.`;
+        return padrao;
     }
   }
 
@@ -223,9 +336,14 @@ export class AuthService {
   }
 
   private async carregarPerfil(user: User): Promise<void> {
+    const metodo = this.metodoAtual;
+    // Cancelado ("Cancelar" na espera) ou trocado de conta no meio: a
+    // resposta desta carga não vale mais.
+    const abandonada = () => this.uidCarregado !== user.uid;
     try {
       const carregar = httpsCallable<void, RespostaPerfil>(functions, 'carregarPerfil');
       const { usuario } = (await carregar()).data;
+      if (abandonada()) return;
 
       if (!usuario) {
         await signOut(auth);
@@ -237,6 +355,7 @@ export class AuthService {
       // antigo. Renovar aqui é o que faz as Security Rules enxergarem o
       // perfil já na primeira leitura.
       await user.getIdToken(true);
+      if (abandonada()) return;
 
       this.sessao.set(usuario);
       // O administrador da plataforma não pertence a empresa nenhuma: não há
@@ -246,8 +365,10 @@ export class AuthService {
         this.dataService.iniciar(usuario);
       }
     } catch {
+      if (abandonada()) return;
       await signOut(auth);
-      this.erro.set('Não foi possível carregar seu perfil. Tente de novo.');
+      this.erroDoSistema.set(true);
+      this.erro.set(this.mensagemFalhaPerfil(metodo));
     }
   }
 }

@@ -6,9 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { collection, doc, onSnapshot, orderBy, query, updateDoc } from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
-import { db, functions } from '../shared/firebase';
+import { PlataformaService } from '../shared/plataforma.service';
 import { IconComponent } from '../shared/icon/icon.component';
 import { FlowButtonComponent } from '../shared/flow-button/flow-button.component';
 import { UiFeedbackService } from '../shared/ui-feedback.service';
@@ -43,6 +41,7 @@ import type { EmpresaCliente } from '../shared/models';
 export class EmpresasComponent {
   private readonly feedback = inject(UiFeedbackService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly plataforma = inject(PlataformaService);
 
   empresas = signal<EmpresaCliente[]>([]);
   displayedColumns = ['nome', 'gestorEmail', 'situacao', 'acoes'];
@@ -74,11 +73,7 @@ export class EmpresasComponent {
   sucesso = signal('');
 
   constructor() {
-    const parar = onSnapshot(
-      query(collection(db, 'empresasClientes'), orderBy('nome')),
-      snap => this.empresas.set(snap.docs.map(d => d.data() as EmpresaCliente)),
-      erro => console.warn('Leitura de empresas encerrada:', erro.message)
-    );
+    const parar = this.plataforma.ouvirEmpresas(lista => this.empresas.set(lista));
     this.destroyRef.onDestroy(parar);
   }
 
@@ -92,11 +87,7 @@ export class EmpresasComponent {
     this.sucesso.set('');
     this.salvando.set(true);
     try {
-      const criarEmpresa = httpsCallable<
-        { nome: string; gestorNome: string; gestorEmail: string },
-        { id: string }
-      >(functions, 'criarEmpresa');
-      await criarEmpresa({ nome: this.nome, gestorNome: this.gestorNome, gestorEmail: this.gestorEmail });
+      await this.plataforma.criarEmpresa({ nome: this.nome, gestorNome: this.gestorNome, gestorEmail: this.gestorEmail });
 
       this.sucesso.set(
         `Empresa "${this.nome}" criada. ${this.gestorNome} já pode entrar com ${this.gestorEmail}: ` +
@@ -135,7 +126,7 @@ export class EmpresasComponent {
 
     this.salvandoEdicao.set(true);
     try {
-      await updateDoc(doc(db, 'empresasClientes', empresa.id), { nome });
+      await this.plataforma.renomearEmpresa(empresa.id, nome);
       this.feedback.announce(`Empresa renomeada para ${nome}.`);
       this.cancelarEdicao();
     } catch {
@@ -150,7 +141,7 @@ export class EmpresasComponent {
   // token. Reativar devolve tudo como estava.
   async alternarAtiva(empresa: EmpresaCliente): Promise<void> {
     try {
-      await updateDoc(doc(db, 'empresasClientes', empresa.id), { ativa: !empresa.ativa });
+      await this.plataforma.definirEmpresaAtiva(empresa.id, !empresa.ativa);
       this.feedback.announce(`Empresa ${empresa.nome} ${empresa.ativa ? 'desativada' : 'reativada'}.`);
     } catch {
       this.erro.set(`Não foi possível alterar a empresa ${empresa.nome}.`);

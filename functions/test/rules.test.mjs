@@ -54,6 +54,8 @@ before(async () => {
     await setDoc(doc(db, caminho('orcamentos', 'o1')), { id: 'o1', osId: 'os1', empresaContratadaId: 'ec1', situacao: 'Pendente', itens: [], dataCriacao: '2026-09-01' });
     await setDoc(doc(db, caminho('chamados', 'ch1')), { id: 'ch1', numero: 'CH1', unidadeId: 'u1', status: 'Aberto' });
     await setDoc(doc(db, caminho('chamados', 'ch2')), { id: 'ch2', numero: 'CH2', unidadeId: 'u2', status: 'Aberto' });
+    await setDoc(doc(db, caminho('chamados', 'ch3')), { id: 'ch3', numero: 'CH3', unidadeId: 'u1', status: 'Em atendimento', ordemServicoId: 'os3', empresaContratadaId: 'ec1' });
+    await setDoc(doc(db, caminho('chamados', 'ch4')), { id: 'ch4', numero: 'CH4', unidadeId: 'u2', status: 'Em atendimento', ordemServicoId: 'os4', empresaContratadaId: 'ec2' });
     await setDoc(doc(db, 'empresasClientes', OUTRA, 'unidades', 'ux'), { id: 'ux', nome: 'X', sigla: 'X' });
   });
 });
@@ -129,6 +131,23 @@ test('orçamento: gestor e contratada dona leem; cliente e outra contratada não
   await assertSucceeds(getDoc(doc(ctx('tecnico', { empresaContratadaId: 'ec1' }), caminho('orcamentos', 'o1'))));
   await assertFails(getDoc(doc(ctx('tecnico', { empresaContratadaId: 'ec2' }), caminho('orcamentos', 'o1'))));
   await assertFails(getDoc(doc(ctx('cliente', { unidadeId: 'u1' }), caminho('orcamentos', 'o1'))));
+});
+
+// Rodada 3: a contratada só vê os chamados que viraram OS num contrato dela.
+// Antes a regra deixava gestor contratado e técnico lerem todos os chamados.
+test('contratada só enxerga os chamados dos próprios contratos', async () => {
+  const contratado = ctx('gestor_contratado', { empresaContratadaId: 'ec1' });
+  const tecnico = ctx('tecnico', { empresaContratadaId: 'ec1' });
+  const gestor = ctx('gestor');
+  await assertSucceeds(getDoc(doc(contratado, caminho('chamados', 'ch3'))));
+  await assertFails(getDoc(doc(contratado, caminho('chamados', 'ch4'))));
+  await assertFails(getDoc(doc(contratado, caminho('chamados', 'ch1'))));
+  await assertFails(getDoc(doc(tecnico, caminho('chamados', 'ch4'))));
+  await assertSucceeds(getDocs(query(collection(contratado, caminho('chamados')), where('empresaContratadaId', '==', 'ec1'))));
+  await assertSucceeds(getDocs(query(collection(tecnico, caminho('chamados')), where('empresaContratadaId', '==', 'ec1'))));
+  await assertFails(getDocs(collection(contratado, caminho('chamados'))));
+  await assertFails(getDocs(query(collection(tecnico, caminho('chamados')), where('empresaContratadaId', '==', 'ec2'))));
+  await assertSucceeds(getDocs(collection(gestor, caminho('chamados'))));
 });
 
 test('cliente só enxerga chamados da própria unidade', async () => {

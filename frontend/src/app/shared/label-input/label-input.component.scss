@@ -67,7 +67,9 @@
   padding: 0 6px;
   font-size: 0.9375rem;
   color: var(--text-tertiary);
-  background-color: var(--bg-tertiary);
+  // Parado dentro do campo, o rótulo não tem fundo próprio: antes ele levava
+  // o fundo do cartão, uma faixa escura por cima do campo ("Onde fica").
+  background: transparent;
   pointer-events: none;
   white-space: nowrap;
   transform-origin: left top;
@@ -81,6 +83,9 @@
 .li-input:not(:placeholder-shown) + .li-label,
 .li-input:focus + .li-label {
   transform: translateY(-24px) scale(0.85);
+  // Subiu para a borda: metade de cima com o fundo do cartão, metade de
+  // baixo com o do campo, para cobrir só a linha da borda.
+  background: linear-gradient(to bottom, var(--li-fundo, var(--bg-tertiary)) 50%, var(--bg-elevated) 50%);
 }
 
 .li-toggle {

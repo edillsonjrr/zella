@@ -1,8 +1,11 @@
 <div class="page-header animate-fade-in">
-  <h1>Ordens de Serviço</h1>
+  <div class="page-header-textos">
+    <h1>Ordens de serviço</h1>
+    <p>Cada ordem de serviço (OS) é um conserto enviado a uma empresa contratada.</p>
+  </div>
   @if (podeCriar) {
     <app-flow-button size="lg" (click)="abrirNovaOs()">
-      <app-icon class="btn-icon" name="add"></app-icon> Criar
+      <app-icon class="btn-icon" name="add" aria-hidden="true"></app-icon> Nova OS
     </app-flow-button>
   }
 </div>
@@ -13,88 +16,216 @@
       <app-icon class="tab-icon" name="view_agenda"></app-icon> Lista
     </ng-template>
 
-    <mat-card class="app-card animate-fade-in-up">
-      <mat-card-content>
-        @if (podeCriar) {
-          <button type="button" class="criacao-inline" (click)="abrirNovaOs()">
-            <app-icon name="add"></app-icon>
-            <span>Criar nova ordem de serviço...</span>
-          </button>
+    @if (executa) {
+      <div class="os-filtros" role="group" aria-label="Filtro da lista">
+        <button
+          type="button"
+          class="filtro-chip"
+          [class.filtro-chip--ativo]="filtroParaExecutar()"
+          [attr.aria-pressed]="filtroParaExecutar()"
+          (click)="alternarFiltro()"
+        >
+          <app-icon name="build" aria-hidden="true"></app-icon>
+          <span>{{ rotuloFiltro }}</span>
+          <span class="filtro-chip-contagem">{{ totalParaExecutar() }}</span>
+        </button>
+        @if (filtroParaExecutar()) {
+          <button type="button" class="filtro-link" (click)="alternarFiltro()">Ver todas as OS</button>
         }
+      </div>
+    }
 
-        <table mat-table [dataSource]="ordensView()" class="app-table full-width">
-          <ng-container matColumnDef="numero">
-            <th mat-header-cell *matHeaderCellDef>OS</th>
-            <td mat-cell *matCellDef="let o"><strong>{{ o.numero }}</strong></td>
-          </ng-container>
-
-          <ng-container matColumnDef="ativo">
-            <th mat-header-cell *matHeaderCellDef>Ativo</th>
-            <td mat-cell *matCellDef="let o">{{ o.ativo }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="contrato">
-            <th mat-header-cell *matHeaderCellDef>Contrato</th>
-            <td mat-cell *matCellDef="let o">{{ o.contrato }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="tecnico">
-            <th mat-header-cell *matHeaderCellDef>Técnico</th>
-            <td mat-cell *matCellDef="let o">
-              <div class="tecnico-cell">
-                <div class="tecnico-avatar">{{ o.tecnico.charAt(0) }}</div>
-                {{ o.tecnico }}
-              </div>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>Status</th>
-            <td mat-cell *matCellDef="let o">
-              <span class="badge" [ngClass]="badgeClass(o.situacao)">
-                <app-icon [name]="statusIcon(o.situacao)" aria-hidden="true"></app-icon>
-                {{ o.situacao }}
+    @if (!ordensFiltradas().length) {
+      <div class="os-vazio">
+        <app-icon name="assignment" aria-hidden="true"></app-icon>
+        @if (filtroParaExecutar()) {
+          <p><strong>Nenhuma OS esperando por você agora.</strong></p>
+          <p>Quando a gestão aprovar um orçamento, a OS aparece aqui para você registrar o serviço.</p>
+          <button type="button" class="filtro-link" (click)="alternarFiltro()">Ver todas as OS</button>
+        } @else {
+          <p><strong>Nenhuma ordem de serviço por enquanto.</strong></p>
+          <p>A OS nasce de um chamado, quando a gestão envia o pedido para a empresa contratada.</p>
+        }
+      </div>
+    } @else {
+      <!-- Cartões: no celular para todos e sempre para o técnico, que usa a
+           lista na rua. Equipamento, local e situação ficam à vista. -->
+      <div class="os-cartoes" [class.os-cartoes--sempre]="souTecnico">
+        @for (o of ordensFiltradas(); track o.id) {
+          <article
+            class="os-cartao"
+            role="button"
+            tabindex="0"
+            [attr.aria-label]="'Abrir ' + o.numero + ' — ' + o.ativo"
+            (click)="abrirDetalhe(o)"
+            (keydown.enter)="teclaNoCartao($event, o)"
+            (keydown.space)="teclaNoCartao($event, o)"
+          >
+            <div class="os-cartao-topo">
+              <span class="os-cartao-numero">{{ o.numero }}@if (o.chamadoNumero) {<span class="os-cartao-chamado">do chamado {{ o.chamadoNumero }}</span>}</span>
+              <span class="badge" [ngClass]="o.seloClasse" [attr.title]="o.situacaoServico.agora">
+                <app-icon [name]="o.situacaoServico.icone" aria-hidden="true"></app-icon>
+                {{ o.situacaoServico.selo }}
               </span>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="orcamento">
-            <th mat-header-cell *matHeaderCellDef>Orçamento</th>
-            <td mat-cell *matCellDef="let o">
-              <span class="badge" [ngClass]="orcamentoBadgeClass(o.orcamentoStatus)">
-                <app-icon [name]="orcamentoIcon(o.orcamentoStatus)"></app-icon>
-                {{ o.orcamentoStatus }}
+            </div>
+            <span class="os-cartao-agora">{{ o.situacaoServico.agora }}</span>
+            <strong class="os-cartao-equipamento">{{ o.ativo }}</strong>
+            @if (o.local) {
+              <span class="os-cartao-local">
+                <app-icon name="location_on" aria-hidden="true"></app-icon>
+                {{ o.local }}
               </span>
-            </td>
-          </ng-container>
+            }
+            @if (o.descricao) {
+              <p class="os-cartao-pedido">{{ o.descricao }}</p>
+            }
+            <div class="os-cartao-rodape">
+              <span><app-icon name="person" aria-hidden="true"></app-icon> {{ o.tecnico }}</span>
+              @if (o.prazo; as p) {
+                <span [class.os-cartao-atrasado]="p.atrasado">
+                  <app-icon [name]="p.atrasado ? 'warning' : 'clock'" aria-hidden="true"></app-icon>
+                  {{ p.texto }}{{ p.atrasado ? ' · atrasado' : '' }}
+                </span>
+              }
+            </div>
+            @if (o.paraExecutar) {
+              <app-flow-button class="full-width os-cartao-acao" (click)="registrarServico(o, $event)">
+                <app-icon class="btn-icon" name="photo_camera" aria-hidden="true"></app-icon> Registrar serviço feito
+              </app-flow-button>
+            }
+          </article>
+        }
+      </div>
 
-          <ng-container matColumnDef="data">
-            <th mat-header-cell *matHeaderCellDef>Data</th>
-            <td mat-cell *matCellDef="let o">{{ o.data | date:'dd/MM/yyyy' }}</td>
-          </ng-container>
+      @if (souTecnico && filtroParaExecutar()) {
+        @if (aguardandoLiberacao().length) {
+          <section class="os-secao" aria-labelledby="os-aguardando">
+            <h2 id="os-aguardando" class="os-secao-titulo">Ainda não liberadas para você <span class="os-secao-contagem">{{ aguardandoLiberacao().length }}</span></h2>
+            <p class="os-secao-texto">Esperam o orçamento ou a aprovação da gestão. O orçamento pode ser seu: abra a OS e use "Criar orçamento". Quando a gestão aprovar, a OS sobe para "Minhas OS para executar".</p>
+            <ul class="os-lista">
+              @for (o of aguardandoLiberacao(); track o.id) {
+                <li>
+                  <button type="button" class="os-linha" (click)="abrirDetalhe(o)">
+                    <span class="os-linha-textos">
+                      <strong>{{ o.ativo }}</strong>
+                      <span>{{ o.numero }}@if (o.prazo; as p) { · {{ p.texto }}{{ p.atrasado ? ' (atrasado)' : '' }} }@if (o.local) { · {{ o.local }} }</span>
+                    </span>
+                    <span class="badge" [ngClass]="o.seloClasse">{{ o.situacaoServico.selo }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+        @if (feitasPorMim().length) {
+          <section class="os-secao" aria-labelledby="os-feitas">
+            <h2 id="os-feitas" class="os-secao-titulo">Feitas por você</h2>
+            <ul class="os-lista">
+              @for (o of feitasPorMim(); track o.id) {
+                <li>
+                  <button type="button" class="os-linha" (click)="abrirDetalhe(o)">
+                    <span class="os-linha-textos">
+                      <strong>{{ o.ativo }}</strong>
+                      <span>{{ o.numero }}@if (o.dataExecucao) { · feito em {{ o.dataExecucao | date:'dd/MM' }} }</span>
+                    </span>
+                    <span class="badge" [ngClass]="o.seloClasse">{{ o.situacaoServico.selo }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      }
 
-          <ng-container matColumnDef="acoes">
-            <th mat-header-cell *matHeaderCellDef></th>
-            <td mat-cell *matCellDef="let o">
-              <button mat-icon-button color="primary" [attr.aria-label]="'Visualizar OS ' + o.numero">
-                <app-icon name="visibility"></app-icon>
-              </button>
-            </td>
-          </ng-container>
+      <mat-card class="app-card animate-fade-in-up os-tabela" [class.os-tabela--escondida]="souTecnico">
+        <mat-card-content>
+          <table mat-table [dataSource]="ordensFiltradas()" class="app-table full-width">
+            <ng-container matColumnDef="numero">
+              <th mat-header-cell *matHeaderCellDef>OS</th>
+              <td mat-cell *matCellDef="let o">
+                <strong>{{ o.numero }}</strong>
+                @if (o.chamadoNumero) {
+                  <span class="celula-corta celula-local">do chamado {{ o.chamadoNumero }}</span>
+                }
+              </td>
+            </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr
-        mat-row
-        *matRowDef="let row; columns: displayedColumns;"
-        (click)="abrirDetalhe(row)"
-        (keydown.enter)="abrirDetalhe(row)"
-        (keydown.space)="$event.preventDefault(); abrirDetalhe(row)"
-        tabindex="0"
-        class="linha-clicavel"
-      ></tr>
-        </table>
-      </mat-card-content>
-    </mat-card>
+            <ng-container matColumnDef="ativo">
+              <th mat-header-cell *matHeaderCellDef>Equipamento</th>
+              <td mat-cell *matCellDef="let o">
+                <span class="celula-corta" [title]="o.ativo">{{ o.ativo }}</span>
+                @if (o.local) {
+                  <span class="celula-corta celula-local" [title]="o.local">{{ o.local }}</span>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="contrato">
+              <th mat-header-cell *matHeaderCellDef>Contrato</th>
+              <td mat-cell *matCellDef="let o">
+                <span class="celula-corta" [title]="o.contrato">{{ o.contratoNumero }}</span>
+                <span class="celula-corta celula-local" [title]="o.contrato">{{ o.contratada }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="tecnico">
+              <th mat-header-cell *matHeaderCellDef>Técnico</th>
+              <td mat-cell *matCellDef="let o">
+                <div class="tecnico-cell" [class.tecnico-cell--vazio]="!o.temTecnico">
+                  <!-- Sem técnico: um ícone, não uma letra que parece uma pessoa. -->
+                  @if (o.temTecnico) {
+                    <div class="tecnico-avatar" aria-hidden="true">{{ o.tecnico.charAt(0) }}</div>
+                  } @else {
+                    <div class="tecnico-avatar tecnico-avatar--vazio" aria-hidden="true"><app-icon name="person"></app-icon></div>
+                  }
+                  <span class="celula-corta">{{ o.tecnico }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Situação</th>
+              <td mat-cell *matCellDef="let o">
+                <span class="badge" [ngClass]="o.seloClasse" [attr.title]="o.situacaoServico.agora">
+                  <app-icon [name]="o.situacaoServico.icone" aria-hidden="true"></app-icon>
+                  {{ o.situacaoServico.selo }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="orcamento">
+              <th mat-header-cell *matHeaderCellDef>Orçamento</th>
+              <td mat-cell *matCellDef="let o">
+                @if (o.orcamentoTem) {
+                  <span class="badge" [ngClass]="orcamentoBadgeClass(o.orcamentoStatus)">
+                    <app-icon [name]="orcamentoIcon(o.orcamentoStatus)" aria-hidden="true"></app-icon>
+                    {{ o.orcamentoStatus }}
+                  </span>
+                } @else {
+                  <span class="sem-orcamento">{{ o.orcamentoStatus }}</span>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="data">
+              <th mat-header-cell *matHeaderCellDef>Data</th>
+              <td mat-cell *matCellDef="let o">{{ o.data | date:'dd/MM/yyyy' }}</td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr
+              mat-row
+              *matRowDef="let row; columns: displayedColumns;"
+              (click)="abrirDetalhe(row)"
+              (keydown.enter)="abrirDetalhe(row)"
+              (keydown.space)="$event.preventDefault(); abrirDetalhe(row)"
+              tabindex="0"
+              class="linha-clicavel"
+            ></tr>
+          </table>
+        </mat-card-content>
+      </mat-card>
+    }
   </mat-tab>
 
   <mat-tab>
@@ -102,6 +233,6 @@
       <app-icon class="tab-icon" name="view_kanban"></app-icon> Quadro
     </ng-template>
 
-    <app-ordens-servico-quadro [ordens]="ordens()" (abrirNovaOs)="abrirNovaOs()" (abrirDetalhe)="abrirDetalhe($event)"></app-ordens-servico-quadro>
+    <app-ordens-servico-quadro [ordens]="ordens()" [podeCriar]="podeCriar" (abrirNovaOs)="abrirNovaOs()" (abrirDetalhe)="abrirDetalhe($event)"></app-ordens-servico-quadro>
   </mat-tab>
 </mat-tab-group>

@@ -7,6 +7,7 @@ import {
   ViewChild,
   signal
 } from '@angular/core';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 // Adaptado de "Flow Button" (spell.sh/docs/flow-button) para Angular: o
 // original mede o botão em um useEffect + useRef; aqui um ResizeObserver
@@ -25,6 +26,7 @@ const RADIUS_POR_TAMANHO: Record<FlowButtonSize, number> = {
 @Component({
   selector: 'app-flow-button',
   standalone: true,
+  imports: [MatTooltipModule],
   templateUrl: './flow-button.component.html',
   styleUrl: './flow-button.component.scss'
 })
@@ -34,6 +36,9 @@ export class FlowButtonComponent implements AfterViewInit, OnDestroy {
   @Input() borderColor = 'var(--flow-button-border-color, var(--primary-400))';
   @Input() type: 'button' | 'submit' = 'button';
   @Input() disabled = false;
+  // Dica (tooltip) no botão de verdade, para aparecer também no foco pelo
+  // teclado: serve quando o rótulo visível é a versão curta da ação.
+  @Input() dica = '';
 
   @ViewChild('botao') private botaoRef!: ElementRef<HTMLButtonElement>;
 

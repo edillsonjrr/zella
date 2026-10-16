@@ -1,8 +1,11 @@
 <div class="page-header animate-fade-in">
-  <h1>Manutenção preventiva</h1>
+  <div class="page-header-textos">
+    <h1>Manutenção preventiva</h1>
+    <p>Revisões que se repetem, como a limpeza do ar-condicionado. O Zella abre o chamado sozinho quando chega a data.</p>
+  </div>
   <div class="acoes-header">
-    <app-flow-button variant="secondary" size="lg" (click)="gerarAgora()" [disabled]="gerando()">
-      <app-icon class="btn-icon" name="clock"></app-icon> {{ gerando() ? 'Gerando…' : 'Gerar agora' }}
+    <app-flow-button variant="secondary" size="lg" (click)="gerarAgora()" [disabled]="gerando()" dica="Abrir agora os chamados que estão vencendo">
+      <app-icon class="btn-icon" name="clock"></app-icon> {{ gerando() ? 'Abrindo…' : 'Abrir chamados vencendo' }}
     </app-flow-button>
     <app-flow-button size="lg" (click)="novo()">
       <app-icon class="btn-icon" name="add"></app-icon> Novo plano
@@ -52,10 +55,10 @@
         (OS, orçamento, execução) segue igual ao de sempre.
       </p>
     } @else {
-      <table mat-table [dataSource]="planos()" class="app-table full-width">
+      <table mat-table [dataSource]="planos()" class="app-table app-table--lista full-width">
         <ng-container matColumnDef="nome">
           <th mat-header-cell *matHeaderCellDef>Plano</th>
-          <td mat-cell *matCellDef="let p">
+          <td mat-cell *matCellDef="let p" class="celula-principal">
             <strong>{{ p.nome }}</strong>
             @if (p.itemNome) {
               <span class="item-vinculado">{{ p.itemNome }}</span>
@@ -65,7 +68,7 @@
 
         <ng-container matColumnDef="equipamento">
           <th mat-header-cell *matHeaderCellDef>Equipamento</th>
-          <td mat-cell *matCellDef="let p">
+          <td mat-cell *matCellDef="let p" data-rotulo="Equipamento">
             {{ p.equipamentoNome }}
             <span class="local">{{ p.local }}</span>
           </td>
@@ -73,30 +76,31 @@
 
         <ng-container matColumnDef="periodicidade">
           <th mat-header-cell *matHeaderCellDef>Periodicidade</th>
-          <td mat-cell *matCellDef="let p">{{ p.periodicidadeLabel }}</td>
+          <td mat-cell *matCellDef="let p" data-rotulo="Periodicidade">{{ p.periodicidadeLabel }}</td>
         </ng-container>
 
         <ng-container matColumnDef="proxima">
           <th mat-header-cell *matHeaderCellDef>Próxima</th>
-          <td mat-cell *matCellDef="let p">{{ p.proximaFormatada }}</td>
+          <td mat-cell *matCellDef="let p" data-rotulo="Próxima">{{ p.proximaFormatada }}</td>
         </ng-container>
 
         <ng-container matColumnDef="situacao">
           <th mat-header-cell *matHeaderCellDef>Situação</th>
-          <td mat-cell *matCellDef="let p">
+          <td mat-cell *matCellDef="let p" data-rotulo="Situação">
             <span class="badge-situacao" [class]="'badge-situacao--' + p.situacao">{{ p.situacaoLabel }}</span>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="acoes">
           <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let p">
+          <td mat-cell *matCellDef="let p" class="celula-acoes">
+            <!-- Editar à vista; excluir no "⋯". -->
             <div class="acoes">
-              <button mat-icon-button (click)="editar(p)" [attr.aria-label]="'Editar ' + p.nome">
+              <button mat-icon-button (click)="editar(p)" [attr.aria-label]="'Editar ' + p.nome" matTooltip="Editar">
                 <app-icon name="edit"></app-icon>
               </button>
-              <button mat-icon-button color="warn" (click)="excluir(p)" [attr.aria-label]="'Excluir ' + p.nome">
-                <app-icon name="delete"></app-icon>
+              <button mat-icon-button [matMenuTriggerFor]="menuPlano" [matMenuTriggerData]="{ p: p }" [attr.aria-label]="'Mais ações para ' + p.nome" matTooltip="Mais ações">
+                <app-icon name="more_horiz"></app-icon>
               </button>
             </div>
           </td>
@@ -105,11 +109,16 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
       </table>
+
+      <mat-menu #menuPlano="matMenu" xPosition="before">
+        <ng-template matMenuContent let-p="p">
+          <button mat-menu-item class="menu-item-perigo" (click)="excluir(p)">
+            <app-icon name="delete" aria-hidden="true"></app-icon>
+            <span>Excluir</span>
+          </button>
+        </ng-template>
+      </mat-menu>
     }
 
-    <button type="button" class="criacao-inline" (click)="novo()">
-      <app-icon name="add"></app-icon>
-      <span>Adicionar plano preventivo...</span>
-    </button>
   </mat-card-content>
 </mat-card>

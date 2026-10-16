@@ -5,16 +5,47 @@
 </button>
 
 @if (aberto()) {
-  @if (carregando()) {
+  @if (modoChamado) {
+    <!-- Linha do tempo do atendimento: do pedido aberto ao encerramento. -->
+    @if (!linhaDoTempo().length) {
+      <p class="historico-vazio">Ainda não há etapas para mostrar.</p>
+    } @else {
+      <ol class="historico-lista historico-lista--tempo">
+        @for (e of linhaDoTempo(); track e.chave) {
+          <li [class]="'historico-marco historico-marco--' + e.tipo">
+            <span class="historico-descricao"><strong>{{ e.titulo }}</strong></span>
+            @if (e.detalhe) {
+              <span class="historico-detalhe">{{ e.detalhe }}</span>
+            }
+            <span class="historico-meta">
+              @if (e.autor) { {{ e.autor }} }
+              @if (e.autor && e.quandoTexto) { · }
+              @if (e.quandoTexto) { {{ e.quandoTexto }} } @else if (!e.autor) { Data não registrada }
+            </span>
+          </li>
+        }
+      </ol>
+      @if (carregando()) {
+        <p class="historico-vazio">Buscando a hora de cada etapa…</p>
+      } @else if (!lerLog) {
+        <p class="historico-vazio">Datas tiradas do chamado e da OS. A hora e quem fez cada etapa ficam no histórico da gestão.</p>
+      }
+    }
+  } @else if (!lerLog) {
+    <p class="historico-vazio">O histórico de ações fica com a gestão.</p>
+  } @else if (carregando()) {
     <p class="historico-vazio">Carregando…</p>
-  } @else if (!eventos().length) {
+  } @else if (!entradas().length) {
     <p class="historico-vazio">Nenhuma ação registrada.</p>
   } @else {
     <ul class="historico-lista">
-      @for (evento of eventos(); track evento.id) {
+      @for (evento of entradas(); track evento.id) {
         <li>
           <span class="historico-descricao">{{ evento.descricao }}</span>
-          <span class="historico-meta">{{ evento.usuarioNome }} · {{ formatarDataHora(evento.data) }}</span>
+          @for (d of evento.detalhes; track d) {
+            <span class="historico-detalhe">{{ d }}</span>
+          }
+          <span class="historico-meta">{{ evento.autor }} · {{ evento.quando }}</span>
         </li>
       }
     </ul>

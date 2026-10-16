@@ -90,20 +90,41 @@
   margin-left: auto;
 }
 
+/* Parar o movimento: ícone + texto. O texto some onde a barra não comporta;
+   aí fica o ícone com a dica (title) e o aria-label completo. */
 .lp-pausa {
-  display: inline-grid;
-  place-items: center;
-  width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 40px;
   height: 40px;
+  padding: 0 14px 0 12px;
   border: 1px solid var(--lp-borda);
   border-radius: 999px;
   background: none;
   color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
 
   &:hover { color: var(--text-primary); border-color: var(--lp-marca); }
-  &[aria-pressed="true"] { color: var(--lp-marca-clara); border-color: color-mix(in srgb, var(--lp-marca) 50%, var(--lp-borda)); }
+  &.lp-pausa--parado { color: var(--lp-marca-clara); border-color: color-mix(in srgb, var(--lp-marca) 50%, var(--lp-borda)); }
+}
+
+@media (max-width: 1099px) {
+  .lp-pausa { width: 40px; padding: 0; }
+  .lp-pausa-texto { display: none; }
+}
+
+/* Fechar, tema e fundo escuro do menu: só no celular. */
+.lp-links-fechar,
+.lp-links-tema,
+.lp-menu-fundo {
+  display: none;
 }
 
 .lp-menu {
@@ -167,21 +188,19 @@
 
 .lp-titulo {
   margin: 20px 0 16px;
-  font-family: var(--font-brand);
+  font-family: var(--font-brand); // its-ok: título da página pública de vendas (o guia permite a fonte de marca fora do app)
   font-size: clamp(2.2rem, 4.2vw, 3.1rem);
   line-height: 1.04;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em; // its-ok: título da página pública de vendas (o guia permite a fonte de marca fora do app)
   font-weight: 700;
 }
 
 /* Revelação em gradiente: a cor atravessa o texto uma vez ao carregar e
-   depois segue um brilho lento. */
+   depois segue um brilho lento. A frase é fixa e pode quebrar linha. */
 .lp-titulo-destaque {
-  /* Levemente menor que o título para a frase mais longa caber na coluna
-     sem cortar (o rotador não quebra linha). */
   font-size: 0.86em;
-  line-height: calc(1.12em / 0.86);
-  white-space: nowrap;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
   background: linear-gradient(90deg, var(--text-primary) 0%, var(--text-primary) 35%, var(--lp-marca-clara) 50%, var(--lp-marca) 60%, var(--text-primary) 75%, var(--text-primary) 100%);
   background-size: 300% 100%;
   background-position: 100% 0;
@@ -273,7 +292,7 @@
 }
 
 .lp-coluna-nome {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -296,7 +315,7 @@
   top: 34px;
   left: 8px;
   width: calc((100% - 30px) / 4 - 16px);
-  padding: 10px;
+  padding: 8px;
   border-radius: 10px;
   background: var(--lp-superficie);
   border: 1px solid color-mix(in srgb, var(--lp-marca) 55%, var(--lp-borda));
@@ -307,16 +326,36 @@
   strong {
     display: block;
     font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
   }
 
+  /* O que é o chamado: quebra em até três linhas em vez de cortar, e uma
+     palavra comprida quebra no hífen, nunca some com reticências. */
   small {
-    display: block;
-    font-size: 0.625rem;
+    display: -webkit-box;
+    margin-top: 4px;
+    font-size: var(--its-t-legenda);
+    line-height: 1.3;
     color: var(--text-tertiary);
-    white-space: nowrap;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
+    hyphens: auto;
   }
+}
+
+.lp-texto-curto { display: none; }
+
+/* Rótulo "Chamado" em cima do número. */
+.lp-cartao-tipo {
+  display: block;
+  margin-bottom: 4px;
+  font-size: var(--its-t-sobretitulo);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
 }
 
 @keyframes lp-andar {
@@ -332,11 +371,9 @@
 
 .lp-cartao-vivo-topo {
   display: flex;
-  gap: 8px;
-  align-items: flex-start;
+  gap: 6px;
+  align-items: center;
   min-width: 0;
-
-  > div { min-width: 0; }
 }
 
 .lp-cartao-icone {
@@ -352,22 +389,24 @@
   app-icon { font-size: 13px; width: 13px; height: 13px; }
 }
 
-/* A foto aparece só na execução (última coluna). */
+/* As fotos aparecem só na execução (última coluna): "2 fotos" que o técnico
+   anexou ao registrar o serviço. */
 .lp-cartao-foto {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  margin-top: 8px;
-  padding: 2px 6px;
+  margin-top: 6px;
+  padding: 2px 5px;
+  white-space: nowrap;
   border-radius: 999px;
   background: var(--success-50);
   color: var(--success-500);
-  font-size: 0.625rem;
+  font-size: var(--its-t-legenda);
   font-weight: 700;
   opacity: 0;
   animation: lp-foto var(--lp-ciclo) ease infinite;
 
-  app-icon { font-size: 11px; width: 11px; height: 11px; }
+  app-icon { font-size: 12px; width: 12px; height: 12px; }
 }
 
 @keyframes lp-foto {
@@ -431,12 +470,21 @@
 
 .lp-saldo-legenda {
   display: flex;
-  gap: 14px;
+  flex-wrap: wrap;
+  gap: 4px 14px;
   margin-top: 8px;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
 
   span { display: inline-flex; align-items: center; gap: 5px; }
+}
+
+/* A legenda de uma linha que diz o que cada número quer dizer. */
+.lp-saldo-explica {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
 }
 
 .lp-leg {
@@ -449,49 +497,39 @@
   &--disp { background: color-mix(in srgb, var(--success-500) 45%, transparent); }
 }
 
-/* Faixa infinita --------------------------------------------------------- */
+/* Faixa de recursos ------------------------------------------------------ */
+/* Parada e só texto: nada de cursor, hover ou forma de botão, para não
+   parecer clicável. */
 
 .lp-faixa {
   border-block: 1px solid var(--lp-borda);
   background: var(--lp-fundo-alt);
-  overflow: hidden;
-  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-}
-
-.lp-faixa-trilho {
-  display: flex;
-  width: max-content;
-  animation: lp-rolar 40s linear infinite;
-
-  &:hover { animation-play-state: paused; }
 }
 
 .lp-faixa-lista {
   display: flex;
-  margin: 0;
-  padding: 0;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 28px;
+  margin: 0 auto;
+  padding-block: 18px;
   list-style: none;
 
   li {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    padding: 18px 28px;
     font-size: 0.9375rem;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--text-secondary);
-    white-space: nowrap;
   }
 }
 
 .lp-faixa-ponto {
-  width: 1px;
-  height: 12px;
-  background: color-mix(in srgb, var(--lp-marca) 45%, var(--lp-borda));
-}
-
-@keyframes lp-rolar {
-  to { transform: translateX(-50%); }
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--lp-marca) 55%, var(--lp-borda));
 }
 
 /* Seções ----------------------------------------------------------------- */
@@ -514,10 +552,10 @@
 
   h2 {
     margin: 0 0 12px;
-    font-family: var(--font-brand);
+    font-family: var(--font-brand); // its-ok: título da página pública de vendas (o guia permite a fonte de marca fora do app)
     font-size: clamp(1.75rem, 3.2vw, 2.5rem);
     line-height: 1.1;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.02em; // its-ok: título da página pública de vendas (o guia permite a fonte de marca fora do app)
   }
 
   p {
@@ -577,7 +615,7 @@
   position: absolute;
   top: 18px;
   right: 20px;
-  font-family: var(--font-brand);
+  font-family: var(--font-brand); // its-ok: título da página pública de vendas (o guia permite a fonte de marca fora do app)
   font-size: 2rem;
   font-weight: 700;
   color: color-mix(in srgb, var(--text-tertiary) 22%, transparent);
@@ -797,9 +835,9 @@
 
   h2 {
     margin: 0 0 12px;
-    font-family: var(--font-brand);
+    font-family: var(--font-brand); // its-ok: título da página pública de vendas (o guia permite a fonte de marca fora do app)
     font-size: clamp(1.75rem, 3.4vw, 2.6rem);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.02em; // its-ok: título da página pública de vendas (o guia permite a fonte de marca fora do app)
   }
 
   p {
@@ -829,6 +867,9 @@
     color: var(--text-secondary);
     font-weight: 600;
   }
+
+  // Só o primeiro link empurra para a direita; os outros seguem ao lado.
+  a + a { margin-left: 0; }
 }
 
 /* Responsivo ------------------------------------------------------------- */
@@ -841,37 +882,86 @@
 }
 
 @media (max-width: 760px) {
+  /* Menu do celular: painel com fundo próprio, borda e sombra, separado do
+     título que fica atrás, e o resto da página escurecido. */
   .lp-links {
     display: none;
     position: absolute;
     top: 64px;
-    left: 0;
-    right: 0;
+    left: 12px;
+    right: 12px;
     flex-direction: column;
+    gap: 2px;
     margin: 0;
-    padding: 12px 24px 16px;
-    background: var(--lp-fundo);
-    border-bottom: 1px solid var(--lp-borda);
+    padding: 8px 12px 12px;
+    border: 1px solid var(--lp-borda);
+    border-radius: 16px;
+    background: var(--bg-elevated);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
 
     &.lp-links--aberto { display: flex; }
+
+    a {
+      padding: 12px;
+      font-size: 1rem;
+      color: var(--text-primary);
+    }
+  }
+
+  .lp-links-fechar {
+    display: inline-flex;
+    align-self: flex-end;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--lp-borda);
+    border-radius: 999px;
+    background: none;
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .lp-links-tema {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 6px;
+    padding: 12px 12px 4px;
+    border-top: 1px solid var(--lp-borda);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
+
+  .lp-menu-fundo {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 19;
+    background: rgba(0, 0, 0, 0.5);
   }
 
   .lp-menu { display: inline-flex; }
-  .lp-nav-acoes app-theme-toggle { display: none; }
+  .lp-nav-acoes .lp-tema-barra { display: none; }
   .lp-hero { padding: 40px 0; }
   .lp-secao, .lp-cta { padding: 64px 0; }
   .lp-etapas, .lp-bento, .lp-perfis { grid-template-columns: 1fr; }
   .lp-recurso--destaque { grid-column: auto; }
   .lp-faq-grid { grid-template-columns: 1fr; gap: 24px; }
   .lp-coluna { min-height: 150px; padding: 8px 6px; }
-  .lp-coluna-nome { font-size: 0.5625rem; margin-bottom: 48px; }
+  .lp-texto-longo { display: none; }
+  .lp-texto-curto { display: inline; }
+  .lp-coluna-nome { font-size: var(--its-t-sobretitulo); margin-bottom: 48px; }
   .lp-rodape-inner { flex-wrap: wrap; }
 }
 
 /* Movimento reduzido: a regra global zera animações. Aqui as decorativas
-   seguem rodando, sem inclinação do cartão; a faixa fica parada. */
+   seguem rodando, sem inclinação do cartão. */
 .lp--reduzido .lp-cartao-vivo { animation-name: lp-andar-reto; }
-.lp--reduzido .lp-faixa-trilho { animation: none; }
 
 /* Cartão do hero sem inclinação, para o modo de movimento reduzido. */
 @keyframes lp-andar-reto {
@@ -921,35 +1011,6 @@
 }
 
 .lp-hero .lp-container { position: relative; z-index: 1; }
-
-/* Palavras que giram no título */
-.lp-rotador {
-  display: inline-block;
-  height: 1.12em;
-  overflow: hidden;
-  vertical-align: bottom;
-}
-
-.lp-rotador-trilho {
-  display: flex;
-  flex-direction: column;
-  animation: lp-rotar 9s cubic-bezier(0.76, 0, 0.24, 1) infinite;
-
-  > span {
-    display: block;
-    /* a frase tem 0.86em; compensa para o passo bater com a janela de 1.12em do rotador */
-    height: calc(1.12em / 0.86);
-    line-height: calc(1.12em / 0.86);
-    white-space: nowrap;
-  }
-}
-
-@keyframes lp-rotar {
-  0%, 28% { transform: translateY(0); }
-  33%, 61% { transform: translateY(-1.12em); }
-  66%, 94% { transform: translateY(-2.24em); }
-  100% { transform: translateY(-3.36em); }
-}
 
 /* Quadro com inclinação 3D e brilho seguindo o mouse */
 .lp-quadro-palco {
@@ -1001,11 +1062,11 @@
 
 .lp-numero-valor {
   display: block;
-  font-family: var(--font-brand);
+  font-family: var(--font-brand); // its-ok: título da página pública de vendas (o guia permite a fonte de marca fora do app)
   font-size: clamp(2.4rem, 5vw, 3.6rem);
   font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em; // its-ok: título da página pública de vendas (o guia permite a fonte de marca fora do app)
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
@@ -1026,11 +1087,11 @@
 .lp-manifesto-texto {
   max-width: 58rem;
   margin: 0 auto;
-  font-family: var(--font-brand);
+  font-family: var(--font-brand); // its-ok: título da página pública de vendas (o guia permite a fonte de marca fora do app)
   font-size: clamp(1.6rem, 3.6vw, 2.8rem);
   font-weight: 700;
   line-height: 1.22;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.02em; // its-ok: título da página pública de vendas (o guia permite a fonte de marca fora do app)
   text-align: center;
 }
 
@@ -1153,8 +1214,8 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  width: 64px;
-  margin-left: -32px;
+  width: 96px;
+  margin-left: -48px;
   /* desfaz a rotação do nó e do giro pra o ícone ficar em pé */
   transform: rotate(calc(var(--k) * -90deg));
   animation: lp-contragirar 28s linear infinite;
@@ -1174,8 +1235,10 @@
   }
 
   small {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
     color: var(--text-secondary);
   }
 }

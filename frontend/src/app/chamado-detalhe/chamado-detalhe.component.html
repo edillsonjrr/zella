@@ -5,7 +5,7 @@
     </div>
     <div>
       <h2>{{ chamado.numero }}</h2>
-      <span class="painel-subtitulo">Chamado</span>
+      <span class="painel-subtitulo">Chamado@if (osNumero(); as os) { · virou a {{ os }} }</span>
     </div>
   </div>
   <button mat-icon-button (click)="fechar()" aria-label="Fechar">
@@ -16,12 +16,16 @@
 <mat-divider class="painel-divider"></mat-divider>
 
 <div class="painel-conteudo">
-  <div class="campo">
+  <div class="campo campo--bloco">
     <span class="campo-label">Situação</span>
-    <span class="badge" [ngClass]="badgeClass(chamado.status)">
-      <app-icon [name]="statusIcon(chamado.status)"></app-icon>
-      {{ chamado.status }}
+    <span class="badge" [ngClass]="situacao().classe">
+      <app-icon [name]="situacao().icone" aria-hidden="true"></app-icon>
+      {{ situacao().selo }}
     </span>
+    <span class="situacao-agora">{{ situacao().agora }}</span>
+    @if (situacao().chave === 'servico-feito' || situacao().chave === 'encerrado') {
+      <span class="situacao-agora">{{ explicacaoFim }}</span>
+    }
   </div>
 
   <div class="campo">
@@ -29,44 +33,77 @@
     <span class="campo-valor">{{ chamado.equipamento }}</span>
   </div>
 
-  <div class="campo">
-    <span class="campo-label">Número de série</span>
-    <span class="campo-valor">{{ chamado.numeroSerie || 'Não informado' }}</span>
-  </div>
+  @if (patrimonio) {
+    <div class="campo">
+      <span class="campo-label">Patrimônio</span>
+      <span class="campo-valor">{{ patrimonio }}</span>
+    </div>
+  }
+
+  @if (chamado.numeroSerie || !patrimonio) {
+    <div class="campo">
+      <span class="campo-label">Número de série</span>
+      <span class="campo-valor">{{ chamado.numeroSerie || 'Não informado' }}</span>
+    </div>
+  }
 
   <div class="campo">
     <span class="campo-label">Unidade</span>
     <span class="campo-valor">{{ unidadeNome }}</span>
   </div>
 
+  @if (onde) {
+    <div class="campo">
+      <span class="campo-label">Onde fica</span>
+      <span class="campo-valor">{{ onde }}</span>
+    </div>
+  }
+
   <div class="campo">
     <span class="campo-label">Solicitante</span>
     <span class="campo-valor">{{ chamado.solicitanteNome }}</span>
   </div>
+
+  @if (urgencia) {
+    <div class="campo">
+      <span class="campo-label">Urgência</span>
+      <span class="campo-valor" [class.campo-valor--alerta]="chamado.urgencia === 'alta'">{{ urgencia }}</span>
+    </div>
+  }
 
   <div class="campo">
     <span class="campo-label">Data de abertura</span>
     <span class="campo-valor">{{ chamado.dataCriacao | date:'dd/MM/yyyy' }}</span>
   </div>
 
+  @if (prazo; as p) {
+    <div class="campo">
+      <span class="campo-label">Prazo</span>
+      <span class="campo-valor" [class.campo-valor--alerta]="p.atrasado">
+        {{ p.data }}@if (p.atrasado) {<span class="prazo-atrasado"> · atrasado</span>}
+      </span>
+    </div>
+  }
+
   <mat-divider class="painel-divider"></mat-divider>
 
   @if (podeAtribuirResponsavel()) {
     <div class="campo">
-      <span class="campo-label">Responsável (gestor)</span>
+      <span class="campo-label">Responsável na gestão (opcional)</span>
       <mat-form-field appearance="outline" class="full-width responsavel-select">
-        <mat-label>Selecione o gestor</mat-label>
+        <mat-label>Quem da gestão acompanha</mat-label>
         <mat-select [(ngModel)]="responsavelId" name="responsavelId" (selectionChange)="atribuirResponsavel()">
-          <mat-option value="">Nenhum</mat-option>
+          <mat-option value="">Ninguém escolhido</mat-option>
           @for (g of gestores(); track g.id) {
             <mat-option [value]="g.id">{{ g.nome }}</mat-option>
           }
         </mat-select>
+        <mat-hint>Só para organizar a gestão. Quem age agora aparece em "Com quem está".</mat-hint>
       </mat-form-field>
     </div>
   } @else if (chamado.responsavelId) {
     <div class="campo">
-      <span class="campo-label">Responsável</span>
+      <span class="campo-label">Responsável na gestão</span>
       <span class="campo-valor">{{ dataService.getUsuarioById(chamado.responsavelId)?.nome ?? '-' }}</span>
     </div>
   }
@@ -86,7 +123,7 @@
       } @else {
         <div class="foto-placeholder">
           <app-icon name="photo_camera"></app-icon>
-          <span>{{ chamado.fotoPath ? 'Carregando foto...' : 'Foto anexada, mas não enviada ao servidor' }}</span>
+          <span>{{ chamado.fotoPath ? 'Carregando foto…' : 'A foto não chegou ao sistema. Peça para quem abriu o chamado enviar de novo.' }}</span>
         </div>
       }
     </div>
@@ -94,7 +131,7 @@
 </div>
 
 <div class="painel-conteudo painel-historico">
-  <app-historico-registro [alvoPaiId]="chamado.id" titulo="Histórico deste chamado"></app-historico-registro>
+  <app-historico-registro [chamadoId]="chamado.id" titulo="Linha do tempo"></app-historico-registro>
 </div>
 
 <div class="painel-acoes">
@@ -103,7 +140,7 @@
   }
   @if (podeConverterEmOs()) {
     <app-flow-button class="full-width" (click)="converterEmOs()">
-      <app-icon class="btn-icon" name="assignment"></app-icon> Converter em OS
+      <app-icon class="btn-icon" name="assignment"></app-icon> Enviar para a empresa contratada
     </app-flow-button>
   }
   @if (podeEncerrar()) {

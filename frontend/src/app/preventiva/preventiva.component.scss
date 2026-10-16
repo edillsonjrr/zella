@@ -13,23 +13,27 @@
   flex: 1;
   min-width: 130px;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  /* Rótulo em cima e número embaixo, na mesma ordem do Painel gerencial
+     (o HTML segue número → rótulo; a ordem visual é invertida aqui). */
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: var(--its-e-2);
   padding: 14px 16px;
   border-radius: var(--card-radius);
   background: var(--bg-secondary);
   border: 1px solid var(--border-default);
 
   .resumo-valor {
-    font-size: 1.375rem;
+    font-size: var(--its-t-indicador);
     font-weight: 700;
     color: var(--text-primary);
     line-height: 1.1;
+    font-variant-numeric: tabular-nums;
   }
 
   .resumo-label {
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
+    font-size: var(--its-t-pequeno);
+    color: var(--text-secondary);
   }
 
   &--alerta {
@@ -44,7 +48,6 @@
 
     .resumo-valor {
       color: var(--primary-400);
-      font-size: 1.125rem;
     }
   }
 }
@@ -69,9 +72,10 @@
 .badge-situacao {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  height: 24px;
+  padding: 0 var(--its-e-2);
   border-radius: var(--badge-radius);
-  font-size: 0.75rem;
+  font-size: var(--its-t-legenda);
   font-weight: 600;
   white-space: nowrap;
 
@@ -151,8 +155,10 @@
 
 .acoes-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
+  max-width: 100%;
 }
 
 .resultado-geracao {

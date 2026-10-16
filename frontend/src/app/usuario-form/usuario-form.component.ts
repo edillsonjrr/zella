@@ -9,6 +9,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { IconComponent } from '../shared/icon/icon.component';
 import { FlowButtonComponent } from '../shared/flow-button/flow-button.component';
 import { DataService } from '../shared/data.service';
+import { PERFIS_CADASTRAVEIS } from '../shared/rotulos';
 import type { PerfilUsuario, Usuario } from '../shared/models';
 
 @Component({
@@ -35,12 +36,7 @@ export class UsuarioFormComponent {
   empresasContratadas = this.dataService.empresasContratadas;
   erro = '';
 
-  perfis: { value: PerfilUsuario; label: string }[] = [
-    { value: 'cliente', label: 'Cliente' },
-    { value: 'gestor', label: 'Gestor' },
-    { value: 'gestor_contratado', label: 'Gestor contratado' },
-    { value: 'tecnico', label: 'Técnico' }
-  ];
+  perfis = PERFIS_CADASTRAVEIS;
 
   nome = '';
   email = '';

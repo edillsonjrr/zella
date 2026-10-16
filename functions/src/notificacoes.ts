@@ -46,3 +46,54 @@ export async function notificarAgora(empresaId: string, n: NovaNotificacao): Pro
 function montar(id: string, n: NovaNotificacao): Notificacao {
   return { id, ...n, data: new Date().toISOString(), lidaPor: [] };
 }
+
+/**
+ * Quem abriu o chamado recebe aviso a cada etapa (OS criada, orçamento
+ * aprovado, serviço feito, encerrado ou cancelado). Só quem tem cadastro:
+ * o convidado do QR Code e a preventiva automática ('sistema') não têm sino.
+ *
+ * É uma leitura: numa transação do Firestore ela precisa vir antes de
+ * qualquer escrita, então cada ação chama isto junto das outras leituras e
+ * guarda o resultado para `avisarSolicitante`.
+ */
+export interface SolicitanteAvisavel {
+  usuarioId: string;
+  perfil: string;
+}
+
+export async function lerSolicitante(
+  tx: FirebaseFirestore.Transaction,
+  empresaId: string,
+  chamado: FirebaseFirestore.DocumentData | undefined
+): Promise<SolicitanteAvisavel | null> {
+  const id = chamado?.['solicitanteId'];
+  if (typeof id !== 'string' || !id || id === 'sistema') return null;
+  const snap = await tx.get(colecao(empresaId, 'usuarios').doc(id));
+  if (!snap.exists) return null;
+  return { usuarioId: id, perfil: (snap.data()?.['perfil'] as string | undefined) ?? '' };
+}
+
+/**
+ * Grava o aviso para quem abriu o chamado. Não avisa a própria pessoa que
+ * fez a ação (a gestora que abriu e encerrou o próprio chamado, por exemplo).
+ */
+export function avisarSolicitante(
+  tx: FirebaseFirestore.Transaction,
+  empresaId: string,
+  solicitante: SolicitanteAvisavel | null,
+  autorUsuarioId: string | undefined,
+  chamado: { id: string; numero: string },
+  aviso: { titulo: string; texto: string }
+): void {
+  if (!solicitante || solicitante.usuarioId === autorUsuarioId) return;
+  // A solicitante acompanha pela tela "Meus pedidos"; os demais perfis, pela
+  // lista de chamados do Início.
+  const link = solicitante.perfil === 'cliente' ? `/meus-pedidos?pedido=${chamado.id}` : `/dashboard?chamado=${chamado.id}`;
+  notificar(tx, empresaId, {
+    paraUsuarioId: solicitante.usuarioId,
+    titulo: aviso.titulo,
+    texto: aviso.texto,
+    link,
+    alvo: { tipo: 'chamado', id: chamado.id, numero: chamado.numero }
+  });
+}

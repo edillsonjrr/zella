@@ -80,7 +80,7 @@
   }
 
   .campo-label {
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.4px;
@@ -124,6 +124,15 @@
   margin-top: 2px;
 }
 
+.aviso-tecnico {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-radius: var(--button-radius);
+  background: var(--warning-50, var(--bg-elevated));
+  color: var(--warning-500);
+  font-size: 0.8rem;
+}
+
 .acao-erro {
   margin: 8px 0 0;
   padding: 8px 10px;
@@ -150,3 +159,189 @@
   padding-top: 8px;
   padding-bottom: 8px;
 }
+
+/* Blocos com título: "Orçamento para aprovar" e "Pedido original". */
+.bloco-titulo {
+  margin: 0 0 4px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.bloco-ajuda {
+  margin: 0 0 10px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.bloco-aprovar,
+.pedido-original {
+  margin: 0 0 16px;
+  padding: 14px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--button-radius);
+  background: var(--bg-secondary);
+}
+
+.bloco-aprovar {
+  border-color: var(--primary-500);
+}
+
+.lista-itens {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 12px;
+    padding: 8px 10px;
+    border-radius: var(--button-radius);
+    background: var(--bg-tertiary);
+    font-size: 0.8125rem;
+  }
+}
+
+.lista-itens-nome {
+  color: var(--text-primary);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.lista-itens-conta {
+  grid-column: 1;
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.lista-itens-valor {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.bloco-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0 12px;
+  font-size: 0.875rem;
+
+  strong {
+    font-size: 1.0625rem;
+    color: var(--primary-400);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.bloco-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  button {
+    height: 40px;
+    font-weight: 600;
+  }
+}
+
+.pedido-meta {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.pedido-descricao {
+  margin: 0 0 12px;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.pedido-dados {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  margin: 0;
+
+  div { min-width: 0; }
+
+  dt {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-tertiary);
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+  }
+}
+
+.pedido-urgente {
+  color: var(--danger-500) !important;
+  font-weight: 600;
+}
+
+.pedido-foto {
+  display: block;
+  margin-top: 12px;
+  border-radius: var(--button-radius);
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+
+  img {
+    display: block;
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+  }
+}
+
+/* Itens fora do contrato (Z3.5): tracejado e selo âmbar, à parte do contrato. */
+.lista-itens--fora li {
+  border: 1px dashed var(--warning-500);
+  background: var(--warning-50, var(--bg-tertiary));
+}
+
+.lista-itens--recusado { opacity: 0.65; }
+
+.selo-fora {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--warning-500);
+  color: #1b1300;
+  font-size: var(--its-t-legenda);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+
+.fora-decisao {
+  margin-left: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--success-500);
+}
+
+.fora-decisao--recusado { color: var(--danger-500); }
+
+.bloco-ajuda--fora { margin: 4px 0 6px; }
+
+.bloco-total--fora strong { color: var(--text-primary); }

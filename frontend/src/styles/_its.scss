@@ -1,0 +1,277 @@
+// its-ui: tokens de tipografia e espaçamento comuns aos produtos da its.
+// Fonte única: Codex/its-ui/_its.scss. Cada produto copia para src/styles/_its.scss
+// e NÃO edita a cópia. Regras completas: Codex/its-ui/GUIA-TIPOGRAFIA-ESPACAMENTO.md
+//
+// Uso no styles.scss global:   @use 'styles/its';
+// Uso dos mixins num componente: @use 'its' as its;  (com stylePreprocessorOptions.includePaths: ["src/styles"])
+
+$bp-celular: 640px;
+$bp-tabela: 768px;
+$bp-computador: 1024px;
+
+:root {
+  // ---------------------------------------------------------------- fontes
+  --its-fonte: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --its-fonte-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+
+  // ---------------------------------------------------------------- escala de tipo (computador)
+  --its-t-titulo: 24px;
+  --its-t-secao: 18px;
+  --its-t-cartao: 15px;
+  --its-t-corpo: 14px;
+  --its-t-pequeno: 13px;
+  --its-t-legenda: 12px;
+  --its-t-sobretitulo: 11px;
+  --its-t-indicador: 28px;
+  --its-t-campo: 14px;
+
+  --its-lh-titulo: 1.25;
+  --its-lh-secao: 1.3;
+  --its-lh-cartao: 1.4;
+  --its-lh-corpo: 1.5;
+  --its-lh-pequeno: 1.45;
+  --its-lh-legenda: 1.4;
+
+  --its-ls-titulo: -0.01em;
+  --its-ls-sobretitulo: 0.06em;
+
+  // ---------------------------------------------------------------- espaçamento (base 4)
+  --its-e-1: 4px;
+  --its-e-2: 8px;
+  --its-e-3: 12px;
+  --its-e-4: 16px;
+  --its-e-5: 20px;
+  --its-e-6: 24px;
+  --its-e-8: 32px;
+  --its-e-10: 40px;
+  --its-e-12: 48px;
+  --its-e-16: 64px;
+
+  // ---------------------------------------------------------------- página
+  --its-margem: 32px;          // margem lateral da página
+  --its-secao: 32px;           // entre seções
+  --its-cabecalho-conteudo: 24px;
+  --its-l-larga: 1280px;
+  --its-l-media: 960px;
+  --its-l-estreita: 720px;
+
+  // ---------------------------------------------------------------- controles
+  --its-botao-altura: 40px;
+  --its-botao-compacto: 36px;
+  --its-campo-altura: 40px;
+  --its-toque: 44px;
+  --its-pilula-altura: 22px;
+  --its-linha-tabela: 44px;
+  --its-cartao-padding: 20px;
+  --its-barra-baixo: 56px;
+}
+
+@media (max-width: #{$bp-computador - 1px}) {
+  :root {
+    --its-margem: 24px;
+  }
+}
+
+@media (max-width: #{$bp-celular - 1px}) {
+  :root {
+    --its-t-titulo: 22px;
+    --its-t-secao: 17px;
+    --its-t-corpo: 15px;
+    --its-t-indicador: 24px;
+    --its-t-campo: 16px;       // evita zoom do iPhone ao tocar no campo
+    --its-margem: 16px;
+    --its-secao: 24px;
+    --its-botao-altura: 44px;
+    --its-campo-altura: 44px;
+    --its-cartao-padding: 16px;
+  }
+}
+
+// ---------------------------------------------------------------- mixins de texto
+@mixin titulo-pagina {
+  font-family: var(--its-fonte);
+  font-size: var(--its-t-titulo);
+  font-weight: 700;
+  line-height: var(--its-lh-titulo);
+  letter-spacing: var(--its-ls-titulo);
+  text-wrap: balance;
+  margin: 0;
+}
+
+@mixin titulo-secao {
+  font-family: var(--its-fonte);
+  font-size: var(--its-t-secao);
+  font-weight: 600;
+  line-height: var(--its-lh-secao);
+  letter-spacing: 0;
+  text-wrap: balance;
+  margin: 0;
+}
+
+@mixin titulo-cartao {
+  font-family: var(--its-fonte);
+  font-size: var(--its-t-cartao);
+  font-weight: 600;
+  line-height: var(--its-lh-cartao);
+  letter-spacing: 0;
+  margin: 0;
+}
+
+@mixin corpo {
+  font-family: var(--its-fonte);
+  font-size: var(--its-t-corpo);
+  line-height: var(--its-lh-corpo);
+  letter-spacing: 0;
+}
+
+@mixin apoio {
+  font-size: var(--its-t-pequeno);
+  line-height: var(--its-lh-pequeno);
+  letter-spacing: 0;
+}
+
+@mixin legenda {
+  font-size: var(--its-t-legenda);
+  font-weight: 500;
+  line-height: var(--its-lh-legenda);
+  letter-spacing: 0;
+}
+
+@mixin sobretitulo {
+  font-family: var(--its-fonte);
+  font-size: var(--its-t-sobretitulo);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: var(--its-ls-sobretitulo);
+  text-transform: uppercase;
+}
+
+@mixin indicador {
+  font-family: var(--its-fonte);
+  font-size: var(--its-t-indicador);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+@mixin numeros {
+  font-variant-numeric: tabular-nums;
+}
+
+@mixin mono {
+  // só para código, ID, chave, token e protocolo copiável
+  font-family: var(--its-fonte-mono);
+  letter-spacing: 0;
+}
+
+// ---------------------------------------------------------------- mixins de peças
+@mixin pagina($largura: var(--its-l-larga)) {
+  width: 100%;
+  max-width: calc(#{$largura} + 2 * var(--its-margem));
+  margin-inline: auto;
+  padding-inline: var(--its-margem);
+  box-sizing: border-box;
+}
+
+// Cabeçalho de página: título + subtítulo à esquerda, ações à direita.
+// Estrutura esperada: .cabecalho > .textos (h1 + p) + .acoes
+@mixin cabecalho-pagina {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--its-e-4);
+  margin-bottom: var(--its-cabecalho-conteudo);
+
+  h1 { @include titulo-pagina; }
+  h1 + p, .subtitulo {
+    @include apoio;
+    margin: var(--its-e-1) 0 0;
+    max-width: 68ch;
+  }
+
+  @media (max-width: #{$bp-celular - 1px}) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@mixin botao-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--its-e-2);
+  min-height: var(--its-botao-altura);
+  padding: 0 var(--its-e-4);
+  font-family: var(--its-fonte);
+  font-size: var(--its-t-corpo);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+@mixin pilula {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--its-e-1);
+  height: var(--its-pilula-altura);
+  padding: 0 var(--its-e-2);
+  font-size: var(--its-t-legenda);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  white-space: nowrap;
+  border-radius: 999px;
+}
+
+@mixin campo {
+  min-height: var(--its-campo-altura);
+  font-family: var(--its-fonte);
+  font-size: var(--its-t-campo);
+  letter-spacing: 0;
+}
+
+// Tabela que vira lista de cartões abaixo de 768 px.
+// Cada <td> precisa de data-rotulo="Nome da coluna" para mostrar o rótulo no cartão.
+@mixin tabela-vira-lista($bp: $bp-tabela) {
+  @media (max-width: #{$bp - 1px}) {
+    thead { display: none; }
+    table, tbody, tr, td { display: block; width: 100%; }
+    tr {
+      padding: var(--its-e-3) var(--its-e-4);
+      border-bottom: 1px solid var(--its-borda, rgba(127, 127, 127, 0.2));
+    }
+    td {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--its-e-3);
+      padding: var(--its-e-1) 0;
+      border: 0;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      text-align: right;
+    }
+    td::before {
+      content: attr(data-rotulo);
+      flex: none;
+      font-size: var(--its-t-legenda);
+      font-weight: 600;
+      text-align: left;
+      opacity: 0.7;
+    }
+    td[data-rotulo='']::before { content: none; }
+  }
+}
+
+@mixin texto-quebra {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@mixin uma-linha {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

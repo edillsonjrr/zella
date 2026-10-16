@@ -1,5 +1,5 @@
 <div class="page-header animate-fade-in">
-  <h1>Histórico de ações</h1>
+  <h1>Histórico de alterações</h1>
 </div>
 
 <div class="toolbar animate-fade-in">
@@ -36,7 +36,7 @@
 
     <button class="toolbar-btn" [class.toolbar-btn--active]="filtroOperacao()" [matMenuTriggerFor]="menuOperacao">
       <app-icon name="layers" aria-hidden="true"></app-icon>
-      <span>Ação: {{ filtroOperacao() ? filtroOperacao() : 'Todas' }}</span>
+      <span>Ação: {{ rotuloOperacao() }}</span>
     </button>
     <mat-menu #menuOperacao="matMenu">
       <button mat-menu-item (click)="selecionarOperacao(null)">Todas</button>
@@ -86,13 +86,17 @@
 
               <div class="registro-meta">
                 <span class="autor">
-                  <span class="avatar">{{ registro.iniciais }}</span>
+                  @if (registro.automatico) {
+                    <span class="avatar avatar--sistema" aria-hidden="true"><app-icon name="calendar_check"></app-icon></span>
+                  } @else {
+                    <span class="avatar" aria-hidden="true">{{ registro.iniciais }}</span>
+                  }
                   {{ registro.usuarioNome }}
                 </span>
                 <span class="etiqueta">{{ rotuloAlvo(registro.alvo) }}</span>
                 @if (registro.origem === 'backend') {
-                  <span class="etiqueta etiqueta--origem" title="Registrado pelo servidor, junto com a ação">
-                    <app-icon name="lock" aria-hidden="true"></app-icon> servidor
+                  <span class="etiqueta etiqueta--origem" title="Registro automático: o sistema grava junto com a ação, e ninguém consegue alterar depois.">
+                    <app-icon name="lock" aria-hidden="true"></app-icon> Automático
                   </span>
                 }
               </div>

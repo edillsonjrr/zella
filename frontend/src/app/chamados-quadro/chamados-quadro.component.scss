@@ -17,11 +17,19 @@
   max-height: 100%;
 }
 
+.coluna-agora {
+  margin: 0 0 12px;
+  padding: 0 4px;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--text-tertiary);
+}
+
 .coluna-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
   padding: 0 4px;
   min-height: 28px;
 
@@ -179,7 +187,7 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      font-size: 0.6875rem;
+      font-size: 0.75rem;
       font-weight: 600;
       color: var(--primary-400);
       background: var(--primary-50);
@@ -235,7 +243,7 @@
       border-radius: 50%;
       background: var(--primary-50);
       color: var(--primary-400);
-      font-size: 0.625rem;
+      font-size: var(--its-t-legenda);
       font-weight: 700;
       flex-shrink: 0;
     }

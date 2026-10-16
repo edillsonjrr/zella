@@ -54,40 +54,44 @@
       @if (empresas().length === 0) {
         <p class="contratadas-vazio">Nenhuma empresa contratada cadastrada.</p>
       } @else {
-        <table mat-table [dataSource]="empresas()" class="app-table full-width">
+        <!-- A tabela rola de lado no celular em vez de alargar a página e
+             empurrar o formulário (e o "Cadastrar") para fora da tela. -->
+        <div class="tabela-rolagem">
+        <table mat-table [dataSource]="empresas()" class="app-table app-table--lista full-width">
           <ng-container matColumnDef="nome">
             <th mat-header-cell *matHeaderCellDef>Nome</th>
-            <td mat-cell *matCellDef="let e">{{ e.nome }}</td>
+            <td mat-cell *matCellDef="let e" class="celula-principal"><strong>{{ e.nome }}</strong></td>
           </ng-container>
 
           <ng-container matColumnDef="cnpj">
             <th mat-header-cell *matHeaderCellDef>CNPJ</th>
-            <td mat-cell *matCellDef="let e">{{ e.cnpj || '-' }}</td>
+            <td mat-cell *matCellDef="let e" data-rotulo="CNPJ">{{ e.cnpj || '—' }}</td>
           </ng-container>
 
           <ng-container matColumnDef="contato">
             <th mat-header-cell *matHeaderCellDef>Contato</th>
-            <td mat-cell *matCellDef="let e">{{ e.contato || '-' }}</td>
+            <td mat-cell *matCellDef="let e" data-rotulo="Contato">{{ e.contato || '—' }}</td>
           </ng-container>
 
           <ng-container matColumnDef="usuarios">
             <th mat-header-cell *matHeaderCellDef>Usuários</th>
-            <td mat-cell *matCellDef="let e">{{ usuariosDe(e.id) }}</td>
+            <td mat-cell *matCellDef="let e" data-rotulo="Usuários">{{ usuariosDe(e.id) }}</td>
           </ng-container>
 
           <ng-container matColumnDef="contratos">
             <th mat-header-cell *matHeaderCellDef>Contratos</th>
-            <td mat-cell *matCellDef="let e">{{ contratosDe(e.id) }}</td>
+            <td mat-cell *matCellDef="let e" data-rotulo="Contratos">{{ contratosDe(e.id) }}</td>
           </ng-container>
 
           <ng-container matColumnDef="acoes">
             <th mat-header-cell *matHeaderCellDef></th>
-            <td mat-cell *matCellDef="let e">
-              <button mat-icon-button (click)="editar(e)" aria-label="Editar">
+            <td mat-cell *matCellDef="let e" class="celula-acoes">
+              <!-- Editar à vista; excluir no "⋯". -->
+              <button mat-icon-button (click)="editar(e)" [attr.aria-label]="'Editar ' + e.nome" matTooltip="Editar">
                 <app-icon name="edit"></app-icon>
               </button>
-              <button mat-icon-button color="warn" (click)="excluir(e)" aria-label="Excluir">
-                <app-icon name="delete"></app-icon>
+              <button mat-icon-button [matMenuTriggerFor]="menuContratada" [matMenuTriggerData]="{ e: e }" [attr.aria-label]="'Mais ações para ' + e.nome" matTooltip="Mais ações">
+                <app-icon name="more_horiz"></app-icon>
               </button>
             </td>
           </ng-container>
@@ -95,6 +99,16 @@
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
         </table>
+
+        <mat-menu #menuContratada="matMenu" xPosition="before">
+          <ng-template matMenuContent let-e="e">
+            <button mat-menu-item class="menu-item-perigo" (click)="excluir(e)">
+              <app-icon name="delete" aria-hidden="true"></app-icon>
+              <span>Excluir</span>
+            </button>
+          </ng-template>
+        </mat-menu>
+        </div>
       }
     </mat-card-content>
   </mat-card>

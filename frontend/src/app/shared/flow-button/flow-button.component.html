@@ -6,7 +6,7 @@
       </svg>
     }
   </span>
-  <button #botao [type]="type" [disabled]="disabled" class="flow-button" [class]="'flow-button--' + size + ' flow-button--' + variant">
+  <button #botao [type]="type" [disabled]="disabled" class="flow-button" [class]="'flow-button--' + size + ' flow-button--' + variant" [matTooltip]="dica" [matTooltipDisabled]="!dica">
     <ng-content></ng-content>
   </button>
 </span>

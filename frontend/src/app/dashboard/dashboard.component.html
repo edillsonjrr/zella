@@ -1,15 +1,17 @@
 <div class="clickup-page">
   <header class="page-title-row animate-fade-in">
-    <div class="title-left">
-      <div class="workspace-badge">CM</div>
-      <h1>Dashboard</h1>
+    <div class="title-left page-header-textos">
+      <h1>Chamados</h1>
+      <p>Os pedidos de conserto das unidades e em que etapa cada um está.</p>
     </div>
-    <div class="title-right">
-      <app-flow-button size="lg" (click)="abrirNovoChamado()">
-        <app-icon class="btn-icon" name="add" aria-hidden="true"></app-icon>
-        Novo chamado
-      </app-flow-button>
-    </div>
+    @if (podeAbrirChamado) {
+      <div class="title-right">
+        <app-flow-button size="lg" (click)="abrirNovoChamado()">
+          <app-icon class="btn-icon" name="add" aria-hidden="true"></app-icon>
+          Novo chamado
+        </app-flow-button>
+      </div>
+    }
   </header>
 
   <div class="abas-view animate-fade-in" role="tablist" aria-label="Visualização dos chamados">
@@ -34,17 +36,17 @@
         <div class="segmented-control">
           <button class="segmented-btn" [class.segmented-btn--active]="agrupamentoAtivo()" [matMenuTriggerFor]="menuAgrupamento">
             <app-icon name="layers" aria-hidden="true"></app-icon>
-            <span>Agrupar{{ agrupamentoAtivo() ? ': ' + (criterioAgrupamento() === 'status' ? 'Status' : criterioAgrupamento() === 'unidade' ? 'Unidade' : 'Contrato') : '' }}</span>
+            <span>Agrupar{{ agrupamentoAtivo() ? ': ' + (criterioAgrupamento() === 'status' ? 'Situação' : criterioAgrupamento() === 'unidade' ? 'Unidade' : 'Contrato') : '' }}</span>
           </button>
           <button class="segmented-btn" [class.segmented-btn--active]="!agrupamentoAtivo()" (click)="removerAgrupamento()">
             <app-icon name="list" aria-hidden="true"></app-icon>
-            <span>Lista</span>
+            <span>Sem agrupar</span>
           </button>
         </div>
       }
       <mat-menu #menuAgrupamento="matMenu">
         <button mat-menu-item (click)="selecionarCriterioAgrupamento('status')">
-          <app-icon name="flag" aria-hidden="true"></app-icon> Por status
+          <app-icon name="flag" aria-hidden="true"></app-icon> Por situação
         </button>
         <button mat-menu-item (click)="selecionarCriterioAgrupamento('unidade')">
           <app-icon name="location_on" aria-hidden="true"></app-icon> Por unidade
@@ -75,17 +77,38 @@
 
       <button class="toolbar-btn" [class.toolbar-btn--active]="filtroStatus()" [matMenuTriggerFor]="menuStatus">
         <app-icon name="filter_list" aria-hidden="true"></app-icon>
-        <span>Status: {{ filtroStatus() ?? 'Todos' }}</span>
+        <span>Situação: {{ rotuloFiltroStatus() }}</span>
       </button>
       <mat-menu #menuStatus="matMenu">
-        <button mat-menu-item (click)="selecionarFiltroStatus(null)">Todos</button>
-        <button mat-menu-item (click)="selecionarFiltroStatus('Aberto')">Aberto</button>
-        <button mat-menu-item (click)="selecionarFiltroStatus('Em atendimento')">Em atendimento</button>
-        <button mat-menu-item (click)="selecionarFiltroStatus('Em orçamento')">Em orçamento</button>
-        <button mat-menu-item (click)="selecionarFiltroStatus('A ser finalizado')">A ser finalizado</button>
-        <button mat-menu-item (click)="selecionarFiltroStatus('Executado')">Executado</button>
-        <button mat-menu-item (click)="selecionarFiltroStatus('Encerrado')">Encerrado</button>
+        <button mat-menu-item (click)="selecionarFiltroStatus(null)">Todas</button>
+        @for (o of opcoesSituacao; track o.chave) {
+          <button mat-menu-item (click)="selecionarFiltroStatus(o.chave)">{{ o.rotulo }}</button>
+        }
       </mat-menu>
+
+      <button
+        type="button"
+        class="toolbar-btn"
+        [class.toolbar-btn--active]="soAtrasados()"
+        [attr.aria-pressed]="soAtrasados()"
+        [matTooltip]="'Passaram do prazo e ainda não tiveram o serviço feito. ' + explicacaoPrazo"
+        (click)="soAtrasados.set(!soAtrasados())"
+      >
+        <app-icon name="warning" aria-hidden="true"></app-icon>
+        <span>Atrasados ({{ totalAtrasados() }})</span>
+      </button>
+
+      @if (descricaoFiltroPainel(); as recorte) {
+        <span
+          class="filtro-painel"
+          [matTooltip]="filtroPainel()?.atraso ? 'Em atraso: passou do prazo e ainda não foi executado, encerrado nem cancelado. ' + explicacaoPrazo : ''"
+          [matTooltipDisabled]="!filtroPainel()?.atraso"
+          [attr.tabindex]="filtroPainel()?.atraso ? 0 : null"
+        >
+          <app-icon name="bar_chart" aria-hidden="true"></app-icon>
+          <span>Do painel: {{ recorte }}</span>
+        </span>
+      }
 
       @if (filtrosAtivos()) {
         <button class="toolbar-btn" (click)="limparFiltros()">
@@ -102,10 +125,25 @@
     </div>
   </div>
 
+  @if (abaAtiva === 'Lista') {
+    <p class="lista-resumo" aria-live="polite">
+      @if (resumoLista(); as r) {
+        Mostrando {{ r.visiveis }} de {{ r.total }} chamados.
+        @if (r.cancelados > 0) {
+          {{ r.cancelados === 1 ? 'O cancelado fica' : 'Os ' + r.cancelados + ' cancelados ficam' }} fora dos grupos; para ver, use "Situação: Cancelado".
+        }
+        @if (r.visiveis === 0 && r.total > 0) {
+          Nenhum chamado com esses filtros.
+        }
+      }
+    </p>
+  }
+
   @if (abaAtiva === 'Quadro') {
     <app-chamados-quadro
       class="animate-fade-in-up"
       [chamados]="chamadosView()"
+      [podeCriar]="podeAbrirChamado"
       (abrirNovoChamado)="abrirNovoChamado()"
       (abrirDetalhe)="abrirChamado($any($event))"
       (transicao)="aplicarTransicao($event)"
@@ -126,15 +164,18 @@
           <span class="grupo-titulo">{{ grupo.valor }}</span>
           <span class="grupo-contagem">{{ grupo.contagem }}</span>
         </button>
+        @if (grupo.agora && !grupo.collapsed) {
+          <p class="grupo-agora">{{ grupo.agora }}</p>
+        }
 
         @if (!grupo.collapsed) {
           <div class="table-header">
             <div class="col col-nome">Chamado</div>
-            <div class="col col-responsavel">Responsável</div>
+            <div class="col col-responsavel">Com quem está</div>
             <div class="col col-unidade">Unidade</div>
-            <div class="col col-os">OS</div>
+            <div class="col col-os">Situação</div>
             <div class="col col-data">Data</div>
-            <div class="col col-prioridade">Prioridade</div>
+            <div class="col col-prioridade">Urgência</div>
           </div>
 
           @for (chamado of grupo.chamados; track chamado.id) {
@@ -151,7 +192,15 @@
                 <app-icon class="task-icon" name="support_agent" aria-hidden="true"></app-icon>
                 <div class="task-info">
                   <span class="task-name">{{ chamado.numero }} — {{ chamado.equipamento }}</span>
-                  @if (chamado.contratoId) {
+                  <!-- Celular: a coluna Unidade some; o nome vem aqui, embaixo do chamado. -->
+                  <span class="task-unidade" [title]="chamado.unidadeDica">{{ chamado.unidadeNome }}</span>
+                  @if (chamado.prazo; as prazo) {
+                    <span class="task-prazo" [class.task-prazo--atrasado]="prazo.atrasado">
+                      <app-icon [name]="prazo.atrasado ? 'warning' : 'clock'" aria-hidden="true"></app-icon>
+                      {{ prazo.texto }}{{ prazo.atrasado ? ' · atrasado' : '' }}
+                    </span>
+                  }
+                  @if (podeVerContrato && chamado.contratoId) {
                     <button class="link-contrato" (click)="abrirContrato(chamado.contratoId); $event.stopPropagation()">
                       <app-icon name="description" aria-hidden="true"></app-icon> Ver contrato
                     </button>
@@ -164,25 +213,21 @@
                 </div>
                 <span class="responsavel-nome">{{ chamado.responsavelNome }}</span>
               </div>
-              <div class="col col-unidade">{{ dataService.getUnidadeById(chamado.unidadeId)?.sigla ?? '-' }}</div>
+              <div class="col col-unidade" [title]="chamado.unidadeDica"><span class="unidade-nome">{{ chamado.unidadeNome }}</span></div>
+              <!-- Chamado e OS na mesma situação (Z0.3): o selo diz a etapa, a
+                   dica diz quem age, e o número da OS fica embaixo. -->
               <div class="col col-os">
-                @if (chamado.osStatus) {
-                  <span class="os-status-badge" [attr.aria-label]="'Ordem de serviço ' + chamado.osStatus">
-                    <app-icon name="assignment" aria-hidden="true"></app-icon>
-                    {{ chamado.osStatus }}
-                  </span>
-                } @else {
-                  <span class="os-status-vazio" aria-label="Sem ordem de serviço vinculada">
-                    <app-icon name="remove_circle_outline" aria-hidden="true"></app-icon>
-                    Sem OS
-                  </span>
-                }
+                <span class="badge" [class]="chamado.seloClasse" [matTooltip]="chamado.situacao.agora">
+                  <app-icon [name]="chamado.situacao.icone" aria-hidden="true"></app-icon>
+                  {{ chamado.situacao.selo }}
+                </span>
+                <span class="os-numero">{{ chamado.osNumero ?? 'Sem OS' }}</span>
               </div>
               <div class="col col-data">
                 {{ chamado.dataFormatada }}
               </div>
               <div class="col col-prioridade">
-                <span class="prioridade-badge" [class]="'prioridade-badge--' + chamado.prioridadeClasse" [attr.aria-label]="'Prioridade ' + chamado.prioridade">
+                <span class="prioridade-badge" [class]="'prioridade-badge--' + chamado.prioridadeClasse" [attr.aria-label]="'Urgência: ' + chamado.prioridade">
                   <app-icon [name]="chamado.prioridadeIcone" aria-hidden="true"></app-icon>
                   {{ chamado.prioridade }}
                 </span>
@@ -190,10 +235,6 @@
             </div>
           }
 
-          <button type="button" class="add-task-inline" (click)="abrirNovoChamado()">
-            <app-icon name="add" aria-hidden="true"></app-icon>
-            <span>Adicionar chamado</span>
-          </button>
         }
       </div>
     }

@@ -80,7 +80,7 @@
   }
 
   .campo-label {
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.4px;
@@ -167,4 +167,9 @@
   max-height: 50%;
   padding-top: 8px;
   padding-bottom: 8px;
+}
+
+.campo-valor--alerta {
+  color: var(--danger-500) !important;
+  font-weight: 600;
 }
