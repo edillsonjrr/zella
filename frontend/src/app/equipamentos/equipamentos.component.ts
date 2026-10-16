@@ -12,6 +12,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { IconComponent } from '../shared/icon/icon.component';
 import { FlowButtonComponent } from '../shared/flow-button/flow-button.component';
+import { abrirItemDaUrl } from '../shared/abrir-pela-url';
 import { DataService } from '../shared/data.service';
 import { DialogoService } from '../shared/dialogo/dialogo.service';
 import { UiFeedbackService } from '../shared/ui-feedback.service';
@@ -131,6 +132,15 @@ export class EquipamentosComponent {
       return normalizar(`${v.equipamento.nome} ${v.local} ${v.patrimonio} ${v.equipamento.patrimonio ?? ''} ${v.unidade} ${v.fabricanteModelo}`).includes(termo);
     });
   });
+
+  constructor() {
+    // Busca global: ?equipamento=ID mostra a lista já filtrada por ele
+    // (pelo patrimônio, que é único; sem patrimônio, pelo nome).
+    abrirItemDaUrl('equipamento', id => this.dataService.getEquipamentoById(id), e => {
+      this.filtroUnidade.set('');
+      this.busca.set(e.patrimonio?.trim() || e.nome);
+    });
+  }
 
   get isEdicao(): boolean {
     return !!this.editandoId();

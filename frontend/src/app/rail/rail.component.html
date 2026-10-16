@@ -19,6 +19,22 @@
     </button>
   </div>
 
+  <button
+    type="button"
+    class="sb-busca"
+    (click)="busca.abrir()"
+    aria-haspopup="dialog"
+    aria-keyshortcuts="Control+K Meta+K"
+    aria-label="Buscar"
+    [matTooltip]="'Buscar (' + busca.modificador + '+K)'"
+    matTooltipPosition="right"
+    [matTooltipDisabled]="!recolhido()"
+  >
+    <app-icon name="search" aria-hidden="true"></app-icon>
+    <span class="sb-rotulo">Buscar…</span>
+    <span class="sb-busca-atalho" aria-hidden="true"><kbd class="kbd">{{ busca.modificador }}</kbd><kbd class="kbd">K</kbd></span>
+  </button>
+
   <div class="sb-lista">
     @for (secao of secoesVisiveis; track secao.id) {
       <section class="sb-secao" [class.fechada]="!!secao.titulo && secaoFechada(secao.id)">
@@ -109,23 +125,26 @@
       <span>{{ item.curto ?? item.label }}</span>
     </a>
   }
-  @if (itensMais.length > 0) {
-    <button type="button" class="bn-item" [matMenuTriggerFor]="menuMais" aria-haspopup="menu">
-      <app-icon name="more_horiz" aria-hidden="true"></app-icon>
-      <span>Mais</span>
+  <!-- "Mais" sempre aparece com a barra: a busca mora nele, como no Procera. -->
+  <button type="button" class="bn-item" [matMenuTriggerFor]="menuMais" aria-haspopup="menu">
+    <app-icon name="more_horiz" aria-hidden="true"></app-icon>
+    <span>Mais</span>
+  </button>
+  <!-- Mesmos tópicos do menu lateral, com o título de cada um. -->
+  <mat-menu #menuMais="matMenu" class="rail-menu" xPosition="before" yPosition="above">
+    <button mat-menu-item (click)="busca.abrir()">
+      <app-icon name="search"></app-icon>
+      <span>Buscar</span>
     </button>
-    <!-- Mesmos tópicos do menu lateral, com o título de cada um. -->
-    <mat-menu #menuMais="matMenu" class="rail-menu" xPosition="before" yPosition="above">
-      @for (secao of secoesMais; track secao.id) {
-        <div class="rail-menu-titulo" role="presentation">{{ secao.titulo }}</div>
-        @for (item of secao.itens; track item.route) {
-          <a mat-menu-item [routerLink]="item.route" routerLinkActive="rail-menu-ativo">
-            <app-icon [name]="item.icon"></app-icon>
-            <span>{{ item.label }}</span>
-          </a>
-        }
+    @for (secao of secoesMais; track secao.id) {
+      <div class="rail-menu-titulo" role="presentation">{{ secao.titulo }}</div>
+      @for (item of secao.itens; track item.route) {
+        <a mat-menu-item [routerLink]="item.route" routerLinkActive="rail-menu-ativo">
+          <app-icon [name]="item.icon"></app-icon>
+          <span>{{ item.label }}</span>
+        </a>
       }
-    </mat-menu>
-  }
+    }
+  </mat-menu>
 </nav>
 }

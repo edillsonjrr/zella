@@ -92,6 +92,80 @@
   }
 }
 
+/* ---------- busca (Ctrl+K) ---------- */
+
+/* Campo falso que abre a busca global, como no Procera. Recolhido, vira só a
+   lupa, com o atalho na dica. */
+.sb-busca {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  margin-bottom: 4px;
+  padding: 0 6px 0 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+  color: var(--text-tertiary);
+  font: inherit;
+  font-size: var(--its-t-pequeno);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease;
+
+  app-icon {
+    flex: none;
+    font-size: 16px;
+  }
+
+  .sb-rotulo {
+    flex: 1 1 auto;
+  }
+
+  &:hover {
+    border-color: var(--border-hover);
+    color: var(--text-secondary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: -2px;
+  }
+}
+
+.sb-busca-atalho {
+  display: inline-flex;
+  gap: 2px;
+  flex: none;
+
+  .kbd {
+    display: inline-grid;
+    place-items: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border: 1px solid var(--border-default);
+    border-radius: 4px;
+    background: var(--bg-secondary);
+    color: var(--text-tertiary);
+    font: inherit;
+    font-size: var(--its-t-legenda);
+    font-weight: 600;
+    line-height: 1;
+  }
+}
+
+:host(.recolhido) .sb-busca {
+  justify-content: center;
+  height: 36px;
+  padding: 0;
+
+  .sb-busca-atalho {
+    display: none;
+  }
+}
+
 /* ---------- lista ---------- */
 
 .sb-lista {
@@ -387,34 +461,36 @@
      reduzida, vira fundo opaco. O layout reserva o espaço no fim da página. */
   .bn {
     position: fixed;
-    left: 12px;
-    right: 12px;
-    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    left: 5.2vw;
+    right: 5.2vw;
+    bottom: calc(15px + env(safe-area-inset-bottom, 0px));
     z-index: 20;
     display: flex;
     align-items: stretch;
     gap: 2px;
     max-width: 480px;
+    /* Proporções da barra do WhatsApp (vídeo de 15/10): 89,6% da largura (5,2% de margem), 61 px de altura, 15 px do pé. */
+    --its-barra-baixo: 53px;
     height: calc(var(--its-barra-baixo) + 8px);
     margin-inline: auto;
     padding: 4px;
-    border: 1px solid color-mix(in srgb, var(--border-default) 70%, transparent);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 999px;
-    background-color: color-mix(in srgb, var(--bg-secondary) 58%, transparent);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    backdrop-filter: blur(20px) saturate(180%);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.02) 60%), color-mix(in srgb, var(--bg-secondary) 18%, transparent);
+    -webkit-backdrop-filter: blur(4px) saturate(160%);
+    backdrop-filter: blur(4px) saturate(160%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(255, 255, 255, 0.06), 0 0 0 0.5px rgba(0, 0, 0, 0.14), 0 12px 32px rgba(0, 0, 0, 0.28);
   }
 
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .bn {
-      background-color: var(--bg-secondary);
+      background: var(--bg-secondary);
     }
   }
 
   @media (prefers-reduced-transparency: reduce) {
     .bn {
-      background-color: var(--bg-secondary);
+      background: var(--bg-secondary);
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
     }
@@ -459,5 +535,47 @@
         color: var(--primary-500);
       }
     }
+  }
+}
+
+/* Itens como os da barra do WhatsApp (vídeo de 15/10): larguras iguais (sem
+   ficar menor que o rótulo), ícone de 24 px a 22 px do topo da barra, rótulo de
+   11 px a 44 px e o item ativo com uma pílula clara que passa um pouco das
+   bordas do item. */
+@media (max-width: 760px) {
+  .bn-item {
+    flex: 1 1 0;
+    min-width: max-content;
+    min-height: 0;
+    height: auto;
+    align-self: stretch;
+    padding: 0;
+    gap: 4px;
+    position: relative;
+    isolation: isolate;
+    border-radius: 999px;
+    background: none;
+    box-shadow: none;
+  }
+  .bn-item span {
+    font-size: 11px; /* its-ok: tamanho do rótulo da barra do WhatsApp, pedido pela usuária */
+    line-height: 13px;
+  }
+  .bn-item app-icon {
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+  }
+  .bn-item.ativo {
+    background: none;
+    box-shadow: none;
+  }
+  .bn-item.ativo::before {
+    content: '';
+    position: absolute;
+    inset: 2px -5px 3px;
+    z-index: -1;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text-primary) 12%, transparent);
   }
 }

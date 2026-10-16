@@ -9,24 +9,12 @@ import { LogoComponent } from '../shared/logo/logo.component';
 import { NotificacoesComponent } from '../shared/notificacoes/notificacoes.component';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { AuthService } from '../shared/auth.service';
-import { podeAcessar } from '../shared/permissoes';
+import { SECOES_MENU, secoesDoPerfil, type ItemMenu, type SecaoMenu } from '../shared/menu';
+import { BuscaGlobalService } from '../shared/busca-global/busca-global.service';
 import { ROTULO_PERFIL } from '../shared/rotulos';
 
-interface RailItem {
-  // Igual ao título da página que o item abre.
-  label: string;
-  // Nome curto para a barra de baixo do celular, quando o label não cabe.
-  curto?: string;
-  route: string;
-  icon: string;
-}
-
-/** Seção do menu. Sem título = sempre aberta, no topo. */
-interface RailSecao {
-  id: string;
-  titulo?: string;
-  itens: RailItem[];
-}
+type RailItem = ItemMenu;
+type RailSecao = SecaoMenu;
 
 const CHAVE_RECOLHIDO = 'gm-rail';
 const CHAVE_SECOES = 'gm-rail-secoes';
@@ -62,46 +50,9 @@ export class RailComponent {
 
   // Menu em seções à la Linear: o dia a dia no topo, sem título; o resto em
   // seções com cabeçalho que recolhe. Recolhido, vira só ícones com tooltip.
-  private readonly secoes: RailSecao[] = [
-    {
-      id: 'operacao',
-      itens: [
-        { label: 'Meus pedidos', route: '/meus-pedidos', icon: 'checklist' },
-        { label: 'Chamados', route: '/dashboard', icon: 'support_agent' },
-        { label: 'Ordens de serviço', curto: 'Ordens', route: '/ordens-servico', icon: 'assignment' },
-        { label: 'Manutenção preventiva', curto: 'Preventiva', route: '/preventiva', icon: 'calendar_check' }
-      ]
-    },
-    {
-      id: 'gestao',
-      titulo: 'Gestão',
-      itens: [
-        { label: 'Contratos', route: '/contratos', icon: 'description' },
-        { label: 'Saldo dos contratos', curto: 'Saldo', route: '/painel-saldo', icon: 'account_balance_wallet' },
-        { label: 'Painel gerencial', curto: 'Painel', route: '/painel-gerencial', icon: 'bar_chart' }
-      ]
-    },
-    {
-      id: 'cadastros',
-      titulo: 'Cadastros',
-      itens: [
-        { label: 'Empresas clientes', curto: 'Empresas', route: '/empresas', icon: 'business' },
-        { label: 'Unidades', route: '/unidades', icon: 'location_on' },
-        { label: 'Equipamentos', route: '/equipamentos', icon: 'devices' },
-        { label: 'Usuários', route: '/usuarios', icon: 'group' },
-        { label: 'Empresas contratadas', curto: 'Contratadas', route: '/contratadas', icon: 'handyman' }
-      ]
-    },
-    {
-      id: 'ferramentas',
-      titulo: 'Ferramentas',
-      itens: [
-        { label: 'Importar contratos', route: '/contratos/importar', icon: 'upload_file' },
-        { label: 'QR Codes', route: '/qrcodes', icon: 'qr_code' },
-        { label: 'Histórico de alterações', route: '/logs', icon: 'clock' }
-      ]
-    }
-  ];
+  // A lista mora em shared/menu.ts, junto da busca global.
+  private readonly secoes: RailSecao[] = SECOES_MENU;
+  readonly busca = inject(BuscaGlobalService);
 
   readonly rotuloPerfil: Record<string, string> = ROTULO_PERFIL;
 
@@ -118,9 +69,8 @@ export class RailComponent {
   // O menu é filtrado pelo mesmo mapa que os guards de rota consultam, então
   // nenhum atalho visível leva a um redirecionamento.
   get secoesVisiveis(): RailSecao[] {
-    return this.secoes
-      .map(secao => ({ ...secao, itens: secao.itens.filter(item => this.permitido(item)) }))
-      .filter(secao => secao.itens.length > 0);
+    const { perfil, adminPlataforma } = this.auth.usuarioLogado();
+    return secoesDoPerfil(perfil, adminPlataforma);
   }
 
   /**
@@ -185,10 +135,5 @@ export class RailComponent {
     } catch {
       return new Set();
     }
-  }
-
-  private permitido(item: RailItem): boolean {
-    const { perfil, adminPlataforma } = this.auth.usuarioLogado();
-    return podeAcessar(perfil, item.route, adminPlataforma);
   }
 }

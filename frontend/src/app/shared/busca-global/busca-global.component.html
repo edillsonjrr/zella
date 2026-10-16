@@ -1,0 +1,79 @@
+@if (visivel()) {
+  <div class="bg-fundo" [class.saindo]="saindo()" (click)="fechar()"></div>
+  <div
+    class="bg"
+    [class.saindo]="saindo()"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Buscar no Zella"
+    cdkTrapFocus
+    [cdkTrapFocusAutoCapture]="true"
+  >
+    <div class="bg-busca">
+      <app-icon name="search" size="18px" aria-hidden="true"></app-icon>
+      <input
+        #campo
+        type="text"
+        role="combobox"
+        aria-expanded="true"
+        aria-controls="bg-lista"
+        aria-autocomplete="list"
+        aria-label="Buscar"
+        [attr.aria-activedescendant]="ativo() ? 'bg-' + ativo()!.id : null"
+        [placeholder]="dica()"
+        [value]="consulta()"
+        (input)="digitar($any($event.target).value)"
+        (keydown)="teclado($event)"
+        autocomplete="off"
+        spellcheck="false"
+        cdkFocusInitial
+      />
+      <kbd class="kbd bg-esc">Esc</kbd>
+      <!-- Celular: sem tecla Esc, o fechar é um toque. -->
+      <button type="button" class="bg-fechar" (click)="fechar()" aria-label="Fechar a busca">
+        <app-icon name="close" size="18px" aria-hidden="true"></app-icon>
+      </button>
+    </div>
+
+    <div class="bg-lista" id="bg-lista" role="listbox" aria-label="Resultados" #lista>
+      @for (g of grupos(); track g.nome) {
+        <div class="bg-grupo" role="group" [attr.aria-labelledby]="'bg-g-' + $index">
+          <div class="bg-grupo-titulo" [id]="'bg-g-' + $index">{{ g.nome }}</div>
+          @for (r of g.itens; track r.id) {
+            <div
+              class="bg-item"
+              role="option"
+              [id]="'bg-' + r.id"
+              [class.ativo]="ativo() === r"
+              [attr.aria-selected]="ativo() === r"
+              (mousemove)="focar(r)"
+              (click)="executar(r)"
+            >
+              <span class="bg-midia" aria-hidden="true">
+                <app-icon [name]="r.icone" size="16px"></app-icon>
+              </span>
+              <span class="bg-conteudo">
+                <span class="bg-titulo">{{ r.titulo }}</span>
+                @if (r.descricao) {
+                  <span class="bg-descricao">{{ r.descricao }}</span>
+                }
+              </span>
+              <span class="bg-enter" aria-hidden="true"><kbd class="kbd">↵</kbd></span>
+            </div>
+          }
+        </div>
+      } @empty {
+        <div class="bg-vazio" role="status">
+          <app-icon name="search" size="22px" aria-hidden="true"></app-icon>
+          <span>Nada encontrado para “{{ consulta() }}”.</span>
+        </div>
+      }
+    </div>
+
+    <div class="bg-rodape" aria-hidden="true">
+      <span class="kbd-grupo"><kbd class="kbd">↑</kbd><kbd class="kbd">↓</kbd> navegar</span>
+      <span class="kbd-grupo"><kbd class="kbd">↵</kbd> abrir</span>
+      <span class="kbd-grupo bg-rodape-dir"><kbd class="kbd">{{ busca.modificador }}</kbd><kbd class="kbd">K</kbd> abre de qualquer tela</span>
+    </div>
+  </div>
+}

@@ -7,6 +7,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDialog } from '@angular/material/dialog';
 import { RailComponent } from '../rail/rail.component';
+import { BuscaGlobalComponent } from '../shared/busca-global/busca-global.component';
 import { alternarTema, temaEscuroAtivo, ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { IconComponent } from '../shared/icon/icon.component';
 import { LogoComponent } from '../shared/logo/logo.component';
@@ -52,6 +53,7 @@ function guardarNoNavegador(u: Usuario): void {
     MatMenuModule,
     MatDividerModule,
     RailComponent,
+    BuscaGlobalComponent,
     ThemeToggleComponent,
     LogoComponent,
     IconComponent,

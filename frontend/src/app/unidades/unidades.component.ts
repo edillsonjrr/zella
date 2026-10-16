@@ -13,7 +13,9 @@ import { DataService } from '../shared/data.service';
 import { DialogoService } from '../shared/dialogo/dialogo.service';
 import { UiFeedbackService } from '../shared/ui-feedback.service';
 import { UnidadeDetalheComponent } from '../unidade-detalhe/unidade-detalhe.component';
-import type { Unidade } from '../shared/models';
+import { SalaDetalheComponent } from '../sala-detalhe/sala-detalhe.component';
+import { abrirItemDaUrl } from '../shared/abrir-pela-url';
+import type { Sala, Unidade } from '../shared/models';
 
 @Component({
   selector: 'app-unidades',
@@ -43,6 +45,13 @@ export class UnidadesComponent {
   editandoId = signal<string | null>(null);
   nome = '';
   sigla = '';
+
+  constructor() {
+    // Busca global: ?unidade=ID abre os blocos e salas da unidade; ?sala=ID,
+    // a sala com os equipamentos dela (o mesmo painel do "Blocos e salas").
+    abrirItemDaUrl('unidade', id => this.dataService.getUnidadeById(id), u => this.gerenciarEstrutura(u));
+    abrirItemDaUrl('sala', id => this.dataService.getSalaById(id), s => this.abrirSala(s));
+  }
 
   private unidadesExpandidas = signal<Set<string>>(new Set());
   private blocosExpandidos = signal<Set<string>>(new Set());
@@ -113,6 +122,17 @@ export class UnidadesComponent {
     this.dialog.open(UnidadeDetalheComponent, {
       panelClass: 'unidade-detalhe-dialog',
       data: unidade,
+      position: { right: '0', top: '0' },
+      height: '100vh',
+      width: '360px',
+      maxWidth: '100vw'
+    });
+  }
+
+  private abrirSala(sala: Sala): void {
+    this.dialog.open(SalaDetalheComponent, {
+      panelClass: 'sala-detalhe-dialog',
+      data: sala,
       position: { right: '0', top: '0' },
       height: '100vh',
       width: '360px',
